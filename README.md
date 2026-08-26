@@ -200,6 +200,8 @@ Useful benchmark options:
 | --- | --- |
 | `--metrics-only` | Suppress generated text and print timing/cache metrics |
 | `--load-only` | Validate model loading without generation |
+| `--warmup-runs N` | Run `N` unmeasured generations while retaining the loaded expert cache |
+| `--runs N` | Run and summarize `N` measured generations in one process |
 | `--analyze-cache` | Record and analyze the routed-expert access trace |
 | `--gpu-profile` | Add exact Metal command-buffer timing; profiling only |
 | `--subcomponent-profile` | Profile production attention subcomponents |
@@ -283,6 +285,8 @@ GPU/DVFS, and system state varied between runs.
 
 See the [active-streaming report](docs/QWEN_ACTIVE_STREAMING.md)
 for the measured evidence, rejected experiments, and limitations.
+See the [optimization analysis](docs/OPTIMIZATION_PLAN.md) for the ranked next
+work, measurement protocol, promotion gates, and experiments not to repeat.
 
 ## How active-expert streaming works
 

@@ -7,6 +7,7 @@ private let usage = """
 Usage:
   QwenFieldfareBench [--model <directory>] [--prompt <text>]
     [--context <tokens>] [--max-new <tokens>] [--cache-slots <count>]
+    [--warmup-runs <count>] [--runs <count>]
     [--load-only] [--metrics-only] [--packed-experts] [--analyze-cache]
     [--gpu-profile] [--subcomponent-profile]
 """
@@ -17,6 +18,8 @@ private struct Arguments {
     var contextLength = 8_192
     var maxNewTokens = 512
     var cacheSlots = 1_024
+    var warmupRuns = 0
+    var measuredRuns = 1
     var loadOnly = false
     var usePackedExperts = false
     var analyzeCache = false
@@ -29,7 +32,8 @@ private struct Arguments {
         while index < values.count {
             let option = values[index]
             switch option {
-            case "--model", "--prompt", "--context", "--max-new", "--cache-slots":
+            case "--model", "--prompt", "--context", "--max-new", "--cache-slots",
+                 "--warmup-runs", "--runs":
                 guard index + 1 < values.count else {
                     throw NSError(domain: "QwenFieldfareBench", code: 2,
                                   userInfo: [NSLocalizedDescriptionKey: "Missing value for \(option)"])
@@ -50,6 +54,18 @@ private struct Arguments {
                                       userInfo: [NSLocalizedDescriptionKey: "Invalid --max-new value: \(value)"])
                     }
                     maxNewTokens = parsed
+                case "--warmup-runs":
+                    guard let parsed = Int(value), parsed >= 0 else {
+                        throw NSError(domain: "QwenFieldfareBench", code: 2,
+                                      userInfo: [NSLocalizedDescriptionKey: "Invalid --warmup-runs value: \(value)"])
+                    }
+                    warmupRuns = parsed
+                case "--runs":
+                    guard let parsed = Int(value), parsed > 0 else {
+                        throw NSError(domain: "QwenFieldfareBench", code: 2,
+                                      userInfo: [NSLocalizedDescriptionKey: "Invalid --runs value: \(value)"])
+                    }
+                    measuredRuns = parsed
                 default:
                     guard let parsed = Int(value), parsed >= 320 else {
                         throw NSError(domain: "QwenFieldfareBench", code: 2,
@@ -100,19 +116,24 @@ private struct TokenSample {
     let metalBytes: UInt64
     let cacheHits: Int
     let cacheMisses: Int
+    let cacheFetchedBytes: Int
 }
 
 private final class SampleBox: @unchecked Sendable {
     private let lock = NSLock()
-    private var decodeStart: CFAbsoluteTime?
+    private var recordingStarted = false
     private var prefillMs = 0.0
     private var samples: [TokenSample] = []
+    private var interTokenLatencyMs: [Double] = []
+    private var firstTokenAt: CFAbsoluteTime?
+    private var previousTokenAt: CFAbsoluteTime?
+    private var firstTokenCache: QwenExpertCacheMetrics?
     private var tokenCount = 0
 
     func startDecode(prefillMs: Double) {
         lock.lock()
         self.prefillMs = prefillMs
-        decodeStart = CFAbsoluteTimeGetCurrent()
+        recordingStarted = true
         lock.unlock()
     }
 
@@ -123,26 +144,57 @@ private final class SampleBox: @unchecked Sendable {
     ) {
         lock.lock()
         defer { lock.unlock() }
-        guard let decodeStart else { return }
+        guard recordingStarted else { return }
+        let now = CFAbsoluteTimeGetCurrent()
         tokenCount += 1
-        if tokenCount == 1 || tokenCount % 64 == 0 {
-            samples.append(TokenSample(
-                tokenCount: tokenCount,
-                elapsedSeconds: CFAbsoluteTimeGetCurrent() - decodeStart,
-                stepMs: profile?.totalStepMs ?? 0,
-                cacheMissFetchMs: profile?.cacheMissFetchMs ?? 0,
-                commandBufferWaitMs: profile?.cbCommitWaitMs ?? 0,
-                attentionRouterWaitMs: profile?.attentionMs ?? 0,
-                moeWaitMs: profile?.stagedMoEMs ?? 0,
-                attentionRouterGPUMs: profile?.attentionRouterGPUMs ?? 0,
-                sharedHitGPUMs: profile?.sharedHitGPUMs ?? 0,
-                moeTailGPUMs: profile?.moeTailGPUMs ?? 0,
-                totalGPUMs: profile?.totalGPUMs ?? 0,
-                footprintBytes: processFootprintBytes(),
-                metalBytes: UInt64(device?.currentAllocatedSize ?? 0),
-                cacheHits: cache.hits,
-                cacheMisses: cache.misses))
+        if let previousTokenAt {
+            interTokenLatencyMs.append((now - previousTokenAt) * 1_000.0)
+        } else {
+            firstTokenAt = now
+            firstTokenCache = cache
         }
+        previousTokenAt = now
+        guard tokenCount == 1 || tokenCount % 64 == 0 else { return }
+        samples.append(makeSample(at: now, profile: profile, device: device, cache: cache))
+    }
+
+    func captureFinal(
+        profile: QwenQ4ActiveExpertStreamingRunner.StepProfile?,
+        device: MTLDevice?,
+        cache: QwenExpertCacheMetrics
+    ) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard recordingStarted, tokenCount > 0,
+              samples.last?.tokenCount != tokenCount,
+              let previousTokenAt else { return }
+        samples.append(makeSample(
+            at: previousTokenAt, profile: profile, device: device, cache: cache))
+    }
+
+    private func makeSample(
+        at timestamp: CFAbsoluteTime,
+        profile: QwenQ4ActiveExpertStreamingRunner.StepProfile?,
+        device: MTLDevice?,
+        cache: QwenExpertCacheMetrics
+    ) -> TokenSample {
+        TokenSample(
+            tokenCount: tokenCount,
+            elapsedSeconds: firstTokenAt.map { timestamp - $0 } ?? 0,
+            stepMs: profile?.totalStepMs ?? 0,
+            cacheMissFetchMs: profile?.cacheMissFetchMs ?? 0,
+            commandBufferWaitMs: profile?.cbCommitWaitMs ?? 0,
+            attentionRouterWaitMs: profile?.attentionMs ?? 0,
+            moeWaitMs: profile?.stagedMoEMs ?? 0,
+            attentionRouterGPUMs: profile?.attentionRouterGPUMs ?? 0,
+            sharedHitGPUMs: profile?.sharedHitGPUMs ?? 0,
+            moeTailGPUMs: profile?.moeTailGPUMs ?? 0,
+            totalGPUMs: profile?.totalGPUMs ?? 0,
+            footprintBytes: processFootprintBytes(),
+            metalBytes: UInt64(device?.currentAllocatedSize ?? 0),
+            cacheHits: cache.hits,
+            cacheMisses: cache.misses,
+            cacheFetchedBytes: cache.fetchedBytes)
     }
 
     func snapshot() -> [TokenSample] {
@@ -156,6 +208,43 @@ private final class SampleBox: @unchecked Sendable {
         defer { lock.unlock() }
         return prefillMs
     }
+
+    func decodeSummary() -> (
+        transitionCount: Int,
+        elapsedMs: Double,
+        latency: QwenLatencySummary,
+        firstTokenCache: QwenExpertCacheMetrics?
+    ) {
+        lock.lock()
+        defer { lock.unlock() }
+        let elapsedMs: Double
+        if let firstTokenAt, let previousTokenAt {
+            elapsedMs = max(0, (previousTokenAt - firstTokenAt) * 1_000.0)
+        } else {
+            elapsedMs = 0
+        }
+        return (
+            transitionCount: max(0, tokenCount - 1),
+            elapsedMs: elapsedMs,
+            latency: .summarize(interTokenLatencyMs),
+            firstTokenCache: firstTokenCache)
+    }
+}
+
+private struct RunSummary {
+    let label: String
+    let tokens: [Int32]
+    let finishReason: String
+    let prefillMs: Double
+    let decodeMs: Double
+    let decodeTransitions: Int
+    let decodeRate: Double
+    let latency: QwenLatencySummary
+    let cache: QwenExpertCacheMetrics
+    let decodeMisses: Int
+    let decodeFetchedBytes: Int
+    let finalFootprintBytes: UInt64
+    let finalMetalBytes: UInt64
 }
 
 private func processFootprintBytes() -> UInt64 {
@@ -387,6 +476,14 @@ private enum QwenBenchMain {
                 return
             }
             let arguments = try Arguments(CommandLine.arguments)
+            let totalRequestedRuns = arguments.warmupRuns + arguments.measuredRuns
+            if arguments.analyzeCache, totalRequestedRuns != 1 {
+                throw NSError(
+                    domain: "QwenFieldfareBench",
+                    code: 2,
+                    userInfo: [NSLocalizedDescriptionKey:
+                        "--analyze-cache requires exactly one run because traces accumulate with retained cache state"])
+            }
             let device = MTLCreateSystemDefaultDevice()
             let loadStarted = CFAbsoluteTimeGetCurrent()
             let runner = try QwenQ4ActiveExpertStreamingRunner(
@@ -407,6 +504,8 @@ private enum QwenBenchMain {
             print("Expert cache slots: \(arguments.cacheSlots)")
             print("Expert storage: \(runner.expertStorageMetrics().kind)")
             print("GPU profiling: \(arguments.gpuProfile ? "enabled" : "disabled")")
+            print("Warmup runs: \(arguments.warmupRuns)")
+            print("Measured runs: \(arguments.measuredRuns)")
             if arguments.subcomponentProfile {
                 let profile = runner.profileSubcomponents(iterations: 20)
                 print(String(format: "Attention subcomponents: %.3f ms total", profile.totalAttentionMs))
@@ -427,95 +526,197 @@ private enum QwenBenchMain {
             let formattedPrompt = QwenChatTemplate.format(
                 messages: [], appendingUser: arguments.prompt, enableThinking: false)
             let promptTokens = tokenizer.encode(formattedPrompt)
-            let samples = SampleBox()
-            let runStarted = CFAbsoluteTimeGetCurrent()
-            let result = try await runner.generateResult(
-                promptTokens: promptTokens,
-                configuration: .greedy(maxNewTokens: arguments.maxNewTokens, seed: 42),
-                onPrefillComplete: {
-                    samples.startDecode(prefillMs: $0)
-                },
-                onToken: { _ in
-                    samples.record(
-                        profile: runner.latestProfile,
-                        device: device,
-                        cache: runner.expertCache.metricsSnapshot())
-                })
-            let prefillMs = samples.recordedPrefillMs()
-            let totalMs = (CFAbsoluteTimeGetCurrent() - runStarted) * 1_000.0
-            let decodeMs = max(0, totalMs - prefillMs)
-            let rate = decodeMs > 0 ? Double(result.tokens.count) * 1_000.0 / decodeMs : 0
+            var measuredSummaries: [RunSummary] = []
+            var referenceTokens: [Int32]?
+            var referenceFinishReason: String?
+            var deterministic = true
 
-            print("Prompt tokens: \(promptTokens.count)")
-            print("Generated tokens: \(result.tokens.count)")
-            print("Finish reason: \(result.finishReason.label)")
-            print(String(format: "Prefill: %.3f s", prefillMs / 1_000.0))
-            print(String(format: "Decode: %.3f s (%.2f tok/s)", decodeMs / 1_000.0, rate))
-            print(String(format: "Final footprint: %.3f GiB", gib(processFootprintBytes())))
-            print(String(format: "Final Metal allocation: %.3f GiB", gib(UInt64(device?.currentAllocatedSize ?? 0))))
+            for runIndex in 0..<totalRequestedRuns {
+                let isWarmup = runIndex < arguments.warmupRuns
+                let ordinal = isWarmup
+                    ? runIndex + 1
+                    : runIndex - arguments.warmupRuns + 1
+                let label = isWarmup
+                    ? "Warmup \(ordinal)/\(arguments.warmupRuns)"
+                    : "Measured \(ordinal)/\(arguments.measuredRuns)"
+                print("\n=== \(label) ===")
 
-            let timingSamples = samples.snapshot()
-            for (index, sample) in timingSamples.enumerated() {
-                let previous = index == 0 ? nil : timingSamples[index - 1]
-                let bucketTokens = previous.map { sample.tokenCount - $0.tokenCount } ?? sample.tokenCount
-                let bucketSeconds = previous.map { sample.elapsedSeconds - $0.elapsedSeconds } ?? sample.elapsedSeconds
-                let bucketRate = bucketSeconds > 0 ? Double(bucketTokens) / bucketSeconds : 0
-                let bucketMisses = previous.map { sample.cacheMisses - $0.cacheMisses } ?? sample.cacheMisses
-                let missesPerToken = Double(bucketMisses) / Double(max(1, bucketTokens))
-                print(String(
-                    format: "At %4d: %6.2f tok/s, %5.1f misses/token, step %6.2f ms, miss fetch %6.2f ms, GPU wait %6.2f ms (attn/router %.2f, MoE %.2f), footprint %.3f GiB, Metal %.3f GiB",
-                    sample.tokenCount, bucketRate, missesPerToken, sample.stepMs, sample.cacheMissFetchMs,
-                    sample.commandBufferWaitMs, sample.attentionRouterWaitMs, sample.moeWaitMs,
-                    gib(sample.footprintBytes), gib(sample.metalBytes)))
-                if arguments.gpuProfile {
-                    print(String(
-                        format: "         exact GPU: %.2f ms (attention/router %.2f, shared/hits %.2f, miss/tail/head %.2f)",
-                        sample.totalGPUMs, sample.attentionRouterGPUMs,
-                        sample.sharedHitGPUMs, sample.moeTailGPUMs))
-                }
-            }
-            let cache = runner.expertCache.metricsSnapshot()
-            print(String(format: "Cache: %d/%d occupied, %d hits, %d misses, %.2f%% hit rate, %d evictions, %.3f GiB fetched",
-                         cache.occupancy, cache.capacity, cache.hits, cache.misses,
-                         (cache.hitRate ?? 0) * 100, cache.evictions, gib(UInt64(cache.fetchedBytes))))
-            let layerRates = (0..<40).map { layer -> String in
-                let requests = runner.expertCache.layerRequests[layer, default: 0]
-                let hits = runner.expertCache.layerHits[layer, default: 0]
-                let rate = requests > 0 ? Double(hits) * 100.0 / Double(requests) : 0
-                return String(format: "%02d:%.1f", layer, rate)
-            }
-            print("Layer cache hit rates (%): \(layerRates.joined(separator: " "))")
-            if arguments.analyzeCache {
-                let traces = runner.expertCache.accessTraceSnapshot()
-                let capacities = runner.expertCache.layerCapacities
-                let simulated = traces.indices.reduce(0) {
-                    $0 + simulateWindowedFrequency(trace: traces[$1], capacity: capacities[$1])
-                }
-                let staticHotSet = traces.indices.reduce(0) {
-                    $0 + staticHotSetMisses(trace: traces[$1], capacity: capacities[$1])
-                }
-                let replay = traces.indices.reduce(0) {
-                    $0 + simulateSegmentedLRU(trace: traces[$1], capacity: capacities[$1])
-                }
-                print("Cache analysis: measured \(cache.misses), SLRU replay \(replay), windowed-frequency \(simulated), static-hot-set \(staticHotSet) misses")
-                print("Layer cache capacities: \(capacities.map(String.init).joined(separator: " "))")
-                if replay == cache.misses,
-                   let optimized = optimizeLayerCapacities(
-                    traces: traces, totalCapacity: cache.capacity) {
-                    print("Trace-optimized SLRU: \(optimized.misses) misses")
-                    print("Trace-optimized capacities: \(optimized.capacities.map(String.init).joined(separator: " "))")
+                // Retain cache contents intentionally while making every
+                // printed run's counters independent.
+                runner.expertCache.resetMetrics()
+                let samples = SampleBox()
+                let result = try await runner.generateResult(
+                    promptTokens: promptTokens,
+                    configuration: .greedy(maxNewTokens: arguments.maxNewTokens, seed: 42),
+                    onPrefillComplete: {
+                        samples.startDecode(prefillMs: $0)
+                    },
+                    onToken: { _ in
+                        samples.record(
+                            profile: runner.latestProfile,
+                            device: device,
+                            cache: runner.expertCache.metricsSnapshot())
+                    })
+                let cache = runner.expertCache.metricsSnapshot()
+                samples.captureFinal(
+                    profile: runner.latestProfile, device: device, cache: cache)
+                let decode = samples.decodeSummary()
+                let prefillMs = samples.recordedPrefillMs()
+                let decodeRate = decode.elapsedMs > 0
+                    ? Double(decode.transitionCount) * 1_000.0 / decode.elapsedMs
+                    : 0
+                let finalFootprint = processFootprintBytes()
+                let finalMetal = UInt64(device?.currentAllocatedSize ?? 0)
+                let decodeHits = max(0, cache.hits - (decode.firstTokenCache?.hits ?? cache.hits))
+                let decodeMisses = max(0, cache.misses - (decode.firstTokenCache?.misses ?? cache.misses))
+                let decodeRequests = decodeHits + decodeMisses
+                let decodeHitRate = decodeRequests > 0
+                    ? Double(decodeHits) * 100.0 / Double(decodeRequests)
+                    : 0
+                let decodeFetchedBytes = max(
+                    0, cache.fetchedBytes - (decode.firstTokenCache?.fetchedBytes ?? cache.fetchedBytes))
+
+                if let referenceTokens {
+                    deterministic = deterministic
+                        && referenceTokens == result.tokens
+                        && referenceFinishReason == result.finishReason.label
                 } else {
-                    print("Trace optimization skipped because SLRU replay did not reproduce measured misses")
+                    referenceTokens = result.tokens
+                    referenceFinishReason = result.finishReason.label
+                }
+
+                print("Prompt tokens: \(promptTokens.count)")
+                print("Generated tokens: \(result.tokens.count)")
+                print("Finish reason: \(result.finishReason.label)")
+                print(String(format: "Prefill/TTFT: %.3f s", prefillMs / 1_000.0))
+                print(String(
+                    format: "Decode: %d inter-token transitions in %.3f s (%.2f tok/s)",
+                    decode.transitionCount, decode.elapsedMs / 1_000.0, decodeRate))
+                print(String(
+                    format: "Inter-token latency: mean %.2f ms, p50 %.2f ms, p95 %.2f ms, min %.2f ms, max %.2f ms (%d samples)",
+                    decode.latency.meanMs ?? 0, decode.latency.p50Ms ?? 0,
+                    decode.latency.p95Ms ?? 0, decode.latency.minimumMs ?? 0,
+                    decode.latency.maximumMs ?? 0, decode.latency.sampleCount))
+                print(String(
+                    format: "Decode-only cache: %d hits, %d misses, %.2f%% hit rate, %.1f misses/token, %.3f GiB fetched",
+                    decodeHits, decodeMisses, decodeHitRate,
+                    Double(decodeMisses) / Double(max(1, decode.transitionCount)),
+                    gib(UInt64(decodeFetchedBytes))))
+                print(String(format: "Final footprint: %.3f GiB", gib(finalFootprint)))
+                print(String(format: "Final Metal allocation: %.3f GiB", gib(finalMetal)))
+
+                let timingSamples = samples.snapshot()
+                for (sampleIndex, sample) in timingSamples.enumerated() {
+                    guard sampleIndex > 0 else {
+                        print(String(
+                            format: "At %4d: first token produced during prefill; footprint %.3f GiB, Metal %.3f GiB",
+                            sample.tokenCount, gib(sample.footprintBytes), gib(sample.metalBytes)))
+                        continue
+                    }
+                    let previous = timingSamples[sampleIndex - 1]
+                    let bucketTokens = sample.tokenCount - previous.tokenCount
+                    let bucketSeconds = sample.elapsedSeconds - previous.elapsedSeconds
+                    let bucketRate = bucketSeconds > 0 ? Double(bucketTokens) / bucketSeconds : 0
+                    let bucketMisses = sample.cacheMisses - previous.cacheMisses
+                    let bucketFetched = sample.cacheFetchedBytes - previous.cacheFetchedBytes
+                    let missesPerToken = Double(bucketMisses) / Double(max(1, bucketTokens))
+                    print(String(
+                        format: "At %4d: %6.2f tok/s, %5.1f misses/token, %.1f MiB/token, step %6.2f ms, miss fetch %6.2f ms, GPU wait %6.2f ms (attn/router %.2f, MoE %.2f), footprint %.3f GiB, Metal %.3f GiB",
+                        sample.tokenCount, bucketRate, missesPerToken,
+                        Double(bucketFetched) / Double(max(1, bucketTokens)) / 1_048_576.0,
+                        sample.stepMs, sample.cacheMissFetchMs,
+                        sample.commandBufferWaitMs, sample.attentionRouterWaitMs,
+                        sample.moeWaitMs, gib(sample.footprintBytes), gib(sample.metalBytes)))
+                    if arguments.gpuProfile {
+                        print(String(
+                            format: "         exact GPU: %.2f ms (attention/router %.2f, shared/hits %.2f, miss/tail/head %.2f)",
+                            sample.totalGPUMs, sample.attentionRouterGPUMs,
+                            sample.sharedHitGPUMs, sample.moeTailGPUMs))
+                    }
+                }
+
+                print(String(format: "Cache including prefill: %d/%d occupied, %d hits, %d misses, %.2f%% hit rate, %d evictions, %.3f GiB fetched",
+                             cache.occupancy, cache.capacity, cache.hits, cache.misses,
+                             (cache.hitRate ?? 0) * 100, cache.evictions,
+                             gib(UInt64(cache.fetchedBytes))))
+                let layerRates = (0..<40).map { layer -> String in
+                    let requests = runner.expertCache.layerRequests[layer, default: 0]
+                    let hits = runner.expertCache.layerHits[layer, default: 0]
+                    let rate = requests > 0 ? Double(hits) * 100.0 / Double(requests) : 0
+                    return String(format: "%02d:%.1f", layer, rate)
+                }
+                print("Layer cache hit rates (%): \(layerRates.joined(separator: " "))")
+
+                if arguments.analyzeCache {
+                    let traces = runner.expertCache.accessTraceSnapshot()
+                    let capacities = runner.expertCache.layerCapacities
+                    let simulated = traces.indices.reduce(0) {
+                        $0 + simulateWindowedFrequency(trace: traces[$1], capacity: capacities[$1])
+                    }
+                    let staticHotSet = traces.indices.reduce(0) {
+                        $0 + staticHotSetMisses(trace: traces[$1], capacity: capacities[$1])
+                    }
+                    let replay = traces.indices.reduce(0) {
+                        $0 + simulateSegmentedLRU(trace: traces[$1], capacity: capacities[$1])
+                    }
+                    print("Cache analysis: measured \(cache.misses), SLRU replay \(replay), windowed-frequency \(simulated), static-hot-set \(staticHotSet) misses")
+                    print("Layer cache capacities: \(capacities.map(String.init).joined(separator: " "))")
+                    if replay == cache.misses,
+                       let optimized = optimizeLayerCapacities(
+                        traces: traces, totalCapacity: cache.capacity) {
+                        print("Trace-optimized SLRU: \(optimized.misses) misses")
+                        print("Trace-optimized capacities: \(optimized.capacities.map(String.init).joined(separator: " "))")
+                    } else {
+                        print("Trace optimization skipped because SLRU replay did not reproduce measured misses")
+                    }
+                }
+
+                let summary = RunSummary(
+                    label: label,
+                    tokens: result.tokens,
+                    finishReason: result.finishReason.label,
+                    prefillMs: prefillMs,
+                    decodeMs: decode.elapsedMs,
+                    decodeTransitions: decode.transitionCount,
+                    decodeRate: decodeRate,
+                    latency: decode.latency,
+                    cache: cache,
+                    decodeMisses: decodeMisses,
+                    decodeFetchedBytes: decodeFetchedBytes,
+                    finalFootprintBytes: finalFootprint,
+                    finalMetalBytes: finalMetal)
+                if !isWarmup { measuredSummaries.append(summary) }
+
+                if !arguments.metricsOnly {
+                    print("TOKEN_IDS=\(result.tokens)")
+                    print("--- OUTPUT ---")
+                    print(tokenizer.decode(result.tokens))
+                    print("--- END OUTPUT ---")
                 }
             }
-            let storage = runner.expertStorageMetrics()
-            print("Expert I/O: \(storage.packedReads) packed experts, \(storage.packedPreadOperations) pread operations, \(storage.packedReadFailures) packed read failures")
-            if !arguments.metricsOnly {
-                print("TOKEN_IDS=\(result.tokens)")
-                print("--- OUTPUT ---")
-                print(tokenizer.decode(result.tokens))
-                print("--- END OUTPUT ---")
+
+            print("\n=== Measured summary ===")
+            let rates = measuredSummaries.map(\.decodeRate)
+            let prefills = measuredSummaries.map(\.prefillMs)
+            if let minimumRate = rates.min(), let maximumRate = rates.max() {
+                let meanRate = rates.reduce(0, +) / Double(rates.count)
+                print(String(
+                    format: "Decode rate across %d runs: min %.2f, mean %.2f, max %.2f tok/s, spread %.2f%%",
+                    rates.count, minimumRate, meanRate, maximumRate,
+                    meanRate > 0 ? (maximumRate - minimumRate) * 100.0 / meanRate : 0))
             }
+            if let minimumPrefill = prefills.min(), let maximumPrefill = prefills.max() {
+                let meanPrefill = prefills.reduce(0, +) / Double(prefills.count)
+                print(String(
+                    format: "Prefill/TTFT across %d runs: min %.3f, mean %.3f, max %.3f s",
+                    prefills.count, minimumPrefill / 1_000.0,
+                    meanPrefill / 1_000.0, maximumPrefill / 1_000.0))
+            }
+            print(totalRequestedRuns > 1
+                ? "Repeated greedy outputs identical: \(deterministic ? "yes" : "NO")"
+                : "Repeated greedy outputs identical: not applicable (one run)")
+            let storage = runner.expertStorageMetrics()
+            print("Expert I/O process totals: \(storage.packedReads) packed experts, \(storage.packedPreadOperations) pread operations, \(storage.packedReadFailures) packed read failures")
         } catch {
             FileHandle.standardError.write(Data("error: \(error.localizedDescription)\n\n\(usage)\n".utf8))
             exit(1)
