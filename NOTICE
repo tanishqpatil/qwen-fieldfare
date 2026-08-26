@@ -1,0 +1,14 @@
+QwenFieldfare
+
+This distribution contains software derived from TurboFieldfare:
+https://github.com/drumih/turbo-fieldfare
+
+TurboFieldfare was created by Andrey Mikhaylov and is distributed under the
+Apache License, Version 2.0.
+
+This derivative adds Qwen 3.6 35B-A3B model support, Qwen-specific Swift and
+Metal inference paths, active-expert caching, validation tools, benchmarks,
+documentation, and a Qwen-focused Mac interface.
+
+Model weights are not part of this source distribution. See
+THIRD_PARTY_NOTICES.md for model and dependency attribution.
