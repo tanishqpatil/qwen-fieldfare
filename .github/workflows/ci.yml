@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -21,10 +22,48 @@ concurrency:
 
 jobs:
   test:
+    name: Build and test (macOS 26)
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: macos-26
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify required toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sw_vers
+          xcodebuild -version
+          swift --version
+
+          macos_major="$(sw_vers -productVersion | cut -d. -f1)"
+          if (( macos_major < 26 )); then
+            echo "QwenFieldfare requires macOS 26 or newer; found macOS ${macos_major}." >&2
+            exit 1
+          fi
+
+          swift_version="$(swift --version | sed -nE 's/.*Swift version ([0-9]+\.[0-9]+).*/\1/p' | head -n 1)"
+          swift_major="${swift_version%%.*}"
+          swift_minor="${swift_version#*.}"
+          if [[ -z "$swift_version" ]] || (( swift_major < 6 )) || (( swift_major == 6 && swift_minor < 2 )); then
+            echo "QwenFieldfare requires Swift 6.2 or newer; found '${swift_version:-unknown}'." >&2
+            exit 1
+          fi
+      - name: Reject committed model weights
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tracked_weights="$(git ls-files | grep -Ei '\.(safetensors|gguf|gturbo)$' || true)"
+          if [[ -n "$tracked_weights" ]]; then
+            echo "Model weights must not be committed:" >&2
+            echo "$tracked_weights" >&2
+            exit 1
+          fi
       - name: Build release products
         run: swift build -c release
       - name: Run serial tests
