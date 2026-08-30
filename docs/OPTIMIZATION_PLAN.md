@@ -4,15 +4,20 @@ Status: roadmap reset on 2026-08-28 after reviewing the current source,
 corrected benchmarks, memory ownership, and rejected experiments. S1a/S1b was
 promoted and pushed as `4758b8b` on 2026-08-30. S2's measurement gate completed
 the same day and closed the fixed-table bookkeeping direction without a
-runtime change.
+runtime change. S3's four-prompt offline trace gate also completed on
+2026-08-30; it found a large non-causal miss ceiling but rejected the tested
+causal replacement and prefetch directions.
 
 ## Decision
 
 The exact-greedy portion of **S1: token-selection hot paths** passed its
 promotion gate. S2 then measured cache planning at only 0.364 ms/token, too
-small for a fixed-table rewrite to reach the 5% promotion threshold. The next
-decode task is S3's offline expert-miss ceiling analysis; it begins with trace
-analysis, not a production cache-policy edit.
+small for a fixed-table rewrite to reach the 5% promotion threshold. S3 found
+that perfect future knowledge could remove 43.42%–46.43% of total misses, but
+the tested causal policies could not approach that bound: SRRIP changed misses
+by -1.63% to +0.22%, and the smallest online transition-prefetch budget wasted
+18,393–18,765 reads per trace. No S3 runtime candidate or throughput A/B was
+justified.
 
 Before S1b, the benchmark's non-nil `.greedy(...)` configuration routed the
 248,320-logit result through the general `QwenLogitSelector` in both runners.
@@ -37,6 +42,9 @@ performance claim.
 | Promoted S1 exact-greedy A/B | 29.02 to 31.97 tok/s; +10.16% paired mean, 95% CI +8.05% to +12.26% | Material short-run gain with identical token IDs and cache demand |
 | Promoted S1 512-token confirmation | Three paired gains: +6.22%, +8.85%, +5.01% | Gain remains positive under sustained expert demand |
 | S2 cache-planning split | 0.364 ms in a 29.84 ms token step | Complete removal could save only about 1.2%; do not implement the fixed-table rewrite |
+| S3 lock-aware offline optimum | 43.42%–46.43% fewer total misses; 46.20%–50.98% fewer decode misses | Future-aware replacement has a large theoretical ceiling, but it is not implementable online |
+| S3 causal replacement | SRRIP changed misses by -1.63% to +0.22%; BRRIP was worse on all four traces | No replacement-policy runtime edit or tok/s A/B |
+| S3 causal prefetch | Best one-read/layer precision 7.56%–10.01%, with 18,393–18,765 wasted reads | Reject the tested transition predictor; it increases expert traffic even before cache pollution |
 | Corrected 512-token baseline | 19.68 tok/s; 50.80 ms/token | Sustained decode and late-run drift are the primary speed metric |
 | Recent exact GPU work | 20.25–21.02 ms/token | About 47–49 tok/s is the GPU-only ceiling before CPU work and expert I/O |
 | Full-resident MLX reference | 49.86 tok/s; 19.631 GB peak | A reference, not an accepted 5 GiB target |
@@ -229,33 +237,73 @@ code changed. No candidate A/B or 512-token promotion run was justified.
 Reopen fixed-table bookkeeping only if a future non-overlapping profile shows
 at least 1.5 ms/token of planning cost under the then-current runtime.
 
-### S3 — establish the expert-miss ceiling offline
+### S3 — expert-miss ceiling offline (closed by measurement)
 
-**Confidence: high that the offline bound can be computed; achievable online
-impact is unknown until the bound exists.**
+**Status: four-prompt trace gate completed on 2026-08-30. No production cache
+policy, prefetch caller, or runtime benchmark candidate was retained.**
 
-The existing 1.16% result optimized only per-layer capacity allocation. It did
-not compute the full optimal replacement bound. Before changing eviction,
-prefetch, I/O flags, or storage again:
+The diagnostic used the promoted S1 executable path, exact greedy sampling,
+8K context, 2,183 cache slots, raw Safetensors, no warmup, one 512-token run per
+prompt, and trace recording enabled. Each trace included prefill and decode.
+The SLRU replay reproduced the measured total miss count exactly before any
+comparison was accepted. The lock-aware Belady simulator preserved each
+layer's real capacity and prevented eviction of an expert already acquired by
+the current top-8 group.
 
-1. record several 512-token traces covering coding, explanation, summarization,
-   and creative prompts;
-2. record prompt/prefill accesses, initial cache contents, cold/warm state,
-   sampler parameters, and a fixed validation seed, then replay the exact
-   grouped top-8 stream with each layer's real capacity and active-group lock
-   constraint;
-3. compute Belady/offline-optimal misses and compare them with SLRU by token
-   bucket;
-4. evaluate same-layer temporal route prediction, reporting precision, useful
-   reads, wasted reads, extra bytes, and predicted blocking time;
-5. translate saved misses into wall-time only from non-overlapped measured read
-   intervals, not raw payload count.
+| Prompt class | Prompt tokens | SLRU total | Offline total | Total reduction | Decode misses | Offline decode | Decode reduction |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Explanation | 22 | 43,267 | 24,482 | 43.42% | 40,551 | 21,818 | 46.20% |
+| Coding | 29 | 39,170 | 21,902 | 44.08% | 36,101 | 18,958 | 47.49% |
+| Summarization | 44 | 33,816 | 18,846 | 44.27% | 29,582 | 15,024 | 49.21% |
+| Creative | 33 | 36,309 | 19,451 | 46.43% | 32,470 | 15,917 | 50.98% |
 
-If the oracle cannot support a 5% end-to-end improvement across prompts, close
-the cache-policy track. If it can, implement exactly one policy or prefetch
-candidate justified by the trace. `perLayerRecentExperts` is currently written
-but unused, and `speculativePrefetch` has no production caller; neither is
-evidence that prediction already works.
+This is a real theoretical gap, not an expected speedup. Belady uses the full
+future trace and therefore cannot be used by the running model. The measured
+diagnostic decode rates were 27.90, 29.01, 30.80, and 30.32 tok/s respectively;
+they are controls only, because no causal candidate passed the trace gate.
+
+Two standard causal 2-bit re-reference policies were replayed next with the
+same active-group locks:
+
+| Prompt class | SLRU | SRRIP | SRRIP change | BRRIP | BRRIP change |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Explanation | 43,267 | 43,361 | 0.22% worse | 49,220 | 13.76% worse |
+| Coding | 39,170 | 39,076 | 0.24% better | 43,327 | 10.61% worse |
+| Summarization | 33,816 | 33,676 | 0.41% better | 37,488 | 10.86% worse |
+| Creative | 36,309 | 35,717 | 1.63% better | 39,406 | 8.53% worse |
+
+Even a prompt-specific dynamic-program allocation of the same 2,183 SLRU
+slots reduced misses by only 1.30%, 1.42%, 1.57%, and 2.47%. SRRIP and layer
+reallocation therefore remain below the predeclared 5% end-to-end promotion
+threshold before accounting for policy overhead or the fact that a percent of
+misses is not a percent of wall time.
+
+The previous-token same-layer route overlap was 37.26%–40.89%, but every such
+prediction referred to experts already resident in that layer partition and
+would initiate zero useful reads. A causal online transition table was then
+trained only on earlier groups in the same trace. The optimistic analysis
+excluded cache pollution and counted a prediction only when its expert was
+absent from the current SLRU state:
+
+| Prompt class | Useful reads | Wasted reads | Precision | Decode misses covered |
+| --- | ---: | ---: | ---: | ---: |
+| Explanation | 1,535 | 18,765 | 7.56% | 3.79% |
+| Coding | 1,634 | 18,747 | 8.02% | 4.53% |
+| Summarization | 1,743 | 18,696 | 8.53% | 5.89% |
+| Creative | 2,045 | 18,393 | 10.01% | 6.30% |
+
+Those are the smallest one-read-per-layer budgets. Increasing the budget to
+eight raised nominal decode-miss coverage to 21.25%–31.33% while issuing
+152,391–154,287 wasted reads. Because each speculative miss reads the same
+expert payload as a demanded miss, every tested budget increases total expert
+traffic before counting eviction pollution. There is no credible wall-time
+translation or runtime A/B to perform.
+
+Conclusion: retain production SLRU. The measurement-only Belady, RRIP, and
+transition-prediction code was removed after recording these results. Reopen
+cache replacement or prefetch only with a causal routing signal that achieves
+high precision on held-out prompts and lowers total expert bytes, not merely a
+new policy name or an oracle-only miss reduction.
 
 ### S4 — incremental multi-turn prefill
 
