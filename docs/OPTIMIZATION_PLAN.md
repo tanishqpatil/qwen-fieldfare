@@ -2,14 +2,17 @@
 
 Status: roadmap reset on 2026-08-28 after reviewing the current source,
 corrected benchmarks, memory ownership, and rejected experiments. S1a/S1b was
-implemented and promoted locally on 2026-08-30; it has not yet been committed
-or pushed. The pushed control remains `5cbc801`.
+promoted and pushed as `4758b8b` on 2026-08-30. S2's measurement gate completed
+the same day and closed the fixed-table bookkeeping direction without a
+runtime change.
 
 ## Decision
 
 The exact-greedy portion of **S1: token-selection hot paths** passed its
-promotion gate. The next eligible decode task is S2's measurement-only cache
-bookkeeping split; no S2 runtime edit is authorized by the S1 result.
+promotion gate. S2 then measured cache planning at only 0.364 ms/token, too
+small for a fixed-table rewrite to reach the 5% promotion threshold. The next
+decode task is S3's offline expert-miss ceiling analysis; it begins with trace
+analysis, not a production cache-policy edit.
 
 Before S1b, the benchmark's non-nil `.greedy(...)` configuration routed the
 248,320-logit result through the general `QwenLogitSelector` in both runners.
@@ -33,6 +36,7 @@ performance claim.
 | Later same-session short control | 31.00 tok/s mean | Host/GPU/page-cache state can move short-run results substantially |
 | Promoted S1 exact-greedy A/B | 29.02 to 31.97 tok/s; +10.16% paired mean, 95% CI +8.05% to +12.26% | Material short-run gain with identical token IDs and cache demand |
 | Promoted S1 512-token confirmation | Three paired gains: +6.22%, +8.85%, +5.01% | Gain remains positive under sustained expert demand |
+| S2 cache-planning split | 0.364 ms in a 29.84 ms token step | Complete removal could save only about 1.2%; do not implement the fixed-table rewrite |
 | Corrected 512-token baseline | 19.68 tok/s; 50.80 ms/token | Sustained decode and late-run drift are the primary speed metric |
 | Recent exact GPU work | 20.25–21.02 ms/token | About 47–49 tok/s is the GPU-only ceiling before CPU work and expert I/O |
 | Full-resident MLX reference | 49.86 tok/s; 19.631 GB peak | A reference, not an accepted 5 GiB target |
@@ -188,25 +192,42 @@ Restoring that release gate remains P7 in the product roadmap. The retained
 performance claim is exact-greedy only; app-default sampled generation is
 unchanged.
 
-### S2 — fixed-table expert-cache bookkeeping
+### S2 — fixed-table expert-cache bookkeeping (closed by measurement)
 
-**Confidence: medium-high; impact must be remeasured.**
+**Status: measurement gate completed on 2026-08-30. No runtime candidate was
+implemented or retained.**
 
-The current cache hot path uses dictionaries, multiple `Set` values, temporary
-arrays, `map`/`compactMap`, and repeated scans of each layer's slot range.
-Historical non-overlapping telemetry attributed about 2.68 ms/token to cache
-lookup, but current telemetry combines some planning and fetch work and is not
-sufficient for promotion.
+The cache hot path uses dictionaries, multiple `Set` values, temporary arrays,
+`map`/`compactMap`, and repeated scans of each layer's slot range. Historical
+telemetry attributed about 2.68 ms/token to “cache lookup,” but that metric
+combined serial placement planning, hit-command encoding, and physical miss
+reads. It overstated the portion a fixed-table rewrite could affect.
 
-First split cache planning, hit-command encoding, and physical read time in the
-benchmark. Proceed only if current planning has a theoretical end-to-end
-ceiling above the 5% gate. The candidate is a fixed 40 x 256 expert-to-slot
-table, direct slot metadata arrays, and fixed eight-element request/hit/miss
-storage. Replay a recorded route trace and require identical slots, hits,
-misses, evictions, bytes, and SLRU promotion decisions before generation A/B.
-Preserve the `layerCount == 1` small-cache fallback, arbitrary test capacities,
-active-slot locking, clear/reset behavior, prefetch metrics, and identical
-prefill-inclusive initial state.
+A measurement-only build split those phases at their real boundaries. The
+frozen control executable SHA-256 was
+`26a3969e2c4e7ce83cf2ff583664fd5ce1281b68b1e0df2a71a2932f6c51227e`.
+It used the promoted S1 runtime, the standard 22-token prompt, 8K context,
+2,183 slots, raw Safetensors, one warmup, and three retained-runner 128-token
+measurements:
+
+| Run | Decode | Mean token step | Cache planning | Hit encoding | Miss fetch |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 33.46 tok/s | 29.89 ms | 0.361 ms | 0.203 ms | 5.127 ms |
+| 2 | 33.44 tok/s | 29.90 ms | 0.368 ms | 0.207 ms | 5.094 ms |
+| 3 | 33.65 tok/s | 29.72 ms | 0.364 ms | 0.202 ms | 4.956 ms |
+
+The means were 33.52 tok/s, 29.84 ms/token, 0.364 ms planning,
+0.204 ms hit-command encoding, and 5.059 ms physical miss fetch. Removing every
+planning instruction would reduce the token step by only about 1.2%. Even the
+impossible upper bound of removing both planning and all hit encoding is below
+2%. A fixed expert-to-slot table cannot reach the predeclared 5% end-to-end
+gate on this workload.
+
+The measurement instrumentation was removed after the gate. No cache mapping,
+replacement, hit/miss behavior, runtime API, test, or production benchmark
+code changed. No candidate A/B or 512-token promotion run was justified.
+Reopen fixed-table bookkeeping only if a future non-overlapping profile shows
+at least 1.5 ms/token of planning cost under the then-current runtime.
 
 ### S3 — establish the expert-miss ceiling offline
 
@@ -372,10 +393,10 @@ into a misleading single score.
 - **Memory:** M1 explicit budgets, M2 lazy FP16 KV if its blocker is resolved,
   M3 arena cleanup, then experimental M4 INT8 KV.
 
-The next one-at-a-time decode task is S2's measurement split. Product planning
-may intentionally prioritize M1 or S4 over high-risk S5, but that is a
-product-value decision rather than a decode-speed ranking. S1 does not
-authorize an S2 runtime edit.
+The next one-at-a-time decode task is S3's offline miss-ceiling analysis.
+Product planning may intentionally prioritize M1 or S4 over high-risk S5, but
+that is a product-value decision rather than a decode-speed ranking. S2 does
+not authorize a cache-policy or prefetch edit.
 
 ## Directions closed by evidence
 
@@ -389,6 +410,8 @@ Do not repeat:
 - `F_NOCACHE` or a two-worker miss cap;
 - command-buffer-count reduction without critical-path evidence;
 - removal of the per-layer router wait, which is a real data dependency;
+- fixed-table cache bookkeeping under the current profile, whose complete
+  planning-time ceiling is only about 1.2%;
 - small scratch/collection cleanup as a headline optimization.
 
 Defer speculative decoding, lower-precision routed experts, expert-count
