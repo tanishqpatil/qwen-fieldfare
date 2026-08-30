@@ -118,6 +118,28 @@ struct QwenGenerationSupportTests {
     }
 
     @Test
+    func exactGreedySelectionPreservesArgmaxEdgeCases() {
+        let cases: [(logits: [Float], expected: Int32)] = [
+            ([-5, -1, -3], 1),
+            ([2, 7, 7, 4], 1),
+            ([-Float.infinity, -2, -3], 1),
+            ([Float.infinity, 9, Float.infinity], 0),
+            ([Float.nan, 2, 1], 0),
+            ([1, Float.nan, 2], 2),
+            ([Float.nan, Float.nan], 0),
+        ]
+
+        for testCase in cases {
+            let selected = QwenLogitSelector.select(
+                logits: testCase.logits,
+                seenTokenIDs: [0, 1, 2],
+                configuration: .greedy(maxNewTokens: 1)
+            )
+            #expect(selected == testCase.expected)
+        }
+    }
+
+    @Test
     func seededSamplingIsDeterministicAndBoundedByTopK() {
         let logits: [Float] = [0, 1, 2, 3, 4]
         let configuration = QwenGenerationConfiguration(

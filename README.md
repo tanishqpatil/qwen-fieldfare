@@ -10,8 +10,9 @@ with active-expert streaming designed to keep Metal allocation near 5 GiB.
 
 > [!IMPORTANT]
 > This is an experimental, model-specific research runtime. Correctness is
-> validated against MLX, but measured decode performance does not yet match the
-> full-resident MLX reference.
+> historically validated against MLX, but the automated parity harness must be
+> restored. Measured decode performance does not yet match the full-resident
+> MLX reference.
 
 ## What this project does
 
@@ -39,7 +40,7 @@ MLX, llama.cpp, Ollama, or another inference engine.
 | Sampling | Temperature, Top-K, Top-P, presence and repetition penalties |
 | Context | 4K, 8K, 16K, 32K, or 64K in Active Expert Streaming mode |
 | Memory | Approximately 5 GiB Metal allocation in validated active-streaming configurations |
-| Correctness | 132/132 teacher-forced next-token predictions matched MLX |
+| Correctness | Historical validation matched 132/132 teacher-forced next-token predictions; the automated harness must be restored |
 | Validated hardware | Apple M5, 32 GiB unified memory |
 | Current limitation | Text-only; the checkpoint's vision encoder is not implemented |
 
@@ -269,8 +270,11 @@ Machine: Apple M5 (`Mac17,2`), 32 GiB unified memory, macOS 26.6.2, Swift
 
 | Measurement | Result |
 | --- | ---: |
-| MLX teacher-forced parity | 132/132 next-token predictions |
-| Active streaming, 8K, 2,183 slots, 512 tokens | 23.28 tok/s |
+| Historical MLX teacher-forced parity | 132/132 next-token predictions |
+| Historical active streaming, 8K, 2,183 slots, 512 tokens | 23.28 tok/s |
+| Corrected inter-token control, same 512-token workload | 19.68 tok/s; 50.80 ms/token |
+| Exact-greedy fast path, five paired 128-token runs | 29.02 to 31.97 tok/s; +10.16% paired mean |
+| Exact-greedy fast path, three paired 512-token runs | +6.22%, +8.85%, and +5.01% |
 | Metal allocation in that 512-token run | 4.928 GiB |
 | Cache hit rate | 74.63% |
 | Cache misses | 43,267 |
@@ -287,6 +291,8 @@ See the [active-streaming report](docs/QWEN_ACTIVE_STREAMING.md)
 for the measured evidence, rejected experiments, and limitations.
 See the [optimization analysis](docs/OPTIMIZATION_PLAN.md) for the ranked next
 work, measurement protocol, promotion gates, and experiments not to repeat.
+See the [product roadmap](docs/PRODUCT_ROADMAP.md) for reliability,
+distribution, and feature priorities.
 
 ## How active-expert streaming works
 
@@ -319,18 +325,30 @@ Scripts/test.sh --filter QwenGenerationSupportTests
 Scripts/test.sh --filter 'Q4BoundedExpertCacheTests|QwenQ4ExpertStoreTests'
 ```
 
-Run the real-model MLX teacher-forced parity check only after installing the
-model at the configured path and closing every other model process:
+Generate a standalone MLX greedy reference only after installing the model and
+closing every other model process:
 
 ```bash
-Scripts/test.sh --filter hashMapPromptTeacherForcedMLXParity
+python3 Scripts/qwen_mlx_greedy_reference.py \
+  --model /absolute/path/to/Qwen3.6-35B-A3B-4bit \
+  --prompt "Explain HashMap in Java with an example." \
+  --max-tokens 65
 ```
+
+The historical engineering run matched 132/132 teacher-forced positions, but
+the automated parity test that produced that result is not present in the
+current checkout. Restoring a callable real-model parity harness is a release
+prerequisite; the reference command above is not a substitute for that gate.
 
 Recent validation:
 
-- Qwen generation support: 9/9 passed
+- Qwen generation support: 10/10 passed
 - Expert cache/store: 6/6 passed
-- MLX teacher-forced parity: 132/132 passed
+- Complete package suite: 43/43 passed
+- Historical MLX teacher-forced parity record: 132/132; current automated
+  harness not checked in
+- Exact-greedy fast path: all 128 generated token IDs matched the frozen
+  control; app-default sampling is unchanged
 - Complete release build: passed
 - `git diff --check`: passed
 

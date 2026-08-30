@@ -1,9 +1,424 @@
 # Optimization analysis and priority order
 
-Status: Priority step 1 completed. This document records analysis and benchmark
-experiments; no production runtime path or default has been changed.
+Status: roadmap reset on 2026-08-28 after reviewing the current source,
+corrected benchmarks, memory ownership, and rejected experiments. S1a/S1b was
+implemented and promoted locally on 2026-08-30; it has not yet been committed
+or pushed. The pushed control remains `5cbc801`.
 
-## Recommendation
+## Decision
+
+The exact-greedy portion of **S1: token-selection hot paths** passed its
+promotion gate. The next eligible decode task is S2's measurement-only cache
+bookkeeping split; no S2 runtime edit is authorized by the S1 result.
+
+Before S1b, the benchmark's non-nil `.greedy(...)` configuration routed the
+248,320-logit result through the general `QwenLogitSelector` in both runners.
+The general selector scanned the complete vocabulary, performed a hash-set
+lookup for every logit, and maintained temporary candidate storage; sampled
+generation also created weight storage. For the benchmark's exact greedy
+configuration, the penalty checks and candidate allocation were unnecessary.
+
+This was a stronger candidate than the previous kernel work because the
+semantic fast-path condition is provable. The retained implementation is
+deliberately narrower: temperature zero, Top-K one, presence penalty zero, and
+repetition penalty one. Top-P and seed cannot change that selection. The app's
+default temperature-based sampler does not enter this path and has no new
+performance claim.
+
+## Reality check
+
+| Evidence | Verified result | Roadmap consequence |
+| --- | ---: | --- |
+| Corrected retained-runner 128-token baseline | 20.62 tok/s mean in the original corrected run | Keep as the comparison record for commit `2f49ba2` |
+| Later same-session short control | 31.00 tok/s mean | Host/GPU/page-cache state can move short-run results substantially |
+| Promoted S1 exact-greedy A/B | 29.02 to 31.97 tok/s; +10.16% paired mean, 95% CI +8.05% to +12.26% | Material short-run gain with identical token IDs and cache demand |
+| Promoted S1 512-token confirmation | Three paired gains: +6.22%, +8.85%, +5.01% | Gain remains positive under sustained expert demand |
+| Corrected 512-token baseline | 19.68 tok/s; 50.80 ms/token | Sustained decode and late-run drift are the primary speed metric |
+| Recent exact GPU work | 20.25–21.02 ms/token | About 47–49 tok/s is the GPU-only ceiling before CPU work and expert I/O |
+| Full-resident MLX reference | 49.86 tok/s; 19.631 GB peak | A reference, not an accepted 5 GiB target |
+| Active 8K allocation | 4.928 GiB | The current speed-oriented profile has little headroom under 5 GiB |
+| Expert cache share at 8K | 3.597 GiB, about 73% of Metal allocation | Large steady memory reductions require fewer cache slots and more I/O |
+| Late-run expert demand | 53.4 to 101.8 misses/token | Miss demand and bytes rise materially and contribute to variance; their share of aggregate slowdown is not isolated |
+| Projection Candidates A–F | No repeatable end-to-end gain | Stop projection geometry and instruction-form search |
+| MoE subset row packing | 1.13% slower | Idle SIMD groups were not the useful-work bottleneck |
+| Packed one-read experts | 24.38 vs 25.04 tok/s raw | Fewer reads without fewer bytes is not a speed strategy |
+
+These are workload-specific observations, not hardware ceilings. The evidence
+does **not** support promising 50 tok/s while retaining the approximately 5 GiB
+active-streaming envelope. The near-term goal is a repeatable improvement over
+the corrected control, with separate reporting for greedy, app-default sampled,
+short, and 512-token sustained workloads.
+
+## How priorities are scored
+
+Every workstream is ranked on four independent axes:
+
+- **evidence**: a current measured cost or a provable unnecessary operation;
+- **impact ceiling**: enough affected wall time to clear run variance;
+- **feasibility**: a bounded reversible change with known correctness checks;
+- **product relevance**: whether it improves greedy diagnostics, default chat,
+  sustained decode, memory, or time to first token.
+
+A speed candidate is a promotion candidate only if the common alternating A/B
+protocol below shows at least a 5% end-to-end point improvement and a positive
+95% confidence interval for the paired change. A memory milestone must save at
+least 0.25 GiB at the claimed operating point; smaller exact savings are
+cleanup, not headline optimization. A conversation-latency feature must reduce
+the measured repeated-turn prefill by at least 20%. These are predeclared
+decision thresholds, not predicted results.
+
+## Common promotion protocol
+
+Every runtime experiment uses this gate unless a stricter one is documented:
+
+1. freeze control and candidate release executables and record their commit and
+   executable SHA-256;
+2. use the same model, prompt, tokens, sampler, context, cache capacity,
+   retained-runner warmup, initial cache state, power mode, and process
+   exclusions;
+3. run at least five alternating A/B pairs, reversing initial order across
+   pairs, and report every run;
+4. use paired percent change as the primary statistic; require a point estimate
+   of at least 5% and a positive 95% confidence interval;
+5. keep GPU/subcomponent profiling out of headline runs and capture matched
+   diagnostic runs separately;
+6. confirm the result with at least two alternating 512-token A/B pairs,
+   including per-bucket latency, misses, bytes, Metal allocation, physical
+   footprint, memory pressure, and before/after system-wide swap;
+7. run the candidate-specific correctness tests, cancellation/unload checks,
+   release build, complete package tests, and `git diff --check`.
+
+## Speed and latency roadmap
+
+### S1 — token-selection hot paths
+
+**Status: S1a greedy measurement and S1b exact-greedy fast path promoted
+locally on 2026-08-30. S1c production-sampler work is not started.**
+
+Stage S1a added measurement-only reporting for the existing `cpuArgmaxMs`.
+Exact greedy was measured over 128- and 512-token runs. App-default sampling
+was not modified or benchmarked, so S1c remains a separate future experiment.
+Any S1c work must use an explicit fixed validation seed and report that the
+real UI default remains unseeded. Greedy and sampled rates must never be
+combined in one headline.
+
+Stage S1b restored one shared exact greedy fast path for both runners when:
+
+```text
+temperature == 0
+topK == 1
+presencePenalty == 0
+repetitionPenalty == 1
+```
+
+It uses Accelerate's maximum-index operation and preserves the same token IDs.
+The current paired measurement reduced mean token selection from 3.171 ms to
+0.028 ms; older scalar measurements are not used as the promoted result.
+
+Stage S1c targets the production sampler only if S1a establishes a material
+cost. Candidate design should remove 248,320 hash-set lookups, reuse fixed
+Top-K/weight scratch, and apply penalties through an indexed seen-token
+representation while preserving exact seeded output. Start with a CPU design;
+do not mix it with a GPU Top-K rewrite.
+
+Promotion gates:
+
+1. require exact greedy IDs to match the frozen control; separately restore the
+   teacher-forced harness and require all 132 recorded positions to match MLX
+   before release qualification;
+2. test equal maxima, all-negative logits, infinities, and defined NaN behavior;
+   verify that the Accelerate path preserves the current lowest-token-ID tie
+   rule;
+3. a fixed-seed configuration using app-default sampling parameters produces
+   identical output before and after sampler changes;
+4. selector microbenchmarks and alternating full-generation A/B both improve;
+5. the greedy result is labelled as greedy-only unless the sampled path also
+   passes its independent gate;
+6. memory, cancellation, unload, and all package tests remain unchanged.
+
+#### S1a/S1b result — promoted locally
+
+The measurement-only harness now reports CPU token-selection latency without
+enabling GPU profiling. The frozen instrumented control executable SHA-256 was
+`5b34d0bb1b773dce55a2a690b98cde2e6633de518c6ac2af59c0e3cf9318f432`.
+The candidate executable SHA-256 was
+`28cf14350f0300c5eaf08a63754d3118eb4d21795e7d0167e77c6c905adda257`.
+
+The runtime change is one shared exact-greedy selector path. It uses
+Accelerate's maximum-index operation for the guarded configuration and retains
+the general selector for penalties, Top-K greater than one, and sampling.
+
+Five alternating 128-token pairs used the same 22-token prompt, 8K context,
+2,183 slots, raw Safetensors, one retained-runner warmup, and one measured run:
+
+| Pair | Order | Control | Candidate | Paired change |
+| ---: | --- | ---: | ---: | ---: |
+| 1 | control, candidate | 29.01 tok/s | 31.85 tok/s | +9.79% |
+| 2 | candidate, control | 29.00 tok/s | 31.94 tok/s | +10.14% |
+| 3 | control, candidate | 29.09 tok/s | 31.95 tok/s | +9.83% |
+| 4 | candidate, control | 29.01 tok/s | 32.74 tok/s | +12.86% |
+| 5 | control, candidate | 29.00 tok/s | 31.37 tok/s | +8.17% |
+
+Control mean was 29.02 tok/s and candidate mean was 31.97 tok/s. The paired
+mean improvement was 10.16%, with a 95% confidence interval of +8.05% to
++12.26%. Mean CPU token selection fell from 3.171 ms to 0.028 ms. All five
+pairs had identical cache hits, misses, fetched bytes, and 4.928 GiB Metal
+allocation.
+
+Three alternating 512-token pairs confirmed sustained gains:
+
+| Pair | Order | Control | Candidate | Paired change |
+| ---: | --- | ---: | ---: | ---: |
+| 1 | control, candidate | 24.75 tok/s | 26.29 tok/s | +6.22% |
+| 2 | candidate, control | 24.19 tok/s | 26.33 tok/s | +8.85% |
+| 3 | control, candidate | 24.97 tok/s | 26.22 tok/s | +5.01% |
+
+Every 512-token run recorded 40,551 decode misses, 66.826 GiB fetched, and
+4.928 GiB Metal allocation. A final candidate memory run held system swap at
+0.25 MiB before and after, ended at 4.801 GiB physical footprint, and kept
+system memory pressure normal. A separate 128-token output comparison matched
+all 128 token IDs and the finish reason against the frozen control. Focused
+tests cover equal maxima, all-negative logits, infinities, NaNs, penalties,
+and seeded sampling. The complete package suite passed 43/43 tests in 10
+suites, and the final release build passed.
+
+The automated 132-position MLX teacher-forced harness is absent from the
+current checkout, so this result is not presented as a new MLX parity run.
+Restoring that release gate remains P7 in the product roadmap. The retained
+performance claim is exact-greedy only; app-default sampled generation is
+unchanged.
+
+### S2 — fixed-table expert-cache bookkeeping
+
+**Confidence: medium-high; impact must be remeasured.**
+
+The current cache hot path uses dictionaries, multiple `Set` values, temporary
+arrays, `map`/`compactMap`, and repeated scans of each layer's slot range.
+Historical non-overlapping telemetry attributed about 2.68 ms/token to cache
+lookup, but current telemetry combines some planning and fetch work and is not
+sufficient for promotion.
+
+First split cache planning, hit-command encoding, and physical read time in the
+benchmark. Proceed only if current planning has a theoretical end-to-end
+ceiling above the 5% gate. The candidate is a fixed 40 x 256 expert-to-slot
+table, direct slot metadata arrays, and fixed eight-element request/hit/miss
+storage. Replay a recorded route trace and require identical slots, hits,
+misses, evictions, bytes, and SLRU promotion decisions before generation A/B.
+Preserve the `layerCount == 1` small-cache fallback, arbitrary test capacities,
+active-slot locking, clear/reset behavior, prefetch metrics, and identical
+prefill-inclusive initial state.
+
+### S3 — establish the expert-miss ceiling offline
+
+**Confidence: high that the offline bound can be computed; achievable online
+impact is unknown until the bound exists.**
+
+The existing 1.16% result optimized only per-layer capacity allocation. It did
+not compute the full optimal replacement bound. Before changing eviction,
+prefetch, I/O flags, or storage again:
+
+1. record several 512-token traces covering coding, explanation, summarization,
+   and creative prompts;
+2. record prompt/prefill accesses, initial cache contents, cold/warm state,
+   sampler parameters, and a fixed validation seed, then replay the exact
+   grouped top-8 stream with each layer's real capacity and active-group lock
+   constraint;
+3. compute Belady/offline-optimal misses and compare them with SLRU by token
+   bucket;
+4. evaluate same-layer temporal route prediction, reporting precision, useful
+   reads, wasted reads, extra bytes, and predicted blocking time;
+5. translate saved misses into wall-time only from non-overlapped measured read
+   intervals, not raw payload count.
+
+If the oracle cannot support a 5% end-to-end improvement across prompts, close
+the cache-policy track. If it can, implement exactly one policy or prefetch
+candidate justified by the trace. `perLayerRecentExperts` is currently written
+but unused, and `speculativePrefetch` has no production caller; neither is
+evidence that prediction already works.
+
+### S4 — incremental multi-turn prefill
+
+**Confidence: medium for user-visible latency; this does not improve
+decode tok/s.**
+
+Every send currently calls `resetState()` and forwards the complete formatted
+conversation again. A historical debug-harness second turn replayed 94 prompt
+tokens and took 6.86 seconds before decode; capture a current release baseline
+before applying the 20% promotion gate. Design an append-only state contract
+that retains the 30 DeltaNet recurrent states, 10 full-attention KV prefixes,
+exact token prefix, and any pending final token, then processes only the new
+template/user suffix.
+
+Before implementation, specify invalidation and rollback for New Chat,
+thinking/template changes, mode/context/model changes, cancellation, output
+limit, context full, and errors.
+[MLX-LM's prompt-cache implementation](https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/models/cache.py)
+is a useful reference, but QwenFieldfare must validate its hybrid recurrent/KV
+state independently. KV rollback can change a logical length, but DeltaNet and
+Conv state mutate destructively; a full recurrent snapshot is roughly 60 MiB
+before other state and may consume the remaining 64K headroom. Choose and
+budget snapshot, replay, or another rollback method before any implementation.
+
+### S5 — one true Q4 weight-access prototype
+
+**Confidence: low-to-medium; potential impact is higher than the rejected
+micro-tweaks, but engineering risk is high.**
+
+Do not revisit row count, launch size, byte-versus-native loads, or the existing
+contiguous arena experiment. Any new GPU candidate must materially change data
+reuse or weight access, such as a block-interleaved Q4 mapping or an MLX-class
+tiled QMV design, while retaining the same Q4/BF16 payload.
+
+Prototype one representative high-cost matrix first. Require a profiler-backed
+kernel win large enough to predict at least 5% end-to-end improvement before
+changing the model layout or all projections. Reject the research branch if
+one representative kernel cannot beat the frozen control. Before prototyping,
+specify load-time versus durable repack, routed-miss repack cost, raw-checkpoint
+fallback, temporary and steady Metal allocation, and attribution if external
+kernel ideas are adapted. A second resident LM-head representation, for
+example, does not fit the current 5 GiB profile without reclaimed memory.
+
+## Memory roadmap
+
+There is no unexplained steady Metal allocation in the measured 8K load: the
+source model predicts 4.927 GiB at 8K/2,183 slots, matching the measured
+4.928 GiB. This does not rule out lifecycle, cancellation, repeated-growth, or
+mode-switch leaks. Meaningful steady 8K memory reduction still requires a
+deliberate cache/speed tradeoff.
+
+### M1 — explicit Active Streaming memory profiles
+
+**Confidence: high; exact parity and context length are preserved. Throughput
+is expected to decrease with fewer slots, but must be measured.**
+
+At 8K, non-cache Metal allocation is approximately 1.3295 GiB. The existing
+runner already accepts a cache capacity, so expose honest speed/memory presets
+instead of presenting one fixed budget as universally optimal. Preserve the
+current approximately 0.07 GiB measurement margin rather than filling every
+theoretical byte:
+
+| 8K target | Approximate slots | Saving versus current | Required claim |
+| ---: | ---: | ---: | --- |
+| 5.0 GiB | 2,183 | control | Speed-oriented default |
+| 4.0 GiB | about 1,576 | about 1.0 GiB | Lower memory, measured rate reported |
+| 3.0 GiB | about 969 | about 2.0 GiB | Minimum-memory active profile, measured tradeoff reported |
+
+These counts are 8K examples, not constants for other contexts. Derive each
+context/profile capacity as:
+
+```text
+floor((target bytes - non-cache bytes(context) - safety margin) / 1,769,472)
+```
+
+Require at least 320 slots because 40 layers each need eight simultaneously
+locked top-8 slots. Validate every preset/context at 128 and 512 tokens and
+publish cache misses, fetched bytes, tok/s, and memory. Fewer slots cannot
+improve the cache-miss ceiling, but overlap and host variance mean measured
+throughput is not guaranteed to decrease monotonically.
+
+### M2 — lazy exact FP16 KV growth
+
+**Confidence: medium until a no-double-residency design is proven; full-context
+peak is unchanged.**
+
+The runner allocates all selected-context KV storage at load. Begin with a
+small power-of-two FP16 capacity and grow while preserving the exact K/V prefix.
+Starting at 1K would initially avoid approximately 140 MiB for an 8K selection,
+620 MiB for 32K, and 1.23 GiB for 64K. The saving disappears when the
+conversation fills the context. The 8K saving is cleanup under the 0.25 GiB
+memory milestone; the feature clears that gate from 16K, where the initial
+saving is approximately 300 MiB.
+
+This work is blocked until a no-double-residency design is demonstrated. One
+candidate is to grow between token steps and replace one K or V buffer at a
+time after all commands using the old buffer complete, proving immediate
+release before the next allocation. If that cannot stay below the target, use
+paged/chunked KV, shrink the expert cache before growth, or reserve explicit
+headroom. The logical context limit remains `maxSeqLen`, while reset, physical
+strides, bounds, and `qwen_update_kv_cache_f16` must use the current allocated
+KV capacity. Measure peak Metal allocation during every growth transition,
+plus latency, cancellation, and allocation-failure behavior.
+
+### M3 — compact per-layer-kind dense arenas
+
+**Confidence: high; impact is modest.**
+
+Separate linear-attention and full-attention layouts can reclaim exactly
+79.453 MiB of mutually exclusive unused ranges. This is only 1.6% of current
+Metal allocation, so classify it as cleanup rather than a priority speed or
+memory milestone. Retaining the saving is preferable to claiming that about 47
+additional expert slots will materially change throughput.
+
+### M4 — experimental INT8 KV at long context only
+
+**Confidence: low-to-medium; exact parity is not preserved.**
+
+At 64K, the INT8 payload has a 640 MiB gross saving versus FP16; estimated scale
+metadata reduces that to roughly 620–635 MiB before additional scratch. At 8K,
+the gross saving is 80 MiB and the estimated post-metadata saving is about
+77.5–79.4 MiB. This requires per-token/head quantization, attention
+dequantization, long-context quality evaluation, and short-context performance
+checks. Keep FP16 as the default and do not begin this experiment before M1/M2
+and a quality suite.
+
+## Independent lane order
+
+Decode speed and memory are different product outcomes and are not combined
+into a misleading single score.
+
+- **Decode speed:** S1 token selection, S2 cache bookkeeping, S3 offline miss
+  ceiling, then S5 one Q4 prototype.
+- **Conversation latency:** S4 incremental prefill/state reuse.
+- **Memory:** M1 explicit budgets, M2 lazy FP16 KV if its blocker is resolved,
+  M3 arena cleanup, then experimental M4 INT8 KV.
+
+The next one-at-a-time decode task is S2's measurement split. Product planning
+may intentionally prioritize M1 or S4 over high-risk S5, but that is a
+product-value decision rather than a decode-speed ranking. S1 does not
+authorize an S2 runtime edit.
+
+## Directions closed by evidence
+
+Do not repeat:
+
+- projection Candidates A–F, input threadgroup copies, SIMD16, or launch-size
+  search;
+- MoE inactive-SIMD row packing;
+- packed one-read/three-read experts as a speed strategy;
+- frequency-only eviction or prompt-specific layer repartitioning;
+- `F_NOCACHE` or a two-worker miss cap;
+- command-buffer-count reduction without critical-path evidence;
+- removal of the per-layer router wait, which is a real data dependency;
+- small scratch/collection cleanup as a headline optimization.
+
+Defer speculative decoding, lower-precision routed experts, expert-count
+reduction, and generic model support because they change model behavior or
+materially expand the architecture.
+
+## Product work
+
+Performance is only one production requirement. The separately ranked
+[product roadmap](PRODUCT_ROADMAP.md) covers strict model validation,
+recoverable lifecycle, context budgeting, release qualification, signed app
+distribution, diagnostics, and later convenience features.
+
+## Comparative evidence
+
+The current upstream
+[TurboFieldfare optimization record](https://github.com/drumih/turbo-fieldfare/blob/main/docs/OPTIMIZATION_JOURNEY.md)
+supports the decision method used here: microbenchmark wins are not promoted
+without full-runtime results, and its Gemma-specific prediction, I/O, fusion,
+and packed-KV failures are warnings rather than evidence that Qwen must behave
+the same way. MLX-LM currently implements prompt-cache reuse and quantized KV
+cache types; those implementations establish feasibility patterns, not a
+QwenFieldfare performance or quality result.
+
+## Previous roadmap (superseded)
+
+The sections below preserve the plan that led to the completed/rejected
+experiments. They are historical evidence, not the current execution order.
+
+### Previous recommendation
 
 Optimize the resident GPU projection path first, beginning with the Q4 linear-
 attention input projection. Do not begin with another packed-expert format,
@@ -16,7 +431,7 @@ exact GPU profile already measured 20.96–21.30 ms/token before cache-miss I/O,
 CPU scheduling, and sampling. Eliminating expert I/O alone therefore cannot
 reach the target.
 
-## Current evidence
+### Previous current evidence
 
 | Signal | Measurement | Consequence |
 | --- | ---: | --- |
@@ -35,7 +450,7 @@ reach the target.
 
 These results are workload-specific measurements, not hardware ceilings.
 
-## Required measurement gate
+### Previous measurement gate
 
 Before changing a kernel, capture a reproducible release baseline with the same
 model, prompt tokens, generated-token count, context, cache slots, sampler,
@@ -54,7 +469,7 @@ Every candidate must report:
 This gate is necessary because observed GPU time varied from about 21 ms to
 30 ms/token and file-page-cache state also changed results.
 
-## Priority 1: resident Q4 projection kernels
+### Previous Priority 1: resident Q4 projection kernels
 
 Start with the fused linear-attention input projection, then apply successful
 work to the generic Q4 out-projection/full-attention/LM-head path.
@@ -87,7 +502,7 @@ Do not repeat the removed threadgroup copy of the 2,048-element input vector or
 the SIMD16 variant. The former improved its isolated projection by only
 1.57–1.88% with no full-run improvement; the latter was 2.10% slower.
 
-## Priority 2: MoE GPU compute and per-layer synchronization
+### Previous Priority 2: MoE GPU compute and per-layer synchronization
 
 After the dense projection work, target the work paid on every token regardless
 of cache misses:
@@ -107,7 +522,7 @@ correct.
 The objective is not a lower command-buffer count by itself. The objective is a
 lower end-to-end GPU critical path with identical token output.
 
-## Priority 3: establish the achievable expert-miss floor
+### Previous Priority 3: establish the achievable expert-miss floor
 
 Only after the GPU path improves should expert I/O become the main optimization
 track. Start offline using recorded traces rather than changing production
@@ -138,7 +553,7 @@ Avoid these previously rejected directions:
 - limiting miss concurrency to two workers, which reduced a matching run from
   25.72 to 23.08 tok/s.
 
-## Priority 4: incremental conversation prefill
+### Previous Priority 4: incremental conversation prefill
 
 This does not improve decode tok/s, but it is the largest user-visible latency
 target after decode. The app currently rebuilds and prefills the complete
@@ -152,7 +567,7 @@ model/mode/context changes, edited history, cancellation, and template changes.
 No implementation should begin until exact token-prefix identity and state
 rollback behavior are specified.
 
-## Priority 5: CPU cache bookkeeping and encoding
+### Previous Priority 5: CPU cache bookkeeping and encoding
 
 Older non-overlapping measurements attributed about 2.68 ms/token to cache
 index lookup and 0.67 ms/token to command encoding. These are secondary until
@@ -160,7 +575,7 @@ the larger GPU and miss-fetch costs fall. Later optimization can replace
 allocation-heavy per-layer arrays/sets and repeated temporary construction with
 fixed-size storage, but only after a current release profile confirms the cost.
 
-## Memory constraint
+### Previous memory constraint
 
 The optimization budget remains a maximum of approximately 5 GiB Metal
 allocation in Active Expert Streaming mode, including 64K context support. The
@@ -171,7 +586,7 @@ unless it first reclaims equivalent memory elsewhere.
 Do not trade the bounded-memory design for MLX-like full residency. Fast
 Resident Q4 already exists as the high-memory diagnostic control.
 
-## Promotion gates
+### Previous promotion gates
 
 A change is eligible for the production path only when all of these hold:
 
@@ -187,12 +602,14 @@ A change is eligible for the production path only when all of these hold:
 6. The experiment is documented whether retained or rejected, preventing the
    same failed direction from being repeated.
 
-## Planned order
+### Previous planned order
 
 1. Capture a stable baseline and corrected GPU split.
 2. Optimize the fixed-geometry linear input projection.
 3. Generalize any proven projection improvement to out/full/LM-head GEMVs.
-4. Optimize shared and routed MoE GPU kernels.
+   Skipped: execution step 2 promoted no projection change.
+4. Optimize shared and routed MoE GPU kernels. Candidate A was rejected and
+   removed; no production runtime change is active.
 5. Measure the optimal cache-replacement bound and route-prediction ceiling.
 6. Implement only the I/O strategy justified by those offline bounds.
 7. Design incremental conversation prefill.
@@ -382,3 +799,333 @@ The result is a corrected, repeatable baseline with a 2.99% short-run spread,
 long-run drift evidence, deterministic-output checking, and a current GPU/I/O
 split. Priority step 1 is complete. Do not begin the fixed-geometry projection
 edit until it is explicitly selected as the next one-at-a-time task.
+
+### Priority step 2 — fixed-geometry linear input projection (completed; no promotion)
+
+Objective: reduce the fused Q4 linear-attention input-projection GPU critical
+path while preserving exact generated tokens and the approximately 5 GiB Metal
+allocation envelope.
+
+#### Pre-edit analysis
+
+The production Active Expert Streaming path already uses
+`qwen_fused_linear_attn_in_proj_q4_simd_f32`: one 32-lane SIMD group computes
+one output row, and eight SIMD groups produce eight rows per threadgroup. Each
+lane reloads the same activation elements independently for every output row.
+The earlier rejected SIMD16 experiment is therefore not a useful next test.
+
+The current profile attributes 4.683 ms/token to all 30 linear-layer fused
+input projections. At the 20.62 tok/s baseline, even a 25% isolated reduction
+would save only about 1.17 ms/token, corresponding to an estimated 2–3%
+end-to-end ceiling before interactions. A retained candidate must exceed normal
+run variance in repeated full generation; an isolated profiler win alone is
+not sufficient.
+
+#### Candidate A: two rows per SIMD group
+
+- Compute two adjacent output rows in each SIMD group.
+- Load each eight-element activation slice once per lane and apply it to two
+  independent packed-Q4 rows.
+- Preserve the current per-row affine accumulation order and separate SIMD
+  reductions so numerical output remains unchanged.
+- Produce 16 rows per 256-thread threadgroup instead of eight, halving the
+  threadgroup count from 1,544 to 772 for the fixed 12,352-row projection.
+- Add no persistent buffers and do not change expert-cache capacity, model
+  format, runtime defaults, or any non-linear-attention projection.
+
+Promotion requires release build/tests, identical greedy token IDs, a paired
+subcomponent improvement, three retained-runner headline measurements, no
+Metal-allocation increase, and a coherent long run if the headline gain clears
+the variance envelope. If it fails those gates, Candidate A will be removed and
+documented as rejected before another kernel design is attempted.
+
+#### Candidate A result: rejected
+
+The paired same-session subcomponent measurement regressed from 5.238 to 5.391
+ms/token for the fused input projection, a 2.9% slowdown. Release compilation
+and all 42 tests passed, but the candidate failed the isolated performance gate
+and was not eligible for full-generation testing. The probable cause is added
+register/weight/metadata pressure; the activation vector was already served
+effectively enough by GPU caches that explicit two-row reuse did not compensate.
+The two-row kernel and dispatch are removed before Candidate B.
+
+#### Candidate B: native aligned packed and metadata loads
+
+The fixed 2,048-column geometry gives every packed-weight row a 1,024-byte
+stride and every scale/bias row a 64-byte stride. All base offsets and accesses
+are therefore aligned for native 32-bit packed-weight loads and 16-bit BF16-bit
+pattern loads. The current helper instead assembles a packed `uint` from four
+`uchar` loads and a BF16 value from two `uchar` loads.
+
+Candidate B will retain one row per SIMD group and the current accumulation
+order, but reinterpret the fixed-geometry row pointers as `uint` and `ushort`.
+It removes byte assembly and repeated shifts without changing persistent memory
+or the quantization calculation. The same promotion gates apply.
+
+#### Candidate B result: rejected
+
+The controlled three-run comparison averaged 5.280 ms/token for the original
+helper (5.721, 4.805, and 5.314 ms) and 5.423 ms/token for aligned loads (5.406,
+5.337, and 5.526 ms). Candidate B was 2.7% slower and is removed. Native loads
+did not improve generated GPU work; compiler load coalescing or scheduling cost
+likely eliminated the intended instruction advantage.
+
+#### Candidate C: 128-thread projection threadgroups
+
+The one-row SIMD arithmetic remains unchanged. Candidate C reduces each
+threadgroup from eight SIMD groups/256 threads to four SIMD groups/128 threads,
+with four output rows per threadgroup. The kernel uses no threadgroup memory,
+so this tests whether smaller scheduling units improve occupancy without adding
+memory, changing arithmetic, or revisiting the rejected SIMD16 lane width.
+
+#### Candidate C result: rejected
+
+Three 128-thread runs averaged 5.322 ms/token (5.408, 5.505, and 5.054 ms),
+versus the 5.280 ms original mean. The 0.8% regression fails the isolated gate;
+Candidate C is removed.
+
+#### Candidate D: 512-thread projection threadgroups
+
+Candidate D tests the opposite scheduling direction once: 16 SIMD groups and
+16 rows per 512-thread threadgroup. It changes no arithmetic or memory and
+halves threadgroup count relative to production. If this fails, threadgroup-size
+search stops and the next candidate must change useful work rather than launch
+geometry alone.
+
+#### Candidate D result: rejected
+
+Three 512-thread runs averaged 5.171 ms/token (5.548, 4.812, and 5.152 ms), a
+2.1% projection-only improvement over the 5.280 ms original mean. This saves an
+estimated 0.11 ms/token end to end, which is far below the measured 2.99%
+headline variance. It is not impactful enough to promote; the 256-thread
+production geometry is restored and launch-size search stops.
+
+#### Candidate E: contiguous fixed projection arena and output
+
+The first 14,229,504 bytes of every dense arena already equal the exact combined
+size of QKV/Z/B/A weights, scales, and biases. Linear layers currently stage
+those bytes matrix-by-matrix (`W/S/B`, then the next matrix), forcing the fused
+kernel to bind twelve logical inputs and branch every output row to select a
+matrix, offsets, and one of four output buffers.
+
+Candidate E changes only the linear-layer interpretation of the same arena
+region to `all weights / all scales / all biases`. The four matrices become one
+fixed 12,352-row Q4 projection. The kernel binds three arena regions, one input,
+and one contiguous output; it removes row-classification branches and 24 offset
+constants. QKV, Z, B, and A consumers bind offsets within that output. Full
+attention layers retain their existing arena layout. Persistent weight bytes
+are unchanged and the four scratch outputs are replaced by one equal-size
+buffer, so Metal allocation should remain unchanged.
+
+#### Candidate E result: not promoted alone
+
+Candidate E's three projection profiles averaged 4.979 ms/token (5.068, 5.157,
+and 4.712 ms), 5.7% below the 5.280 ms original mean. It preserved 132/132 MLX
+greedy token IDs and 4.928 GiB Metal allocation. However, the fair current-state
+headline averaged 31.52 tok/s versus 31.47 tok/s for a temporary build of pushed
+baseline commit `2f49ba2`: only +0.16%. Candidate E is not impactful alone.
+
+#### Candidate F: precomputed affine input-group sums
+
+Every Q4 output row currently recomputes eight-element partial sums for the
+same normalized input, then applies the per-group affine bias. Across 12,352
+rows and 30 linear layers this repeats hundreds of millions of additions per
+token. A linear-specific RMSNorm kernel can compute the 32 sums of each
+64-element quantization group once. The projection then retains all weight-dot
+arithmetic but applies one bias FMA per group via the precomputed sums instead
+of recomputing partial sums in every row.
+
+Candidate F is tested together with Candidate E's contiguous layout because it
+provides the branch-free fixed projection needed by the specialized helper.
+The combined change is promoted only if it retains exact token IDs and produces
+a repeatable end-to-end gain over commit `2f49ba2`; Candidate E's isolated result
+is not counted as sufficient evidence.
+
+#### Candidate F result: rejected
+
+Candidate F initially appeared to reduce the projection profile substantially:
+3.678, 3.692, and 3.619 ms/token, or 3.663 ms/token mean. An immediate profile
+of the exact pushed baseline measured 3.695, 3.688, and 3.597 ms/token, or 3.660
+ms/token mean. The paired means are effectively identical; the apparent gain
+relative to older profiles was GPU-state drift, not Candidate F.
+
+A 65-token Candidate F greedy sequence matched the recorded MLX token IDs.
+Candidate F changes floating-point association, however, and its run recorded
+four different expert-cache misses. Because it failed the performance gate, the
+full 132-token promotion parity test was intentionally not used to justify it.
+
+The first ordered headline pair appeared positive:
+
+| Build | Measured decode rates | Mean | Spread |
+| --- | --- | ---: | ---: |
+| Candidate E+F | 29.88, 30.35, 30.24 tok/s | 30.16 tok/s | 1.58% |
+| Exact pushed baseline | 29.44, 29.49, 29.30 tok/s | 29.41 tok/s | 0.64% |
+
+This +2.55% ordered result conflicted with the identical isolated GPU time, so
+it was not accepted. Reversing the comparison produced the opposite result:
+
+| Build | Measured decode rates | Mean | Spread |
+| --- | --- | ---: | ---: |
+| Candidate E+F | 29.77, 31.17, 31.52 tok/s | 30.82 tok/s | 5.67% |
+| Exact pushed baseline | 31.38, 31.33, 31.02 tok/s | 31.25 tok/s | 1.14% |
+
+Candidate E+F was 1.38% slower in the closing pair. Across all six measured
+runs per build, Candidate E+F averaged 30.49 tok/s and baseline averaged 30.33
+tok/s: a 0.53% difference, below the established variance and contradicted by
+the paired projection profiles. Metal allocation was 4.928 GiB for both.
+
+Candidate F and Candidate E are therefore removed together. They add a second
+dense-arena layout, another RMSNorm kernel, altered floating-point association,
+and more runtime bindings without a reproducible end-to-end benefit.
+
+#### Priority step 2 conclusion
+
+No fixed-geometry input-projection candidate met the promotion gate:
+
+- two-row activation reuse regressed the projection by 2.9%;
+- aligned packed/metadata loads regressed it by 2.7%;
+- 128-thread scheduling regressed it by 0.8%;
+- 512-thread scheduling improved only the isolated projection by 2.1%, an
+  estimated 0.11 ms/token end-to-end;
+- contiguous layout measured only +0.16% end to end;
+- precomputed affine sums had identical paired GPU time and no repeatable
+  headline gain.
+
+The evidence indicates that the fixed input projection is bandwidth-bound and
+already receives coalesced row-major reads; removing address arithmetic or
+scalar additions does not materially shorten its critical path. A larger gain
+would require a different same-size weight representation and tiled algorithm,
+not another launch-size or instruction-level variation.
+
+Production runtime source remains exactly as pushed in commit `2f49ba2`; later
+commit `5cbc801` changes CI only. Execution step 3 is skipped below.
+
+### Execution step 3 — projection generalization (skipped)
+
+This step required a projection improvement promoted by execution step 2.
+None of Candidates A–F met the end-to-end promotion gate. Applying their launch
+or arithmetic changes to linear out, full-attention, or LM-head projections
+would therefore generalize an unproven or rejected result. The measured costs
+also limit the likely value: the best launch-only candidate saved an estimated
+0.11 ms/token on the original input-projection target, below normal headline
+variance. No runtime edit is justified, and execution step 3 is skipped.
+
+### Execution step 4 — shared and routed MoE GPU kernels (Candidate A rejected)
+
+Objective: reduce GPU work paid on every token while preserving the current
+CPU/GPU overlap for expert-cache misses, exact token output, and the bounded
+approximately 5 GiB Metal allocation.
+
+#### Current control flow
+
+For every layer, the production path:
+
+1. encodes attention, post-attention RMSNorm, router logits/top-8, and the
+   shared-expert coefficient;
+2. waits because the CPU needs the selected expert IDs to resolve cache slots;
+3. starts shared-expert and cache-hit GPU work in one command buffer while the
+   CPU fetches cache misses;
+4. runs miss-only routed work, combines hit/miss/shared outputs with the
+   residual, and continues on the same Metal queue.
+
+The router wait is a real data dependency. Removing it, moving shared work in
+front of it, or merging hit and miss work after all reads would either be
+incorrect or destroy existing I/O overlap.
+
+#### Current diagnostic measurement
+
+Commit `5cbc801` has no runtime difference from control commit `2f49ba2`. A
+diagnostic-only release run used the standard 22-token prompt, 8K context,
+2,183 cache slots, 128 generated tokens, one warmup, one measured run, raw
+safetensors, and GPU profiling. It is excluded from headline throughput.
+
+- measured decode: 30.78 tok/s, 32.49 ms mean inter-token latency;
+- exact GPU at token 128: 21.02 ms/token;
+- attention/router: 11.26 ms/token;
+- shared/cache-hit MoE: 5.55 ms/token;
+- miss/tail/LM-head: 4.21 ms/token;
+- decode cache: 7,185 misses, 82.32% hit rate, 11.841 GiB fetched;
+- Metal allocation: 4.928 GiB;
+- repeated greedy output: identical.
+
+The two MoE buckets total 9.76 ms/token, but the miss/tail bucket also includes
+the LM head and the two buckets overlap CPU expert reads differently. Their sum
+is an optimization opportunity, not an amount that can simply be subtracted
+from wall time.
+
+#### First technically credible candidate
+
+The hit-only and miss-only routed-down kernels each dispatch eight SIMD groups
+per output row. Each kernel uses only `expert_count` groups and makes the rest
+write zero. When both subsets exist, the two kernels schedule sixteen SIMD
+groups per row although exactly eight groups perform expert dot products across
+the two subsets. The measured 56.6 misses/token equals approximately 1.42 miss
+experts per layer, leaving about 6.58 hit experts per layer on this prompt.
+
+A geometry-specific subset-down kernel could pack multiple output rows into a
+threadgroup according to `expert_count`, so only useful expert/row SIMD groups
+are scheduled. It would retain the hit-before-I/O-completion and miss-after-read
+split, the exact router-order reduction, the same Q4 weight bytes, and the same
+persistent buffers.
+
+This is not yet approved for implementation. It is certain to remove idle SIMD
+groups, but it is not certain to improve wall time because useful weight traffic
+is unchanged and the kernel may already be bandwidth-bound. Claiming a speedup
+before an A/B would be false.
+
+#### Required stages before promotion
+
+1. Freeze the exact pushed control build and record two alternating diagnostic
+   control runs to establish same-session GPU variance.
+2. Implement only the reversible subset-down row-packing kernel and dispatch;
+   do not alter cache policy, expert format, overlap, or persistent memory.
+3. Reject immediately unless paired GPU measurements reduce both hit-subset
+   and miss-subset critical paths without increasing attention/router time.
+4. Verify the complete 132-token MLX parity sequence and the fixed greedy
+   sequence before headline testing.
+5. Run alternating control/candidate headline pairs, each with one warmup and
+   three measured 128-token generations. Require a repeatable gain exceeding
+   the established variance rather than selecting the fastest run.
+6. Only after that gate, run the 512-token drift test, 64K load test, memory and
+   swap checks, cancellation/unload checks, release build, and all package
+   tests.
+7. Remove and document the candidate if any gate fails. Do not proceed to a
+   second MoE kernel idea on the same evidence.
+
+#### Candidate A result: rejected
+
+An exact control benchmark was frozen in a separate SwiftPM scratch build before
+the edit. Its one-warmup/two-measured diagnostic run averaged 31.00 tok/s
+(31.04 and 30.96 tok/s) with 0.27% spread. At token 128 its measured GPU splits
+were:
+
+| Control run | Exact GPU | Attention/router | Shared/hits | Miss/tail/head |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 20.25 ms | 10.70 ms | 5.68 ms | 3.88 ms |
+| 2 | 20.48 ms | 11.22 ms | 5.26 ms | 4.00 ms |
+
+Candidate A implemented only the planned subset-down row packing. Expert counts
+of one, two, or four packed eight, four, or two output rows per 256-thread
+threadgroup; other counts used the largest whole-row packing possible. Active
+expert dot products, subset split, router-order reduction, cache behavior,
+persistent buffers, and I/O overlap were unchanged.
+
+The candidate's matching one-warmup/two-measured diagnostic run averaged 30.65
+tok/s (30.67 and 30.64 tok/s) with 0.10% spread, a 1.13% regression from the
+control. At token 128 its GPU splits were:
+
+| Candidate run | Exact GPU | Attention/router | Shared/hits | Miss/tail/head |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 20.83 ms | 10.87 ms | 5.84 ms | 4.12 ms |
+| 2 | 20.75 ms | 11.24 ms | 5.49 ms | 4.02 ms |
+
+Generated length, finish reason, cache demand, fetched bytes, repeated greedy
+output, and 4.928 GiB Metal allocation matched the control. The candidate
+failed the first performance gate, so MLX parity, headline, long-run, and test
+promotion stages were correctly not used to rescue it. Runtime source is
+restored to the pushed control.
+
+Conclusion: scheduling inactive SIMD groups was visible structurally but was
+not the MoE critical-path bottleneck. The useful Q4 dot-product weight traffic
+dominates this kernel. Do not repeat row packing or dynamic subset threadgroup
+geometry without evidence of a changed weight-access design.

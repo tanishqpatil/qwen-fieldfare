@@ -1,3 +1,4 @@
+import Accelerate
 import Foundation
 
 public enum QwenGenerationFinishReason: Sendable, Equatable {
@@ -237,6 +238,13 @@ enum QwenLogitSelector {
         configuration: QwenGenerationConfiguration,
         samplePosition: Int
     ) -> Int32 {
+        if configuration.temperature == 0,
+           configuration.topK == 1,
+           configuration.presencePenalty == 0,
+           configuration.repetitionPenalty == 1 {
+            return exactGreedyToken(logits: logits, count: count)
+        }
+
         let candidateCount = min(configuration.topK, count)
         var candidates: [Candidate] = []
         candidates.reserveCapacity(candidateCount)
@@ -323,6 +331,19 @@ enum QwenLogitSelector {
             result = index
         }
         return result
+    }
+
+    /// Matches the existing Top-K=1 greedy selector for every Float value.
+    /// The general selector retains token zero when its first logit is NaN;
+    /// vDSP otherwise ignores NaNs and returns the first maximum index.
+    private static func exactGreedyToken(
+        logits: UnsafePointer<Float>,
+        count: Int
+    ) -> Int32 {
+        guard count > 0 else { return 0 }
+        guard !logits[0].isNaN else { return 0 }
+        let buffer = UnsafeBufferPointer(start: logits, count: count)
+        return Int32(vDSP.indexOfMaximum(buffer).0)
     }
 
     private static func uniformUnit(seed: UInt64?, position: Int) -> Double {

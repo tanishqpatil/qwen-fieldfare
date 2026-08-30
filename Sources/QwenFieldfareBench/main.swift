@@ -125,6 +125,7 @@ private final class SampleBox: @unchecked Sendable {
     private var prefillMs = 0.0
     private var samples: [TokenSample] = []
     private var interTokenLatencyMs: [Double] = []
+    private var cpuTokenSelectionMs: [Double] = []
     private var firstTokenAt: CFAbsoluteTime?
     private var previousTokenAt: CFAbsoluteTime?
     private var firstTokenCache: QwenExpertCacheMetrics?
@@ -154,6 +155,9 @@ private final class SampleBox: @unchecked Sendable {
             firstTokenCache = cache
         }
         previousTokenAt = now
+        if let profile {
+            cpuTokenSelectionMs.append(profile.cpuArgmaxMs)
+        }
         guard tokenCount == 1 || tokenCount % 64 == 0 else { return }
         samples.append(makeSample(at: now, profile: profile, device: device, cache: cache))
     }
@@ -213,6 +217,7 @@ private final class SampleBox: @unchecked Sendable {
         transitionCount: Int,
         elapsedMs: Double,
         latency: QwenLatencySummary,
+        cpuTokenSelection: QwenLatencySummary,
         firstTokenCache: QwenExpertCacheMetrics?
     ) {
         lock.lock()
@@ -227,6 +232,7 @@ private final class SampleBox: @unchecked Sendable {
             transitionCount: max(0, tokenCount - 1),
             elapsedMs: elapsedMs,
             latency: .summarize(interTokenLatencyMs),
+            cpuTokenSelection: .summarize(cpuTokenSelectionMs),
             firstTokenCache: firstTokenCache)
     }
 }
@@ -240,6 +246,7 @@ private struct RunSummary {
     let decodeTransitions: Int
     let decodeRate: Double
     let latency: QwenLatencySummary
+    let cpuTokenSelection: QwenLatencySummary
     let cache: QwenExpertCacheMetrics
     let decodeMisses: Int
     let decodeFetchedBytes: Int
@@ -598,6 +605,12 @@ private enum QwenBenchMain {
                     decode.latency.p95Ms ?? 0, decode.latency.minimumMs ?? 0,
                     decode.latency.maximumMs ?? 0, decode.latency.sampleCount))
                 print(String(
+                    format: "CPU token selection: mean %.3f ms, p50 %.3f ms, p95 %.3f ms (%d samples)",
+                    decode.cpuTokenSelection.meanMs ?? 0,
+                    decode.cpuTokenSelection.p50Ms ?? 0,
+                    decode.cpuTokenSelection.p95Ms ?? 0,
+                    decode.cpuTokenSelection.sampleCount))
+                print(String(
                     format: "Decode-only cache: %d hits, %d misses, %.2f%% hit rate, %.1f misses/token, %.3f GiB fetched",
                     decodeHits, decodeMisses, decodeHitRate,
                     Double(decodeMisses) / Double(max(1, decode.transitionCount)),
@@ -680,6 +693,7 @@ private enum QwenBenchMain {
                     decodeTransitions: decode.transitionCount,
                     decodeRate: decodeRate,
                     latency: decode.latency,
+                    cpuTokenSelection: decode.cpuTokenSelection,
                     cache: cache,
                     decodeMisses: decodeMisses,
                     decodeFetchedBytes: decodeFetchedBytes,
@@ -698,6 +712,7 @@ private enum QwenBenchMain {
             print("\n=== Measured summary ===")
             let rates = measuredSummaries.map(\.decodeRate)
             let prefills = measuredSummaries.map(\.prefillMs)
+            let selectorMeans = measuredSummaries.compactMap(\.cpuTokenSelection.meanMs)
             if let minimumRate = rates.min(), let maximumRate = rates.max() {
                 let meanRate = rates.reduce(0, +) / Double(rates.count)
                 print(String(
@@ -711,6 +726,13 @@ private enum QwenBenchMain {
                     format: "Prefill/TTFT across %d runs: min %.3f, mean %.3f, max %.3f s",
                     prefills.count, minimumPrefill / 1_000.0,
                     meanPrefill / 1_000.0, maximumPrefill / 1_000.0))
+            }
+            if let minimumSelector = selectorMeans.min(),
+               let maximumSelector = selectorMeans.max() {
+                let meanSelector = selectorMeans.reduce(0, +) / Double(selectorMeans.count)
+                print(String(
+                    format: "CPU token selection across %d runs: min %.3f, mean %.3f, max %.3f ms",
+                    selectorMeans.count, minimumSelector, meanSelector, maximumSelector))
             }
             print(totalRequestedRuns > 1
                 ? "Repeated greedy outputs identical: \(deterministic ? "yes" : "NO")"
