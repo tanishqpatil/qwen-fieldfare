@@ -18,7 +18,7 @@ body:
     id: hardware
     attributes:
       label: Mac hardware and memory
-      placeholder: M2 MacBook Air, 8 GB
+      placeholder: Apple M5, 32 GB unified memory
     validations:
       required: true
   - type: input

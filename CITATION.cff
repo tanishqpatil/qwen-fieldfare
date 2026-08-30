@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use QwenFieldfare in research or benchmarking, please cite this software."
+title: "QwenFieldfare"
+type: software
+authors:
+  - family-names: "Patil"
+    given-names: "Tanishq"
+repository-code: "https://github.com/tanishqpatil/qwen-fieldfare"
+url: "https://github.com/tanishqpatil/qwen-fieldfare"
+license: "Apache-2.0"
+abstract: >-
+  A native Swift and Metal runtime for local Qwen 3.6 35B-A3B Q4
+  mixture-of-experts inference on Apple Silicon, using bounded active-expert
+  streaming and a native macOS chat interface.
+keywords:
+  - "Qwen 3.6"
+  - "large language model inference"
+  - "mixture of experts"
+  - "Apple Silicon"
+  - "Metal"
+  - "Swift"
+  - "on-device AI"
+  - "active-expert streaming"

@@ -27,7 +27,7 @@ body:
     id: memory
     attributes:
       label: Bounded-memory behavior
-      description: Explain how the proposal remains valid on an 8 GB Mac without loading full shards or tensors.
+      description: Explain how the proposal preserves bounded memory. Include measured or estimated Metal allocation and the target Mac and unified-memory configuration.
     validations:
       required: true
   - type: textarea

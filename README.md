@@ -1,11 +1,28 @@
-# QwenFieldfare
+<p align="center">
+  <img src="Sources/QwenFieldfareApp/Mac/Resources/qwenfieldfare-app-icon.png"
+       width="128" alt="QwenFieldfare app icon">
+</p>
 
-Native Swift and Metal inference for **Qwen 3.6 35B-A3B Q4** on Apple Silicon,
-with active-expert streaming designed to keep Metal allocation near 5 GiB.
+<h1 align="center">QwenFieldfare</h1>
 
+**Local Qwen 3.6 35B-A3B Q4 mixture-of-experts inference near 5 GiB of Metal
+allocation.**
+
+QwenFieldfare is a native Swift + Metal runtime and macOS chat app for Apple
+Silicon. It reads MLX Q4 Safetensors and streams only the routed MoE experts
+selected for each token from SSD into a bounded cache instead of keeping the
+complete checkpoint resident.
+
+[Quick start](#quick-start) · [Benchmarks](#measured-results) ·
+[How it works](#how-active-expert-streaming-works) ·
+[Community benchmarks](docs/COMMUNITY_BENCHMARKS.md) ·
+[Contributing](CONTRIBUTING.md)
+
+[![Model: Qwen 3.6 35B-A3B](https://img.shields.io/badge/Model-Qwen%203.6%2035B--A3B-6f42c1)](https://huggingface.co/Qwen/Qwen3.6-35B-A3B)
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
 [![Metal 4](https://img.shields.io/badge/Metal-4-5E5CE6)](https://developer.apple.com/metal/)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)](https://www.apple.com/macos/)
+[![CI](https://github.com/tanishqpatil/qwen-fieldfare/actions/workflows/ci.yml/badge.svg)](https://github.com/tanishqpatil/qwen-fieldfare/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-2ea44f)](LICENSE)
 
 > [!IMPORTANT]
@@ -415,9 +432,3 @@ upstream model repositories and their current files remain authoritative.
 
 Source and documentation in this repository are licensed under the
 [Apache License 2.0](LICENSE).
-
-## Suggested GitHub topics
-
-`qwen`, `qwen3`, `mixture-of-experts`, `moe`, `apple-silicon`, `metal`,
-`swift`, `local-llm`, `llm-inference`, `active-expert-streaming`, `mlx`,
-`safetensors`, `macos`
