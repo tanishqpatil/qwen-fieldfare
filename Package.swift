@@ -25,6 +25,7 @@ let package = Package(
                 "Infrastructure/ModelIO/Sha256Verifier.swift",
                 "Kernels/Attention/Attention.swift",
                 "Kernels/LinearAttention/QwenDeltaNetKernel.swift",
+                "Runtime/Generation/QwenActiveStreamingMemoryConfiguration.swift",
                 "Runtime/Generation/QwenGenerationSupport.swift",
                 "Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift",
                 "Runtime/Generation/QwenQ4ChatRunner.swift",
@@ -82,6 +83,7 @@ let package = Package(
             sources: [
                 "Kernels/Attention/QwenFP16AttentionBridgeTests.swift",
                 "QwenDeltaNetMathTests.swift",
+                "QwenActiveStreamingMemoryConfigurationTests.swift",
                 "QwenGenerationSupportTests.swift",
                 "QwenModelDirectoryTests.swift",
                 "QwenRuntimeTelemetryTests.swift",

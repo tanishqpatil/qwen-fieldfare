@@ -19,7 +19,7 @@ as measurements from one machine and commit, not as hardware ceilings.
   --model "/absolute/path/to/Qwen3.6-35B-A3B-4bit" \
   --prompt "Explain HashMap in Java with a short example." \
   --context 8192 \
-  --cache-slots 2183 \
+  --memory-gib 5 \
   --max-new 512 \
   --metrics-only
 ```
@@ -39,6 +39,7 @@ change timing.
 - Prefill duration and time to first token
 - Decode tokens per second
 - Context length and expert-cache slots
+- Selected active-streaming memory budget and the planned bytes printed by the benchmark
 - Cache hits, misses, hit rate, and logical bytes fetched
 - Metal allocation and memory pressure
 - Whether the packed store was enabled

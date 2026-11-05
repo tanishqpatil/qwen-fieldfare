@@ -442,7 +442,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         if usePackedExpertStore {
             self.packedExpertStore = try QwenQ4ExpertStore.openIfPresent(modelPath: modelPath)
         }
-        initStates()
+        try initStates()
 
         if keepDenseWeightsResident {
             for l in 0..<40 {
@@ -708,28 +708,35 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         }
     }
 
-    private func initStates() {
+    private func initStates() throws {
+        func buffer(_ length: Int) throws -> MTLBuffer {
+            guard let value = device.makeBuffer(length: length, options: .storageModeShared) else {
+                throw NSError(domain: "QwenFieldfare", code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Unable to allocate model state buffer (\(length) bytes)"])
+            }
+            return value
+        }
         convStates.removeAll(); ssmStates.removeAll(); kCaches.removeAll(); vCaches.removeAll()
         for l in 0..<40 {
             if layerKinds[l] == .linearAttention {
-                let cBuf = device.makeBuffer(length: 8192 * 4 * 4, options: .storageModeShared)!
-                let sBuf = device.makeBuffer(length: 32 * 128 * 128 * 4, options: .storageModeShared)!
+                let cBuf = try buffer(8192 * 4 * 4)
+                let sBuf = try buffer(32 * 128 * 128 * 4)
                 memset(cBuf.contents(), 0, 8192 * 4 * 4)
                 memset(sBuf.contents(), 0, 32 * 128 * 128 * 4)
                 convStates.append(cBuf)
                 ssmStates.append(sBuf)
-                kCaches.append(device.makeBuffer(length: 4, options: .storageModeShared)!)
-                vCaches.append(device.makeBuffer(length: 4, options: .storageModeShared)!)
+                kCaches.append(try buffer(4))
+                vCaches.append(try buffer(4))
             } else {
                 let kvByteLength = 2 * maxSeqLen * 256 * MemoryLayout<Float16>.size
-                let kBuf = device.makeBuffer(length: kvByteLength, options: .storageModeShared)!
-                let vBuf = device.makeBuffer(length: kvByteLength, options: .storageModeShared)!
+                let kBuf = try buffer(kvByteLength)
+                let vBuf = try buffer(kvByteLength)
                 memset(kBuf.contents(), 0, kvByteLength)
                 memset(vBuf.contents(), 0, kvByteLength)
                 kCaches.append(kBuf)
                 vCaches.append(vBuf)
-                convStates.append(device.makeBuffer(length: 4, options: .storageModeShared)!)
-                ssmStates.append(device.makeBuffer(length: 4, options: .storageModeShared)!)
+                convStates.append(try buffer(4))
+                ssmStates.append(try buffer(4))
             }
         }
     }

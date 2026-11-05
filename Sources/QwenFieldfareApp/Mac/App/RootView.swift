@@ -225,7 +225,7 @@ struct RootView: View {
     private var modeDescription: String {
         switch chatService.selectedMode {
         case .activeStreaming:
-            return "Active Expert Streaming — Fast Low Memory. Dense Q4 weights stay resident; routed experts use a bounded \(chatService.expertCacheSlots.formatted())-slot cache at \(chatService.contextLength / 1_024)K context."
+            return "Active Expert Streaming — Fast Low Memory. \(chatService.activeStreamingMemoryBudget.displayName) plans \(chatService.expertCacheSlots.formatted()) expert-cache slots at \(chatService.contextLength / 1_024)K context. Changing the budget reloads the model."
         case .fastResident:
             return "Fast Resident Q4 is the high-memory diagnostic mode with all layers resident in RAM."
         case .memorySaver:

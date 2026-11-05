@@ -6,6 +6,9 @@ import heapq
 import argparse
 import os
 import time
+import hashlib
+import importlib.metadata
+from pathlib import Path
 
 from transformers import AutoTokenizer
 
@@ -34,8 +37,31 @@ parser.add_argument(
 )
 parser.add_argument("--prompt", default="Explain HashMap in Java with an example.")
 parser.add_argument("--max-tokens", type=int, default=65)
+parser.add_argument("--fixture", help="Write prompt and greedy token IDs for teacher-forced comparison")
 args = parser.parse_args()
 
+def checkpoint_hashes(model_path):
+    root = Path(model_path)
+    index = json.loads((root / "model.safetensors.index.json").read_text())
+    files = set(index["weight_map"].values()) | {
+        "config.json", "model.safetensors.index.json", "tokenizer.json",
+        "tokenizer_config.json", "chat_template.jinja", "generation_config.json",
+    }
+    hashes = {}
+    for name in sorted(files):
+        if Path(name).name != name:
+            raise ValueError("unsafe checkpoint filename")
+        path = root / name
+        if not path.is_file():
+            raise ValueError(f"missing checkpoint file: {name}")
+        digest = hashlib.sha256()
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+        hashes[name] = digest.hexdigest()
+    return hashes
+
+checkpoint = checkpoint_hashes(args.model) if args.fixture else None
 
 model, tokenizer = load(args.model)
 prompt_text = tokenizer.apply_chat_template(
@@ -108,6 +134,15 @@ print(f"Finish reason: {finish_reason}")
 print(f"Generation: {elapsed * 1000:.2f} ms ({len(generated) / elapsed:.2f} tok/s)")
 print(f"Peak memory: {mx.get_peak_memory() / 1e9:.3f} GB")
 print("TOKEN_IDS_JSON=" + json.dumps(generated))
+if args.fixture:
+    with open(args.fixture, "x", encoding="utf-8") as output:
+        json.dump({"format_version": 2, "prompt": args.prompt,
+                   "prompt_tokens": prompt_tokens, "reference_tokens": generated,
+                   "checkpoint_sha256": checkpoint,
+                   "reference_versions": {name: importlib.metadata.version(name)
+                                          for name in ("mlx", "mlx-lm", "transformers")}},
+                  output, indent=2)
+        output.write("\n")
 print("--- OUTPUT ---")
 print(tokenizer.decode(generated))
 print("--- END OUTPUT ---")

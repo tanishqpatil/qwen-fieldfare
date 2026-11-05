@@ -22,7 +22,8 @@ public enum QwenModelDirectory {
     @discardableResult
     public static func validate(path: String, fileManager: FileManager = .default) throws -> String {
         let expanded = (path as NSString).expandingTildeInPath
-        let canonical = URL(fileURLWithPath: expanded, isDirectory: true).standardizedFileURL.path
+        let canonical = URL(fileURLWithPath: expanded, isDirectory: true)
+            .standardizedFileURL.resolvingSymlinksInPath().path
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: canonical, isDirectory: &isDirectory), isDirectory.boolValue else {
             throw QwenModelDirectoryError.notDirectory(canonical)
@@ -42,8 +43,18 @@ public enum QwenModelDirectory {
             guard !name.isEmpty, name == (name as NSString).lastPathComponent else {
                 throw QwenModelDirectoryError.invalidIndex("unsafe shard name \(name)")
             }
-            guard fileManager.fileExists(atPath: (canonical as NSString).appendingPathComponent(name)) else {
+            let shard = URL(fileURLWithPath: canonical, isDirectory: true)
+                .appendingPathComponent(name).resolvingSymlinksInPath()
+            guard shard.deletingLastPathComponent().path == canonical else {
+                throw QwenModelDirectoryError.invalidIndex("shard resolves outside model directory: \(name)")
+            }
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: shard.path, isDirectory: &isDirectory) else {
                 throw QwenModelDirectoryError.missingFile(name)
+            }
+            guard !isDirectory.boolValue,
+                  (try? shard.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else {
+                throw QwenModelDirectoryError.invalidIndex("shard is not a regular file: \(name)")
             }
         }
         return canonical

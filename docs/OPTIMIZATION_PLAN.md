@@ -1,5 +1,11 @@
 # Optimization analysis and priority order
 
+Planning update (2026-11-05): see the
+[agent runtime and memory plan](AGENT_RUNTIME_PLAN.md) for the current proposed
+execution order, source audit, server/client requirements, and the newly
+identified unused LM-head work during prefill. The August results below remain
+historical evidence; this update adds no performance claim.
+
 Status: roadmap reset on 2026-08-28 after reviewing the current source,
 corrected benchmarks, memory ownership, and rejected experiments. S1a/S1b was
 promoted and pushed as `4758b8b` on 2026-08-30. S2's measurement gate completed
@@ -441,7 +447,8 @@ into a misleading single score.
 - **Memory:** M1 explicit budgets, M2 lazy FP16 KV if its blocker is resolved,
   M3 arena cleanup, then experimental M4 INT8 KV.
 
-The next one-at-a-time decode task is S3's offline miss-ceiling analysis.
+S3 is complete and closed for the tested policies. The next remaining pure
+GPU decode research is S5; sampled-selector cost must be measured independently.
 Product planning may intentionally prioritize M1 or S4 over high-risk S5, but
 that is a product-value decision rather than a decode-speed ranking. S2 does
 not authorize a cache-policy or prefetch edit.

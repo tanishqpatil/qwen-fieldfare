@@ -112,6 +112,7 @@ public final class ChatService {
     public var selectedMode: QwenQ4ChatRunner.RuntimeMode = .activeStreaming {
         didSet { metrics.mode = selectedMode.rawValue }
     }
+    public private(set) var activeStreamingMemoryBudget: QwenActiveStreamingMemoryBudget = .fiveGiB
     public private(set) var metrics = QwenRuntimeMetricsSnapshot(
         mode: QwenQ4ChatRunner.RuntimeMode.activeStreaming.rawValue,
         modelState: ModelState.unloaded.rawValue
@@ -142,34 +143,29 @@ public final class ChatService {
     public var expertCacheHitRate: Double { (metrics.cache?.hitRate ?? 0) * 100 }
     public var expertCacheMissesPerToken: Double { metrics.missesPerGeneratedToken ?? 0 }
     public var estimatedKVGiB: Double {
-        // 10 full-attention layers, separate K/V, two KV heads, 256-wide,
-        // FP16. The 30 DeltaNet layers have fixed recurrent state.
-        Double(contextLength * 10 * 2 * 2 * 256 * 2) / 1_073_741_824.0
+        Double(activeStreamingMemoryConfiguration?.kvStateBytes ?? 0) / 1_073_741_824.0
+    }
+    public var activeStreamingMemoryConfiguration: QwenActiveStreamingMemoryConfiguration? {
+        try? QwenActiveStreamingMemoryConfiguration.make(
+            budget: activeStreamingMemoryBudget,
+            contextLength: contextLength
+        )
     }
     public var expertCacheSlots: Int {
         guard selectedMode == .activeStreaming else { return 0 }
-        return switch contextLength {
-        case ...8_192: 2_183
-        case ...16_384: 2_083
-        case ...32_768: 1_883
-        default: 1_523
-        }
+        return activeStreamingMemoryConfiguration?.expertCacheSlots ?? 0
     }
     public var estimatedActiveRuntimeGiB: Double {
-        // 2.92 GiB is the conservative fixed/1,024-slot envelope after
-        // compacting the dense arenas and omitting inactive staging arenas.
-        // Account for the selected FP16 KV length and every additional packed
-        // expert slot so all supported contexts retain headroom below 5 GiB.
-        let additionalSlots = max(0, expertCacheSlots - 1_024)
-        let additionalCacheGiB = Double(
-            additionalSlots * Q4BoundedExpertCache.expertByteLength
-        ) / 1_073_741_824.0
-        return 2.92 + estimatedKVGiB + additionalCacheGiB
+        Double(activeStreamingMemoryConfiguration?.estimatedTotalBytes ?? 0) / 1_073_741_824.0
     }
     public var supportedContextLengths: [Int] {
-        selectedMode == .activeStreaming
-            ? [4_096, 8_192, 16_384, 32_768, 65_536]
-            : [4_096, 8_192]
+        guard selectedMode == .activeStreaming else { return [4_096, 8_192] }
+        return [4_096, 8_192, 16_384, 32_768, 65_536].filter {
+            (try? QwenActiveStreamingMemoryConfiguration.make(
+                budget: activeStreamingMemoryBudget,
+                contextLength: $0
+            )) != nil
+        }
     }
 
     private var activeRunner: QwenQ4ActiveExpertStreamingRunner?
@@ -231,10 +227,8 @@ public final class ChatService {
         let used = metrics.memory.hostUsedBytes ?? total
         let availableGiB = Double(total > used ? total - used : 0) / 1_073_741_824.0
         let minimumGiB: Double = selectedMode == .fastResident ? 12 : 4
-        if selectedMode == .activeStreaming, estimatedActiveRuntimeGiB > 5.0 {
-            return (false, String(format:
-                "The selected context is estimated at %.2f GiB, above the 5 GiB active-streaming budget.",
-                estimatedActiveRuntimeGiB))
+        if selectedMode == .activeStreaming, activeStreamingMemoryConfiguration == nil {
+            return (false, "The selected active-streaming context does not fit its memory budget.")
         }
         guard availableGiB >= minimumGiB else {
             return (false, String(format: "Insufficient estimated available memory (%.1f GiB).", availableGiB))
@@ -257,6 +251,17 @@ public final class ChatService {
         if activeRunner != nil || chatRunner != nil { unloadModel() }
         contextLength = tokens
         maxOutputTokens = min(maxOutputTokens, tokens)
+    }
+
+    public func setActiveStreamingMemoryBudget(_ budget: QwenActiveStreamingMemoryBudget) {
+        guard budget != activeStreamingMemoryBudget else { return }
+        guard !isGenerating else { return }
+        if activeRunner != nil || chatRunner != nil { unloadModel() }
+        activeStreamingMemoryBudget = budget
+        if !supportedContextLengths.contains(contextLength) {
+            contextLength = 8_192
+            maxOutputTokens = min(maxOutputTokens, contextLength)
+        }
     }
 
     public func setModelPath(_ path: String) throws {

@@ -3,13 +3,33 @@ import Foundation
 import Metal
 import QwenFieldfareCore
 
+private struct TeacherReference: Decodable {
+    let formatVersion: Int
+    let prompt: String
+    let promptTokens: [Int32]
+    let referenceTokens: [Int32]
+    let checkpointSHA256: [String: String]
+    let referenceVersions: [String: String]
+
+    enum CodingKeys: String, CodingKey {
+        case formatVersion = "format_version"
+        case prompt
+        case promptTokens = "prompt_tokens"
+        case referenceTokens = "reference_tokens"
+        case checkpointSHA256 = "checkpoint_sha256"
+        case referenceVersions = "reference_versions"
+    }
+}
+
 private let usage = """
 Usage:
   QwenFieldfareBench [--model <directory>] [--prompt <text>]
-    [--context <tokens>] [--max-new <tokens>] [--cache-slots <count>]
+    [--context <tokens>] [--max-new <tokens>] [--memory-gib 3|4|5]
+    [--cache-slots <count>]
     [--warmup-runs <count>] [--runs <count>]
     [--load-only] [--metrics-only] [--packed-experts] [--analyze-cache]
-    [--gpu-profile] [--subcomponent-profile]
+    [--gpu-profile] [--subcomponent-profile] [--teacher-reference <json>]
+    [--sampler greedy|app-seeded] [--seed <integer>]
 """
 
 private struct Arguments {
@@ -17,7 +37,9 @@ private struct Arguments {
     var prompt = "tell me what hasmap is in java with example"
     var contextLength = 8_192
     var maxNewTokens = 512
-    var cacheSlots = 1_024
+    var memoryBudget: QwenActiveStreamingMemoryBudget = .fiveGiB
+    var explicitMemoryBudget = false
+    var cacheSlots: Int?
     var warmupRuns = 0
     var measuredRuns = 1
     var loadOnly = false
@@ -26,14 +48,17 @@ private struct Arguments {
     var metricsOnly = false
     var gpuProfile = false
     var subcomponentProfile = false
+    var teacherReference: String?
+    var sampler = "greedy"
+    var seed: UInt64 = 42
 
     init(_ values: [String]) throws {
         var index = 1
         while index < values.count {
             let option = values[index]
             switch option {
-            case "--model", "--prompt", "--context", "--max-new", "--cache-slots",
-                 "--warmup-runs", "--runs":
+            case "--model", "--prompt", "--context", "--max-new", "--memory-gib", "--cache-slots",
+                 "--warmup-runs", "--runs", "--teacher-reference", "--sampler", "--seed":
                 guard index + 1 < values.count else {
                     throw NSError(domain: "QwenFieldfareBench", code: 2,
                                   userInfo: [NSLocalizedDescriptionKey: "Missing value for \(option)"])
@@ -42,12 +67,33 @@ private struct Arguments {
                 switch option {
                 case "--model": modelPath = value
                 case "--prompt": prompt = value
+                case "--teacher-reference": teacherReference = value
+                case "--sampler":
+                    guard ["greedy", "app-seeded"].contains(value) else {
+                        throw NSError(domain: "QwenFieldfareBench", code: 2,
+                            userInfo: [NSLocalizedDescriptionKey: "Invalid sampler: \(value)"])
+                    }
+                    sampler = value
+                case "--seed":
+                    guard let parsed = UInt64(value) else {
+                        throw NSError(domain: "QwenFieldfareBench", code: 2,
+                            userInfo: [NSLocalizedDescriptionKey: "Invalid seed: \(value)"])
+                    }
+                    seed = parsed
                 case "--context":
                     guard let parsed = Int(value), parsed > 0 else {
                         throw NSError(domain: "QwenFieldfareBench", code: 2,
                                       userInfo: [NSLocalizedDescriptionKey: "Invalid --context value: \(value)"])
                     }
                     contextLength = parsed
+                case "--memory-gib":
+                    guard let parsed = Int(value),
+                          let budget = QwenActiveStreamingMemoryBudget(rawValue: parsed) else {
+                        throw NSError(domain: "QwenFieldfareBench", code: 2,
+                                      userInfo: [NSLocalizedDescriptionKey: "--memory-gib must be 3, 4, or 5."])
+                    }
+                    memoryBudget = budget
+                    explicitMemoryBudget = true
                 case "--max-new":
                     guard let parsed = Int(value), parsed > 0 else {
                         throw NSError(domain: "QwenFieldfareBench", code: 2,
@@ -97,6 +143,21 @@ private struct Arguments {
                               userInfo: [NSLocalizedDescriptionKey: "Unknown option: \(option)"])
             }
         }
+        if explicitMemoryBudget, cacheSlots != nil {
+            throw NSError(domain: "QwenFieldfareBench", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey:
+                            "Use either --memory-gib or diagnostic --cache-slots, not both."])
+        }
+    }
+
+    func expertCacheCapacity() throws -> Int {
+        if let cacheSlots {
+            return cacheSlots
+        }
+        return try QwenActiveStreamingMemoryConfiguration.make(
+            budget: memoryBudget,
+            contextLength: contextLength
+        ).expertCacheSlots
     }
 }
 
@@ -483,6 +544,33 @@ private enum QwenBenchMain {
                 return
             }
             let arguments = try Arguments(CommandLine.arguments)
+            var teacherReference: TeacherReference?
+            if let path = arguments.teacherReference {
+                let data = try Data(contentsOf: URL(fileURLWithPath: path))
+                let reference = try JSONDecoder().decode(TeacherReference.self, from: data)
+                let root = URL(fileURLWithPath: arguments.modelPath, isDirectory: true)
+                let indexData = try Data(contentsOf: root.appendingPathComponent("model.safetensors.index.json"))
+                guard let index = try JSONSerialization.jsonObject(with: indexData) as? [String: Any],
+                      let weights = index["weight_map"] as? [String: String] else {
+                    throw NSError(domain: "QwenFieldfareBench", code: 2,
+                        userInfo: [NSLocalizedDescriptionKey: "Invalid checkpoint index"])
+                }
+                let required = Set(weights.values).union([
+                    "config.json", "model.safetensors.index.json", "tokenizer.json",
+                    "tokenizer_config.json", "chat_template.jinja", "generation_config.json"])
+                guard reference.formatVersion == 2, Set(reference.checkpointSHA256.keys) == required,
+                      ["mlx", "mlx-lm", "transformers"].allSatisfy({ reference.referenceVersions[$0]?.isEmpty == false }),
+                      required.allSatisfy({ !$0.isEmpty && $0 == ($0 as NSString).lastPathComponent }) else {
+                    throw NSError(domain: "QwenFieldfareBench", code: 2,
+                        userInfo: [NSLocalizedDescriptionKey: "Invalid reference provenance"])
+                }
+                for name in required.sorted() {
+                    try Sha256Verifier.verifyFile(at: root.appendingPathComponent(name), named: name,
+                                                  expectedHex: reference.checkpointSHA256[name]!)
+                }
+                print("Reference checkpoint SHA-256 verified; versions: \(reference.referenceVersions)")
+                teacherReference = reference
+            }
             let totalRequestedRuns = arguments.warmupRuns + arguments.measuredRuns
             if arguments.analyzeCache, totalRequestedRuns != 1 {
                 throw NSError(
@@ -491,12 +579,19 @@ private enum QwenBenchMain {
                     userInfo: [NSLocalizedDescriptionKey:
                         "--analyze-cache requires exactly one run because traces accumulate with retained cache state"])
             }
+            let memoryPlan = arguments.cacheSlots == nil
+                ? try QwenActiveStreamingMemoryConfiguration.make(
+                    budget: arguments.memoryBudget,
+                    contextLength: arguments.contextLength
+                )
+                : nil
+            let cacheSlots = try arguments.expertCacheCapacity()
             let device = MTLCreateSystemDefaultDevice()
             let loadStarted = CFAbsoluteTimeGetCurrent()
             let runner = try QwenQ4ActiveExpertStreamingRunner(
                 modelPath: arguments.modelPath,
                 maxSeqLen: arguments.contextLength,
-                expertCacheCapacity: arguments.cacheSlots,
+                expertCacheCapacity: cacheSlots,
                 usePersistentExpertCache: true,
                 keepDenseWeightsResident: true,
                 usePackedExpertStore: arguments.usePackedExperts,
@@ -508,11 +603,21 @@ private enum QwenBenchMain {
             print(String(format: "Loaded footprint: %.3f GiB", gib(processFootprintBytes())))
             print(String(format: "Loaded Metal allocation: %.3f GiB", gib(UInt64(device?.currentAllocatedSize ?? 0))))
             print("Context: \(arguments.contextLength)")
-            print("Expert cache slots: \(arguments.cacheSlots)")
+            if let memoryPlan {
+                print(String(
+                    format: "Active-streaming budget: %@; planned %.3f / %.3f GiB",
+                    memoryPlan.budget.displayName,
+                    gib(memoryPlan.estimatedTotalBytes),
+                    gib(memoryPlan.targetBytes)))
+            } else {
+                print("Active-streaming budget: diagnostic raw cache-slot override")
+            }
+            print("Expert cache slots: \(cacheSlots)")
             print("Expert storage: \(runner.expertStorageMetrics().kind)")
             print("GPU profiling: \(arguments.gpuProfile ? "enabled" : "disabled")")
             print("Warmup runs: \(arguments.warmupRuns)")
             print("Measured runs: \(arguments.measuredRuns)")
+            print("Sampler: \(arguments.sampler), seed: \(arguments.seed)")
             if arguments.subcomponentProfile {
                 let profile = runner.profileSubcomponents(iterations: 20)
                 print(String(format: "Attention subcomponents: %.3f ms total", profile.totalAttentionMs))
@@ -530,6 +635,43 @@ private enum QwenBenchMain {
 
             let tokenizer = try await QwenTokenizer.load(
                 from: URL(fileURLWithPath: arguments.modelPath))
+            if let reference = teacherReference {
+                let prompt = QwenChatTemplate.format(
+                    messages: [], appendingUser: reference.prompt, enableThinking: false)
+                let actualPrompt = tokenizer.encode(prompt)
+                guard !actualPrompt.isEmpty,
+                      !reference.referenceTokens.isEmpty,
+                      reference.promptTokens.allSatisfy({ 0 <= $0 && $0 < 248_320 }),
+                      reference.referenceTokens.allSatisfy({ 0 <= $0 && $0 < 248_320 }),
+                      actualPrompt == reference.promptTokens,
+                      actualPrompt.count + reference.referenceTokens.count - 1 <= arguments.contextLength else {
+                    throw NSError(domain: "QwenFieldfareBench", code: 2,
+                        userInfo: [NSLocalizedDescriptionKey: "Invalid teacher reference, prompt-token mismatch, or context too small"])
+                }
+                runner.resetState()
+                var position = 0
+                for token in actualPrompt.dropLast() {
+                    _ = try runner.forwardToken(tokenId: Int(token), tokenPos: position)
+                    position += 1
+                }
+                var input = actualPrompt.last!
+                var failures = 0
+                for (index, expected) in reference.referenceTokens.enumerated() {
+                    let actual = try runner.forwardToken(tokenId: Int(input), tokenPos: position)
+                    if actual != expected {
+                        failures += 1
+                        print("Mismatch at reference token \(index + 1): expected \(expected), got \(actual)")
+                    }
+                    input = expected
+                    position += 1
+                }
+                print("Teacher-forced parity: \(reference.referenceTokens.count - failures)/\(reference.referenceTokens.count) matched")
+                guard failures == 0 else {
+                    throw NSError(domain: "QwenFieldfareBench", code: 3,
+                        userInfo: [NSLocalizedDescriptionKey: "Teacher-forced parity failed"])
+                }
+                return
+            }
             let formattedPrompt = QwenChatTemplate.format(
                 messages: [], appendingUser: arguments.prompt, enableThinking: false)
             let promptTokens = tokenizer.encode(formattedPrompt)
@@ -552,9 +694,12 @@ private enum QwenBenchMain {
                 // printed run's counters independent.
                 runner.expertCache.resetMetrics()
                 let samples = SampleBox()
+                let configuration = arguments.sampler == "greedy"
+                    ? QwenGenerationConfiguration.greedy(maxNewTokens: arguments.maxNewTokens, seed: arguments.seed)
+                    : QwenGenerationConfiguration(maxNewTokens: arguments.maxNewTokens, seed: arguments.seed)
                 let result = try await runner.generateResult(
                     promptTokens: promptTokens,
-                    configuration: .greedy(maxNewTokens: arguments.maxNewTokens, seed: 42),
+                    configuration: configuration,
                     onPrefillComplete: {
                         samples.startDecode(prefillMs: $0)
                     },
@@ -735,8 +880,8 @@ private enum QwenBenchMain {
                     selectorMeans.count, minimumSelector, meanSelector, maximumSelector))
             }
             print(totalRequestedRuns > 1
-                ? "Repeated greedy outputs identical: \(deterministic ? "yes" : "NO")"
-                : "Repeated greedy outputs identical: not applicable (one run)")
+                ? "Repeated \(arguments.sampler) outputs identical: \(deterministic ? "yes" : "NO")"
+                : "Repeated \(arguments.sampler) outputs identical: not applicable (one run)")
             let storage = runner.expertStorageMetrics()
             print("Expert I/O process totals: \(storage.packedReads) packed experts, \(storage.packedPreadOperations) pread operations, \(storage.packedReadFailures) packed read failures")
         } catch {

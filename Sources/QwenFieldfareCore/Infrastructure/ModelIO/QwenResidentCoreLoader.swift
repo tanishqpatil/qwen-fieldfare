@@ -41,7 +41,14 @@ public final class QwenResidentWeights: @unchecked Sendable {
         guard let lenData = try? fileHandle.read(upToCount: 8), lenData.count == 8 else {
             throw NSError(domain: "QwenResidentCoreLoader", code: 5, userInfo: [NSLocalizedDescriptionKey: "Cannot read header length from \(shardPath)"])
         }
-        let headerLen = Int(lenData.withUnsafeBytes { $0.load(as: UInt64.self) })
+        let rawHeaderLen = lenData.withUnsafeBytes { $0.loadUnaligned(as: UInt64.self) }.littleEndian
+        let fileSize = try fileHandle.seekToEnd()
+        guard rawHeaderLen <= 100_000_000, fileSize >= 8,
+              rawHeaderLen <= fileSize - 8, let headerLen = Int(exactly: rawHeaderLen) else {
+            throw NSError(domain: "QwenResidentCoreLoader", code: 6,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid or oversized Safetensors header in \(shardPath)"])
+        }
+        try fileHandle.seek(toOffset: 8)
 
         guard let headerData = try? fileHandle.read(upToCount: headerLen), headerData.count == headerLen else {
             throw NSError(domain: "QwenResidentCoreLoader", code: 6, userInfo: [NSLocalizedDescriptionKey: "Cannot read JSON header from \(shardPath)"])
@@ -58,6 +65,12 @@ public final class QwenResidentWeights: @unchecked Sendable {
                   let dtype = dict["dtype"] as? String,
                   let shape = dict["shape"] as? [Int],
                   let offs = dict["data_offsets"] as? [Int], offs.count == 2 else { continue }
+            guard offs[0] >= 0, offs[1] >= offs[0],
+                  UInt64(offs[1]) <= fileSize - 8 - rawHeaderLen,
+                  shape.allSatisfy({ $0 >= 0 }) else {
+                throw NSError(domain: "QwenResidentCoreLoader", code: 7,
+                    userInfo: [NSLocalizedDescriptionKey: "Invalid tensor bounds for \(k) in \(shardPath)"])
+            }
             tensors[k] = QwenTensorInfo(shape: shape, dtype: dtype, dataOffsets: offs)
         }
 

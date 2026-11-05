@@ -26,9 +26,10 @@ complete checkpoint resident.
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-2ea44f)](LICENSE)
 
 > [!IMPORTANT]
-> This is an experimental, model-specific research runtime. Correctness is
-> historically validated against MLX, but the automated parity harness must be
-> restored. Measured decode performance does not yet match the full-resident
+> This is an experimental, model-specific research runtime. The release
+> benchmark includes a checkpoint-identified, teacher-forced MLX parity mode;
+> broader long-context and sampled-generation qualification is still in
+> progress. Measured decode performance does not yet match the full-resident
 > MLX reference.
 
 ## What this project does
@@ -56,8 +57,8 @@ MLX, llama.cpp, Ollama, or another inference engine.
 | Chat | Multi-turn, thinking on/off, checkpoint-compatible template |
 | Sampling | Temperature, Top-K, Top-P, presence and repetition penalties |
 | Context | 4K, 8K, 16K, 32K, or 64K in Active Expert Streaming mode |
-| Memory | Approximately 5 GiB Metal allocation in validated active-streaming configurations |
-| Correctness | Historical validation matched 132/132 teacher-forced next-token predictions; the automated harness must be restored |
+| Memory | Explicit 3, 4, or 5 GiB active-streaming allocation targets; 5 GiB is the default |
+| Correctness | Checkpoint-identified teacher-forced MLX harness; 132/132 next-token control matched |
 | Validated hardware | Apple M5, 32 GiB unified memory |
 | Current limitation | Text-only; the checkpoint's vision encoder is not implemented |
 
@@ -158,7 +159,7 @@ not a generic Safetensors runtime.
 
 | Mode | Intended use | Memory behavior |
 | --- | --- | --- |
-| **Active Expert Streaming** | Recommended chat mode | Dense weights stay resident; routed experts use a bounded cache under the approximately 5 GiB Metal budget |
+| **Active Expert Streaming** | Recommended chat mode | Dense weights stay resident; routed experts use a bounded cache planned under a selected 3, 4, or 5 GiB Metal target |
 | **Fast Resident Q4** | High-memory diagnostic mode | Loads the full Q4 model into unified memory |
 | **Memory Saver Q4** | Low-memory fallback | Streams layer weights and experts with lower throughput |
 
@@ -166,14 +167,23 @@ Only one model-owning process should run at a time. Do not run the Mac app,
 Qwen benchmark, MLX, Ollama, or another local model process concurrently when
 collecting memory or performance results.
 
-### Active-streaming cache by context
+### Active-streaming memory budget
 
-| Context | Expert-cache slots | Validated budget behavior |
-| ---: | ---: | --- |
-| 4K / 8K | 2,183 | 8K measured 4.928 GiB Metal |
-| 16K | 2,083 | Preflight estimate below 5 GiB |
-| 32K | 1,883 | Preflight estimate below 5 GiB |
-| 64K | 1,523 | Measured 4.937 GiB Metal |
+Select 3, 4, or 5 GiB in the inspector. Changing the choice unloads the
+runtime before the next model load; the cache is never resized in place. The
+planner reserves dense/recurrent state, KV state, scratch, and headroom before
+deriving the cache capacity. At 8K context it yields:
+
+| Target | Expert-cache slots | Observed Metal allocation | 512-token greedy control |
+| ---: | ---: | ---: | ---: |
+| 3 GiB | 969 | 2.927 GiB | 30.28 tok/s |
+| 4 GiB | 1,576 | 3.928 GiB | 32.53 tok/s |
+| 5 GiB (default) | 2,183 | 4.928 GiB | 34.15 tok/s |
+
+At 64K, the 3 GiB plan is unavailable because it cannot retain eight lockable
+expert slots for every layer. The response limit cannot exceed the selected
+context. Prompt tokens and prior conversation turns consume part of the same
+context window.
 
 The response limit cannot exceed the selected context. Prompt tokens and prior
 conversation turns consume part of the same context window.
@@ -208,7 +218,7 @@ swift run -c release QwenFieldfareBench \
   --model "$QWEN_MODEL" \
   --prompt "Explain HashMap in Java with an example." \
   --context 8192 \
-  --cache-slots 2183 \
+  --memory-gib 5 \
   --max-new 128
 ```
 
@@ -217,6 +227,8 @@ Useful benchmark options:
 | Option | Purpose |
 | --- | --- |
 | `--metrics-only` | Suppress generated text and print timing/cache metrics |
+| `--memory-gib 3\|4\|5` | Select the shared active-streaming allocation plan; default: 5 GiB |
+| `--cache-slots N` | Diagnostic raw override; cannot be combined with `--memory-gib` |
 | `--load-only` | Validate model loading without generation |
 | `--warmup-runs N` | Run `N` unmeasured generations while retaining the loaded expert cache |
 | `--runs N` | Run and summarize `N` measured generations in one process |
@@ -299,6 +311,20 @@ Machine: Apple M5 (`Mac17,2`), 32 GiB unified memory, macOS 26.6.2, Swift
 | 64K context load, 1,523 slots | 4.937 GiB Metal |
 | Full-resident MLX reference | 49.86 tok/s, 19.631 GB peak memory |
 
+### Active-streaming budget controls (2026-11-05)
+
+Release-mode greedy controls used the 21-token HashMap prompt, 8K context,
+seed 42, one retained-runner warmup and two measured runs per profile on the
+validated Apple M5 / 32 GiB machine. Raw Safetensors were used and GPU
+profiling was disabled. File-cache state was uncontrolled; these values show
+the supported memory/speed trade-off, not a speedup over an earlier build.
+
+| Target | Slots | 128-token decode mean | 512-token decode mean | 512-token cache hit rate |
+| ---: | ---: | ---: | ---: | ---: |
+| 3 GiB | 969 | 31.76 tok/s | 30.28 tok/s | 57.5% |
+| 4 GiB | 1,576 | 34.07 tok/s | 32.53 tok/s | 68.9% |
+| 5 GiB | 2,183 | 35.83 tok/s | 34.15 tok/s | 76.8% |
+
 Compared with the previous 2,100-slot trace, the promoted 2,183-slot cache
 reduced misses by 1,480 (3.31%) and logical expert traffic by 2.439 GiB. It did
 not establish a deterministic throughput increase because file-page-cache,
@@ -310,6 +336,9 @@ See the [optimization analysis](docs/OPTIMIZATION_PLAN.md) for the ranked next
 work, measurement protocol, promotion gates, and experiments not to repeat.
 See the [product roadmap](docs/PRODUCT_ROADMAP.md) for reliability,
 distribution, and feature priorities.
+See the [local agent and memory plan](docs/AGENT_RUNTIME_PLAN.md) for proposed
+memory budgets, faster prompt processing, and OpenCode/Hermes server support.
+These server integrations are planned, not currently available.
 
 ## How active-expert streaming works
 

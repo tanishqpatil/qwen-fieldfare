@@ -1,5 +1,12 @@
 # Product roadmap
 
+Planning update (2026-11-05): the proposed
+[agent runtime and memory plan](AGENT_RUNTIME_PLAN.md) adds explicit budgets,
+prefill/state reuse, Qwen tool formatting, and a single-owner local server.
+It supersedes the blanket server deferral below for planning purposes only.
+These features are not implemented. OpenCode is the first integration target;
+Hermes needs long-context qualification, and Claude Code remains experimental.
+
 Status: analysis-only roadmap created on 2026-08-28. No item in this document is
 implemented or promised until its acceptance criteria pass.
 

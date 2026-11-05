@@ -145,6 +145,31 @@ struct ChatInspectorView: View {
             }
             .disabled(chatService.isGenerating)
 
+            if chatService.selectedMode == .activeStreaming {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Active Memory Budget")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Picker("", selection: Binding(
+                            get: { chatService.activeStreamingMemoryBudget },
+                            set: { chatService.setActiveStreamingMemoryBudget($0) }
+                        )) {
+                            ForEach(QwenActiveStreamingMemoryBudget.allCases, id: \.self) { budget in
+                                Text(budget.displayName).tag(budget)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 90)
+                    }
+                    Text("Changes unload the model and reset the active runtime allocation.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .disabled(chatService.isGenerating)
+            }
+
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Max Output")
@@ -228,7 +253,15 @@ struct ChatInspectorView: View {
             telemetryRow(title: "KV Cache Size", value: String(format: "%.2f GiB", chatService.estimatedKVGiB))
 
             if chatService.selectedMode == .activeStreaming {
-                telemetryRow(title: "Active Runtime Est.", value: String(format: "%.2f / 5 GiB", chatService.estimatedActiveRuntimeGiB))
+                telemetryRow(
+                    title: "Active Runtime Plan",
+                    value: String(
+                        format: "%.2f / %@",
+                        chatService.estimatedActiveRuntimeGiB,
+                        chatService.activeStreamingMemoryBudget.displayName
+                    )
+                )
+                telemetryRow(title: "Expert Cache Slots", value: chatService.expertCacheSlots.formatted())
             }
 
             HStack {
