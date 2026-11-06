@@ -455,6 +455,14 @@ not authorize a cache-policy or prefetch edit.
 
 ## Directions closed by evidence
 
+**Stage 2 unused-prefill-output, 2026-11-05:** A state-only prompt-advance
+candidate passed the six-case teacher suite and produced an identical
+fixed-seed, 128-token sampled output to its all-logits diagnostic control.
+On the declared 1,037-token prompt, all-logits prefill averaged 30.230 s and
+final-only prefill averaged 27.513 s: an 8.99% reduction. The predeclared 20%
+TTFT gate was missed, so the runtime and benchmark changes were reverted and
+must not be presented as a speedup.
+
 Do not repeat:
 
 - projection Candidates A–F, input threadgroup copies, SIMD16, or launch-size

@@ -253,6 +253,23 @@ contract, identical greedy IDs and fixed-seed output, and at least 20% lower
 prefill/TTFT on declared long-prompt workloads. Reject a headline claim if the
 measured gain misses that threshold. Decode tok/s should remain unchanged.
 
+**Status: rejected on 2026-11-05; no runtime code retained.** The candidate
+introduced a separate state-only prompt advance operation in both Qwen runners
+and an all-logits same-binary diagnostic control. The six-case teacher suite
+passed (`valid`, `wrong token`, `wrong prompt`, `wrong hash`, `invalid token`,
+and `missing provenance`). A fixed-seed, 128-token sampled generation produced
+identical token IDs and cache demand between the all-logits control and the
+state-only candidate.
+
+The declared long workload was a 1,037-token formatted prompt at 8K context /
+5 GiB cache budget, raw Safetensors, greedy seed 42, no warmup, and two
+measured runs per mode on the Apple M5 / 32 GiB machine. All-logits prefill
+averaged 30.230 s; final-only prefill averaged 27.513 s: an 8.99% reduction.
+Metal allocation remained 4.928 GiB. The candidate removes real output work
+but misses the predeclared 20% gate; longer occupied attention would not
+plausibly improve that percentage. The implementation and benchmark switches
+were reverted. This is rejection evidence, not a shipped optimization.
+
 ### 3. Reuse one verified conversation prefix
 
 Retain exact token prefix, logical positions, Conv/DeltaNet state, full-attention
