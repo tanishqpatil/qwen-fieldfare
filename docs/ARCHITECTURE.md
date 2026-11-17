@@ -1,7 +1,7 @@
 # QwenFieldfare architecture
 
 Source audit: 2026-11-17, base commit `72fb923`. Implemented behavior below is
-separate from the proposed server. [TODO](../TODO.md) owns task status;
+separate from later proposed features; S2-00 server is now implemented. [TODO](../TODO.md) owns task status;
 [decisions](DECISIONS.md) own design constraints.
 
 ## Implemented modules
@@ -13,6 +13,7 @@ separate from the proposed server. [TODO](../TODO.md) owns task status;
 | Presentation | Model-free Markdown parsing, version presentation and model-reveal policy |
 | Bench | Retained-runner measurements, diagnostic profiling, checkpoint-hashed teacher forcing |
 | Pack | Optional packed-expert builder; raw checkpoint remains the production default |
+| Server/ServerSupport | SwiftNIO HTTP1, bounded admission and wire validation, one retained Core backend |
 
 Core paths are relative to `Sources/QwenFieldfareCore/`:
 `Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift` is the production
@@ -344,10 +345,10 @@ encoder/command creation. Error propagation and injection are Stage 1 work;
 recoverability is not yet qualified. Cross-process exclusive ownership is a
 manual prerequisite, not an implemented process lock.
 
-## Proposed architecture: not implemented
+## Later architecture: partly superseded by S2-00
 
 Stage 2 adds typed checkpoint-specific messages/tool calls and a bounded
-incremental parser; tools execute only in clients. Stage 3 adds
+incremental parser; tools execute only in clients. S2-00 now supplies the minimal server described below. Later stages extend
 `QwenFieldfareServer`, loopback/authenticated HTTP, bounded admission and SSE
 backpressure, disconnect cancellation, and one serialized inference owner.
 Networking must run independently from blocking GPU/IO work. App, bench and
@@ -366,3 +367,34 @@ The [observed numerical contract](NUMERICAL_CONTRACT.md) distinguishes activatio
 state, KV and accumulation precision. In particular, native MLX recurrent state
 is FP32; its Conv history is BF16, while Swift uses FP32 for both. Contract and
 matched-input local tests do not replace full-model parity qualification.
+
+## S2-00 design before implementation
+
+Use existing SwiftNIO2.101.3 (Apache2.0), made a direct dependency, NIOHTTP1/Posix.
+One retained Core active runner/tokenizer, existing chat formatter, reset/replay
+per request, selected3/4/5GiB planner. No Core math changes. Networking remains
+on NIO event loops; generation runs in detached work, one active and two queued
+requests, explicit overload rejection. Shutdown/disconnect cancel work; runner
+remains retained until synchronous Metal work and generation finish.
+Loopback-only bind, required environment bearer secret, no CORS/content logging.
+1MiB body,128 messages,4096 output tokens, context reservation before inference;
+one request per HTTP connection, bounded outbound watermark and cancellation for
+slow clients. HTTP errors before SSE start; error event and close after start.
+No tools, response formats, logprobs or arbitrary unsupported fields accepted.
+Wire references reviewed: https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create
+and https://developers.openai.com/api/reference/resources/chat/subresources/completions/streaming-events
+NIO source/example reviewed locally and https://github.com/apple/swift-nio .
+
+## S2-00 implemented outcome
+
+Implemented architecture above in ServerSupport Protocol/Service/HTTP and Server
+main. Model initialization completes before listening; readiness is explicit,
+startup errors exit nonzero.32 connection cap and15s request-body deadline bound
+idle senders; write timeout10s covers stalled peers. Default HTTP request limits
+and serialization are in AGENT_INTEGRATION. Client disconnect cancels its job;
+server SIGTERM/SIGINT cancels and drains before event loops exit. Signal callbacks
+are installed from a nonisolated function to avoid inheriting MainActor. Server
+flock excludes other servers only, not the existing app/Bench/MLX processes.
+Real HTTP JSON/SSE/reuse/recovery/shutdown passed; see S2-00 evidence. These tests
+do not qualify tool calling, full-context/long-agent quality, exhaustive socket
+soak or legacy fatal Core allocation/encoder paths. Strict131/132 remains open.

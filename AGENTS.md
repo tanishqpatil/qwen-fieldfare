@@ -1,5 +1,15 @@
 # QwenFieldfare
 
+## Active priority override — S2-00 (2026-11-17)
+
+Explicit user decision supersedes earlier Stage1-only/order/stop directives.
+Build and qualify the minimal local QwenFieldfareServer now. S1-01e and remaining
+noncritical reliability work are deferred, not completed or abandoned. Preserve
+S1-01a–d and strict131/132 release blocker. Stop after real nonstream/SSE HTTP
+generation; tools, prefix reuse and further reader migrations remain deferred.
+No push/merge. Current implementation/validation status is in DEVELOPMENT_LOG.
+
+
 Native Swift and Metal inference for the MLX Q4 build of Qwen 3.6 35B-A3B on
 Apple Silicon.
 

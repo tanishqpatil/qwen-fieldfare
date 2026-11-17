@@ -1,5 +1,15 @@
 # QwenFieldfare: controlled memory, faster requests, and local agents
 
+## Active priority override — S2-00 (2026-11-17)
+
+Explicit user decision supersedes earlier Stage1-only/order/stop directives.
+Build and qualify the minimal local QwenFieldfareServer now. S1-01e and remaining
+noncritical reliability work are deferred, not completed or abandoned. Preserve
+S1-01a–d and strict131/132 release blocker. Stop after real nonstream/SSE HTTP
+generation; tools, prefix reuse and further reader migrations remain deferred.
+No push/merge. Current implementation/validation status is in DEVELOPMENT_LOG.
+
+
 ## Current mission overlay — 2026-11-17
 
 [TODO](../TODO.md) is now the authoritative backlog with mission stage IDs.
@@ -36,7 +46,7 @@ itself need to execute shell commands or own the agent's filesystem permissions.
 
 | Area | Present | Gap relevant to this goal |
 | --- | --- | --- |
-| Products | Native Mac app, Core library, benchmark, optional pack builder | No HTTP server target or general chat CLI in `Package.swift` |
+| Products | Native Mac app, Core library, benchmark, optional pack builder | S2-00 adds text HTTP; tool/client compatibility remains unqualified |
 | Active streaming | Resident dense Q4 weights, 40 layer partitions, segmented LRU, top-8 slot locks; now 3/4/5 GiB controls | Long-context occupied-history qualification remains open |
 | Expert reads | Parallel independent misses; gate/up/down reads also run in parallel | Nine raw ranges per missed expert; reduced syscall count alone previously lost |
 | CPU/GPU overlap | Shared and hit experts run while misses are fetched | Router completion remains a true CPU dependency at each layer |

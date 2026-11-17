@@ -46,3 +46,12 @@ lazy KV growth and server startup settings are not implemented. Expert caching
 is separate from sequence state and conversation reuse. Selected context is an
 allocation capacity, not measured occupied-history qualification. Current
 teacher-forced correctness is blocked; see [baseline](PERFORMANCE_BASELINES.md).
+
+## Local server S2-00 override
+
+The minimal server is now implemented; this supersedes earlier future-server
+wording above. CLI controls: model path/ID,port,context,memory-gib3/4/5. Required
+QWENFIELDFARE_API_KEY environment secret,127.0.0.1 only. Request sampling/output
+settings follow the existing Core implementation. One active/two queued, reset
+per request, no prefix reuse. See [server guide](AGENT_INTEGRATION.md) for exact
+limits, errors, cancellation/shutdown and reproducible commands. No tool support.

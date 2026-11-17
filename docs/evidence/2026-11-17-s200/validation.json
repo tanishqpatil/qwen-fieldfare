@@ -1,0 +1,69 @@
+{
+  "milestone": "S2-00 completed",
+  "base_commit": "cf0d1447ca81ddd377f899008b3390e38e3997f0",
+  "package_passed": 113,
+  "package_skipped": 3,
+  "server_tests_passed": 6,
+  "checker_tests_passed": 6,
+  "release_seconds": 33.34,
+  "dependency": "SwiftNIO exact2.101.3, already resolved; no pin upgrades",
+  "core_unchanged_verified": 20,
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "strict_baseline": "Retained131/132 exit1; no new strict replay or full checkpoint hashing; log checker is historical evidence only",
+  "real_http_runs": 2,
+  "first_run": "Generation/SSE/reuse/context/disconnect pass; shutdown SIGTRAP; artifacts preserved",
+  "shutdown_fix": "Nonisolated Dispatch signal handler installation; callback no longer inherits MainActor",
+  "final_http": {
+    "startup_to_health_seconds": 1.367499083000439,
+    "first": {
+      "seconds": 1.052618749999965,
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 23,
+        "total_tokens": 25
+      },
+      "finish_reason": "stop"
+    },
+    "repeated": {
+      "seconds": 0.6803357499993581,
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 23,
+        "total_tokens": 25
+      },
+      "finish_reason": "stop"
+    },
+    "stream": {
+      "seconds": 0.6748785419986234,
+      "first_content_seconds": 0.6152399999991758,
+      "events": 5,
+      "done": true
+    },
+    "context_overflow_rejected": true,
+    "disconnect_then_recovery": true,
+    "exit": 0,
+    "shutdown_seconds": 0.15330504199664574
+  },
+  "memory_bytes": {
+    "loaded_footprint": 1157519336,
+    "drained_footprint": 5143274256,
+    "metal": 5291294720
+  },
+  "memory_limitations": "Snapshots not peaks; runner retained through drain until process exit. 5GiB is a Metal plan, not process RAM cap. No full-context or agent soak.",
+  "source_sha256": {
+    "Sources/QwenFieldfareServer/main.swift": "058ad813fd84dcd92600f9bb4ddf9dbaa8d2639b7fa922b1cad525366759ef97",
+    "Sources/QwenFieldfareServerSupport/Protocol.swift": "1d9fb3cee7f92ae9e2e53ae8974f8ed3d9b6f7fabb0b85418d8b6a6d221a3f04",
+    "Sources/QwenFieldfareServerSupport/Service.swift": "2b271e0a7b99cf29284b61e70c2288be307a369dc93c086fd11978bfb01dbe9a",
+    "Sources/QwenFieldfareServerSupport/HTTP.swift": "ff9081019fb19019e5f1f955b3cd9f72b978a0d7fdc09755920f2e2b4ae38f5b",
+    "Tests/QwenFieldfareServerTests/ServerTests.swift": "83266db80bb033d1405567ee3afb9d082e6d2d1126f5d51494b0f884a0a922d2",
+    "Package.swift": "d74892120cccb31a43370fd46d277c5a6cc34c3e2116d78c7ecdc9f2b77a1ce6",
+    "Scripts/test_server_http.py": "b0038a864d02df4ce6220a1daff23d2fb9f53ac44939915c16ae3e4ba7d5119c"
+  },
+  "git": "Uncommitted; no push or merge",
+  "limitations": [
+    "Existing Core fatal Metal allocation/encoder paths and immutable-file races remain",
+    "Manual app/Bench/MLX exclusion; flock is server-only",
+    "No tools/prefix reuse/client qualification; text-only last-user prompts",
+    "Loading not promptly cancellable; no production or numerical equivalence claim"
+  ]
+}

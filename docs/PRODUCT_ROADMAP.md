@@ -1,11 +1,22 @@
 # Product roadmap
 
+## Active priority override — S2-00 (2026-11-17)
+
+Explicit user decision supersedes earlier Stage1-only/order/stop directives.
+Build and qualify the minimal local QwenFieldfareServer now. S1-01e and remaining
+noncritical reliability work are deferred, not completed or abandoned. Preserve
+S1-01a–d and strict131/132 release blocker. Stop after real nonstream/SSE HTTP
+generation; tools, prefix reuse and further reader migrations remain deferred.
+No push/merge. Current implementation/validation status is in DEVELOPMENT_LOG.
+
+
 ## Current execution status — 2026-11-17
 
 [TODO](../TODO.md) now owns mission stages and acceptance; the priorities below
 remain product requirements, not a competing execution queue. AGENTS explicitly
 authorizes the Qwen-only single-owner local server after reliability/tool gates.
-No server, tools or client compatibility is implemented. The known **131/132** teacher-forced result is a release blocker; revised
+S2-00 now implements minimal local text HTTP; tools/client qualification remain
+unimplemented. The known **131/132** teacher-forced result is a release blocker; revised
 policy permits independent Stage 1 reliability work. See
 [architecture](ARCHITECTURE.md) and [development log](DEVELOPMENT_LOG.md).
 
@@ -15,7 +26,8 @@ Planning update (2026-11-05): the proposed
 [agent runtime and memory plan](AGENT_RUNTIME_PLAN.md) adds explicit budgets,
 prefill/state reuse, Qwen tool formatting, and a single-owner local server.
 It supersedes the blanket server deferral below for planning purposes only.
-These features are not implemented. OpenCode is the first integration target;
+This paragraph is historical; S2-00 supplies basic text HTTP only. OpenCode is
+the first integration target after tool-contract qualification;
 Hermes needs long-context qualification, and Claude Code remains experimental.
 
 Status: analysis-only roadmap created on 2026-08-28. No item in this document is

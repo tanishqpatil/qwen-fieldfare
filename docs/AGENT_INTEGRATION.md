@@ -1,46 +1,81 @@
-# Agent integration
+# Local agent integration
 
-Status on 2026-11-17: **no server executable or implemented HTTP API**. Existing
-products are Core, Mac, Bench and Pack. OpenCode and Hermes are unqualified.
-There is no working provider configuration, tested client version, authentication
-scheme or server startup command to publish yet.
+S2-00 implements one local text model over HTTP/1.1. OpenCode/Hermes end-to-end
+qualification and tool calling are **not implemented**. Strict MLX parity remains
+131/132; this research backend is not release qualified.
 
-## Planned contract (Stages 2–4; not available)
+## Build and run
 
-Only `GET /health`, `GET /v1/models` and `POST /v1/chat/completions` are in scope.
-Chat Completions will provide JSON and bounded SSE, exact model IDs, usage,
-finish reasons, structured tools and actionable errors. Supported fields,
-unsupported-field rejection and API error mappings must be specified and tested
-before this document becomes a usage guide. Do not guess a model identifier or
-claim full OpenAI API coverage.
+```bash
+swift build -c release
+export QWENFIELDFARE_API_KEY="$(openssl rand -hex 32)"
+.build/release/QwenFieldfareServer \
+  --model /absolute/path/to/Qwen3.6-35B-A3B-4bit \
+  --model-id qwen-fieldfare --port 8080 --context 8192 --memory-gib 5
+```
 
-Bind to `127.0.0.1` by default. Specify and test local authentication before
-serving. Request body, prompt/context, output, queue and streaming buffers need
-explicit finite limits. Slow clients must exert backpressure or be disconnected;
-client disconnect cancels generation. Serialize inference on exactly one owner
-and prevent simultaneous app/bench/server model loads. Networking must not run
-on the blocking inference executor. Do not log prompts, tool arguments/results,
-auth secrets or sensitive payloads. Never execute tools in Core or the server.
+Keep the environment secret private and configure the same bearer key in clients.
+Only127.0.0.1 binding is allowed. Every endpoint requires authorization; browser
+Origin requests are rejected and no CORS is enabled. Health becomes available
+only after tokenizer/model initialization; startup errors exit nonzero without
+printing sensitive details. Default model ID is qwen-fieldfare (single configured
+Qwen checkpoint, no model switching). Budget choices3/4/5GiB use Core's existing
+planner; these are Metal allocation targets, not process RAM caps.
 
-Stage 2 must derive formatting from the actual compatible checkpoint template,
-including system/developer/user/assistant/tool roles, matching IDs, multiple
-calls, thinking controls and tool-choice behavior. A bounded incremental parser
-must survive arbitrary fragment boundaries, Unicode, escaped strings, nested
-JSON, malformed output and unsupported/duplicate/missing tool metadata. Dispatch
-only complete valid calls; client-side tools own filesystem and shell access.
+```bash
+curl -H "Authorization: Bearer $QWENFIELDFARE_API_KEY" http://127.0.0.1:8080/health
+curl -H "Authorization: Bearer $QWENFIELDFARE_API_KEY" http://127.0.0.1:8080/v1/models
+curl -N http://127.0.0.1:8080/v1/chat/completions \
+  -H "Authorization: Bearer $QWENFIELDFARE_API_KEY" -H 'Content-Type: application/json' \
+  -d '{"model":"qwen-fieldfare","messages":[{"role":"user","content":"Say hello."}],"max_tokens":32,"temperature":0,"stream":true,"stream_options":{"include_usage":true}}'
+```
 
-## Qualification gates
+Omit stream or use false for a chat.completion JSON response. SSE sends role,
+content deltas, finish chunk, optional usage-only chunk, then data: [DONE].
+Stop EOS maps to stop; output/context exhaustion maps to length. Usage counts
+Core prompt tokens and emitted completion tokens; excluded EOS is not counted.
+Text-only system/user/assistant history is supported, with final user required;
+existing Core template disables thinking and cleans assistant history as in app.
+Sampling: temperature,top_p,top_k,presence_penalty,repetition_penalty,seed; output
+limit max_tokens or max_completion_tokens; n=1 only. Limits/defaults are validated.
+Tools/tool_choice,developer/tool roles,content arrays,stop,frequency_penalty,
+response_format,logprobs and all other unknown fields return explicit errors.
+No tool execution, cross-request prefix cache or generic OpenAI API is present.
+Protocol references: [request](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create),
+[streaming](https://developers.openai.com/api/reference/resources/chat/subresources/completions/streaming-events).
 
-- Stage 3: HTTP tests for nonstream/stream/tool exchange, malformed input,
-  queue limits, backpressure, disconnect, auth and context overflow.
-- Stage 4: pin the installed OpenCode version after inspecting its current
-  provider schema; run actual read/edit/test/failing-test-repair in a disposable
-  repository through this backend. Record retries, tool validity, actual token
-  use, latency and memory. A mocked exchange does not qualify OpenCode.
-- Stage 8: inspect installed Hermes protocol and requirements, then test actual
-  occupied long histories, auxiliary calls and the single-session cache policy.
-  A 65,536-token allocation alone does not qualify long-context behavior.
-- Claude Code remains separate experimental research.
+## Lifecycle and limits
 
-Integration configuration and tested version records will be added only when
-these gates run. See [backlog](../TODO.md) and [architecture](ARCHITECTURE.md).
+One retained Core runner/tokenizer, one active generation, two queued requests;
+full queue returns429, shutdown admission returns503. Networking uses NIO event
+loops; serialized detached work resets/replays Core state for every request.
+Disconnect cancels active/queued work; cancellation waits for the current Core
+forward/Metal work to finish. SIGINT/SIGTERM stop admission/listening, cancel and
+drain work before event-loop shutdown/process exit. File flock excludes another
+server for the same OS user; app/Bench/MLX do not honor that lock, so stop them
+manually before startup. There is no implemented cross-application owner lock.
+
+1MiB body,128 messages,4096 output tokens (default256), prompt+requested output
+must fit selected context.32 accepted connections,15s header/body deadline,one
+request per connection,no keep-alive/pipelining.16KiB outbound watermark,one
+flushed write at a time,10s write timeout; non-writable clients cancel instead of
+accumulating streaming data. No heartbeat or resumable SSE. Errors are structured
+JSON before SSE starts; after start an error data event closes the stream (no
+false successful DONE). No request/content/secret/tool/weight logging; only safe
+startup/load/shutdown aggregates. Existing fatal Metal encoder paths and immutable
+checkpoint/ancestor-race limitations remain; this is not crash-proof production
+serving. Loading itself is not immediately cancellable.
+
+## Reproduce validation
+
+```bash
+Scripts/test.sh
+python3 Scripts/test_numerical_non_regression.py
+QWENFIELDFARE_SERVER_CHECKPOINT=/absolute/path/to/Qwen3.6-35B-A3B-4bit python3 Scripts/test_server_http.py
+```
+
+Run model integration only after AGENTS preflight and release build; it starts
+one server on18089 and saves aggregate timings/counts, never content/keys. See
+[S2-00 evidence](evidence/2026-11-17-s200/README.md) for actual results/limitations.
+Next task is S2-01 tool-contract work, followed by actual OpenCode qualification;
+clients, not this server, execute tools. No tool compatibility is advertised now.

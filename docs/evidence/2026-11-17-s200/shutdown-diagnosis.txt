@@ -1,0 +1,3 @@
+Initial HTTP smoke passed generation/SSE/reuse/context/disconnect but shutdown trapped.
+Crash classification: EXC_BREAKPOINT/SIGTRAP; _dispatch_assert_queue_fail -> Swift executor isolation check -> Main signal callback.
+Cause: signal callback inherited main actor but dispatched on global queue. Fix: register callbacks from explicitly nonisolated function. No raw system crash report copied (contains device identifiers).

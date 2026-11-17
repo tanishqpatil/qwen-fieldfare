@@ -1,8 +1,44 @@
 # Agent recovery memory
 
+## Active priority override — S2-00 (2026-11-17)
+
+Explicit user decision supersedes earlier Stage1-only/order/stop directives.
+Build and qualify the minimal local QwenFieldfareServer now. S1-01e and remaining
+noncritical reliability work are deferred, not completed or abandoned. Preserve
+S1-01a–d and strict131/132 release blocker. Stop after real nonstream/SSE HTTP
+generation; tools, prefix reuse and further reader migrations remain deferred.
+No push/merge. Current implementation/validation status is in DEVELOPMENT_LOG.
+
+
 Updated 2026-11-17. Read AGENTS.md, TODO.md and this file at session start.
 Git source/tests/evidence outrank narrative memory. No secrets or private runtime
 payloads belong here. The saved HashMap prompt is the public benchmark prompt.
+
+## S2-00 completed — current recovery state
+
+User explicitly reordered priorities: minimal server before deferred Stage1.
+Do not resume S1-01e now. Server/ServerSupport plus six tests implement NIO HTTP1,
+one retained Core active runner, one active +two queued, JSON/SSE and sampling,
+loopback bearer auth,32 connections,1MiB/128messages/4096output/context reservation,
+15s body deadline/16KiB watermark/10s write deadline. Every request reset/replay;
+no tools or prefix reuse. Secret required in QWENFIELDFARE_API_KEY, no body/key
+logging. Server flock is server-only; manual exclusion of app/Bench/MLX remains.
+See AGENT_INTEGRATION for exact commands/unsupported fields and limits.
+
+Final package113 passed +3 opt-ins skipped; release passed33.34s; checker6 pass.
+Real HTTP run uses existing checkpoint,context8192,budget5GiB. JSON/SSE/reuse,
+context rejection,disconnect recovery,SIGTERM during request passed;exit0.
+Initial HTTP run shutdown trapped on MainActor-inherited Dispatch signal callback;
+fixed by nonisolated signal installation, bounded repeat passes. Preserve initial
+logs/diagnosis alongside final metrics, no raw device-identifying crash report.
+Loaded Metal5291294720 bytes; loaded footprint1157519336,drained5143274256 bytes;
+runner remains retained through drain until process exit. Snapshots not peaks;
+no optimization or long-context/agent qualification claim. Strict131/132 remains
+unresolved; no numerical sources/fixture/math or precision changes. No fresh
+strict replay/hash required; checker reuses old log only. Evidence S2-00 directory.
+New work is uncommitted on cf0d144; no push/merge. Stop after S2-00. Next S2-01:
+validated Qwen tool contract, then real OpenCode integration; not begun here.
+Remaining historical policy/status below is superseded by this override.
 
 ## Current policy and milestone (supersedes earlier stop instructions)
 

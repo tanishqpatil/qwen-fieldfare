@@ -1,0 +1,31 @@
+{
+  "startup_to_health_seconds": 1.367499083000439,
+  "first": {
+    "seconds": 1.052618749999965,
+    "usage": {
+      "completion_tokens": 2,
+      "prompt_tokens": 23,
+      "total_tokens": 25
+    },
+    "finish_reason": "stop"
+  },
+  "repeated": {
+    "seconds": 0.6803357499993581,
+    "usage": {
+      "completion_tokens": 2,
+      "prompt_tokens": 23,
+      "total_tokens": 25
+    },
+    "finish_reason": "stop"
+  },
+  "stream": {
+    "seconds": 0.6748785419986234,
+    "first_content_seconds": 0.6152399999991758,
+    "events": 5,
+    "done": true
+  },
+  "context_overflow_rejected": true,
+  "disconnect_then_recovery": true,
+  "exit": 0,
+  "shutdown_seconds": 0.15330504199664574
+}

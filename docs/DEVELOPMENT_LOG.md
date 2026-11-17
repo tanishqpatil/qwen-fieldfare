@@ -823,3 +823,61 @@ trailing docstring spaces. Preserved all3 raw files byte-for-byte; added exact-
 path .gitattributes -whitespace entries for those archives only. Source, tests,
 ordinary docs and logs retain normal whitespace checks. This records raw evidence
 handling, not suppression of numerical or implementation failures.
+
+## S2-00 started — explicit priority override
+
+Read directives/recovery/architecture/roadmaps/package, Core template/sampling/
+active runner, app ChatService and NIO HTTP example. Clean cf0d144 baseline.
+Remaining Stage1 deferred by user; no pack migration. Architecture documented
+before code. Choose already-resolved NIO2.101.3 HTTP1 with direct dependency, no
+extra general framework. Preserve original numerical fixture/release blocker.
+
+## S2-00 functional milestone completed
+
+Implemented QwenFieldfareServer plus ServerSupport Protocol.swift/Service.swift/
+HTTP.swift; Package directly names existing exact NIO2.101.3. No pin upgrades.
+One configured Core active runner/tokenizer, existing template/planner/config and
+reset/replay, no duplicated inference. HTTP1 GET health/models +POST chat JSON/SSE,
+usage and finish reasons, explicit unsupported-field validation. One active/two
+queued,32 connections,15s body deadline,1MiB/128messages/4096output/context limits,
+16KiB outbound watermark,one flush at a time,10s stalled-write deadline. Required
+loopback bearer secret; no body/key/content logging. SIGINT/SIGTERM/disconnect
+cancel and drain retained work; server flock excludes another server for user,
+not app/Bench/MLX. Earlier Stage1-only ordering superseded by explicit attachment.
+
+Final Scripts/test.sh:113 passed +3 opt-in skips (116 reported:93 Core including
+skips,17 Presentation,6 server). Server tests cover invalid parameters, actual
+HTTP JSON/SSE/auth/loopback, admission saturation/shutdown, disconnect cancellation,
+initialization failure. Release passed33.34s; checker unit6 passes. Markdown links,
+source/evidence checks and diff checks pass. All tracked Core sources byte-identical
+to cf0d144, original fixture SHA unchanged. No kernels/precision/weights modified.
+
+Actual test command: QWENFIELDFARE_SERVER_CHECKPOINT=/Users/tanishq/models/Qwen3.6-35B-A3B-4bit python3 Scripts/test_server_http.py .
+One server at a time,127.0.0.1:18089,context8192,budget5GiB. Preflight Mac17,2/M5/
+32GB/10GPU,macOS27.2.1/26B131,Swift6.4.2,133GiB disk,normal pressure. Two controlled
+HTTP processes total: initial generation/SSE/reuse/context/disconnect succeeded,
+shutdown trapped in Dispatch callback actor-isolation assertion. Diagnosis from
+triggered stack only (no device-identifying crash report copied). Fixed signal
+installation in nonisolated function. Final replay passes entire script,exit0;
+no suppression of initial failure and no unrelated numerical investigation.
+
+Final load0.896549s; health-ready1.367499s; first JSON1.052619s,repeat0.680336s,
+each23 prompt/2 emitted completion tokens,finish stop. SSE0.674879s,first content
+0.615240s,5 JSON events +DONE,then context400/disconnect recovery and SIGTERM during
+request pass. Shutdown0.153305s. First-run metrics remain in initial JSON/log files,
+not omitted to claim an optimization. OS-cache/warmup uncontrolled; no performance
+promotion. No tools or actual OpenCode/Hermes test. Footprint loaded1157519336,
+drained5143274256; Metal5291294720 bytes (4.928GiB) remains under selected5GiB
+allocation plan. Drained runner is intentionally retained until process exits;
+these are snapshots, not peak/RAM cap or unload soak. Postpressure1/free80%.
+
+Strict teacher baseline131/132 exit1/token61 is retained. HTTP smoke proves no
+MLX equivalence; no fresh strict replay/hash, checker reuses S1-01c log only.
+Known Core fatal paths, checkpoint mutation/ancestor races and full-context/agent
+qualification remain open. Remaining Stage1 tasks deferred, not abandoned.
+
+Updated AGENTS/TODO/memory/architecture/roadmaps/integration/runtime controls/README.
+Evidence docs/evidence/2026-11-17-s200 retains initial/final logs,aggregate metrics,
+pre/postflight and source manifest; no conversations/keys/model artifacts. Work
+uncommitted on cf0d144, no push/merge. Stop after S2-00. Next S2-01 validates
+structured Qwen tool contracts, then OpenCode; none implemented in this milestone.

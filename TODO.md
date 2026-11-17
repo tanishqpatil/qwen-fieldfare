@@ -1,5 +1,15 @@
 # Authoritative implementation backlog
 
+## Active priority override — S2-00 (2026-11-17)
+
+Explicit user decision supersedes earlier Stage1-only/order/stop directives.
+Build and qualify the minimal local QwenFieldfareServer now. S1-01e and remaining
+noncritical reliability work are deferred, not completed or abandoned. Preserve
+S1-01a–d and strict131/132 release blocker. Stop after real nonstream/SSE HTTP
+generation; tools, prefix reuse and further reader migrations remain deferred.
+No push/merge. Current implementation/validation status is in DEVELOPMENT_LOG.
+
+
 Mission accepted 2026-11-17; base `72fb923`. Stable IDs below use the mission's
 stage numbers. Existing AGENT_RUNTIME_PLAN optimization stages are historical.
 
@@ -56,7 +66,7 @@ Core paths below omit `Sources/QwenFieldfareCore/`; Mac paths omit
 
 ## Stage 1 — Reliability and correctness hardening
 
-Stage 1 status: **in progress**; 131/132 is a retained release blocker, not
+Stage 1 status: **deferred**; 131/132 is a retained release blocker, not
 an independent-task blocker. Completed S1-03a, S1-01a, S1-01b, S1-01c and S1-01d; next proposed task is S1-01e. Parent tasks
 remain open until their full acceptance criteria pass.
 
@@ -107,7 +117,7 @@ remain open until their full acceptance criteria pass.
 
 ### S1-01e — Migrate pack-builder Safetensors input reader (proposed next)
 
-- Stage/priority/status: 1 / P0 / **pending**; not started.
+- Stage/priority/status: 1 / P0 / **deferred**; not started.
 - Files: `QwenQ4ExpertStoreBuilder.swift; shared descriptor/header owner; focused pack fixtures`.
 - Dependencies: S1-01d.
 - Acceptance: Inspect pack builder's input validation/ownership and existing256MiB cap; reuse shared infrastructure with an explicit compatibility decision, not an automatic cap reduction. Preserve packed format/source identity/integrity checks and output semantics. No other storage-format migration bundled.
@@ -116,7 +126,7 @@ remain open until their full acceptance criteria pass.
 
 ### S1-01 — Unify bounded Safetensors parsing and safe shard ownership
 
-- Stage/priority/status: 1 / P0 / **in progress**.
+- Stage/priority/status: 1 / P0 / **deferred**.
 - Files: `Infrastructure/ModelIO/; Runtime/Generation/QwenQ4*Runner.swift; Storage/`.
 - Dependencies: S0-02 and recorded S0-03 baseline; its unresolved strict-release subgate does not block this independent task.
 - Acceptance: All readers reject short/oversized headers, invalid offsets and failed stat/read; close/unmap on all failures; no heap shard copies.
@@ -125,7 +135,7 @@ remain open until their full acceptance criteria pass.
 
 ### S1-02 — Preflight exact Qwen model and tensor contract before allocation
 
-- Stage/priority/status: 1 / P0 / **pending**.
+- Stage/priority/status: 1 / P0 / **deferred**.
 - Files: `Infrastructure/ModelIO/; Runtime/Generation/QwenQ4*Runner.swift`.
 - Dependencies: S1-01.
 - Acceptance: Required tensor names/shapes/dtypes/byte sizes and affine quantization validated; extras permitted; tokenizer/template metadata checked.
@@ -134,7 +144,7 @@ remain open until their full acceptance criteria pass.
 
 ### S1-03 — Enforce model-root and regular-file policy on every entry point
 
-- Stage/priority/status: 1 / P0 / **in progress**.
+- Stage/priority/status: 1 / P0 / **deferred**.
 - Files: `QwenModelDirectory.swift; runner loaders; expert stores; Bench/; Pack/`.
 - Dependencies: S1-01.
 - Acceptance: Canonical containment, safe metadata/shards, regular-file checks; define symlink and concurrent modification policy.
@@ -143,7 +153,7 @@ remain open until their full acceptance criteria pass.
 
 ### S1-04 — Make Metal allocation and command failures recoverable
 
-- Stage/priority/status: 1 / P0 / **pending**.
+- Stage/priority/status: 1 / P0 / **deferred**.
 - Files: `Infrastructure/Metal/MetalContext.swift; Kernels/; Runtime/Generation/; Storage/Q4BoundedExpertCache.swift`.
 - Dependencies: S1-01,S1-02.
 - Acceptance: Replace production fatal errors/forced buffers; propagate command completion errors; invalidate partial state.
@@ -152,7 +162,7 @@ remain open until their full acceptance criteria pass.
 
 ### S1-05 — Unify cancellable lifecycle and error recovery
 
-- Stage/priority/status: 1 / P0 / **pending**.
+- Stage/priority/status: 1 / P0 / **deferred**.
 - Files: `Mac/Generation/ChatService.swift; Core runtime/loading support`.
 - Dependencies: S1-02,S1-03,S1-04.
 - Acceptance: Cancellation during load/prefill/decode releases ownership; idempotent unload; recoverable retry; consistent visible/internal history.
@@ -161,7 +171,7 @@ remain open until their full acceptance criteria pass.
 
 ### S1-06 — Qualify Stage 1 and stop for review
 
-- Stage/priority/status: 1 / P0 / **pending**.
+- Stage/priority/status: 1 / P0 / **deferred**.
 - Files: `Scripts/; Tests/; docs/DEVELOPMENT_LOG.md; docs/PERFORMANCE_BASELINES.md`.
 - Dependencies: S1-01,S1-02,S1-03,S1-04,S1-05.
 - Acceptance: Independent reliability tests/package/release and numerical non-regression pass; known strict-parity failure explicitly retained; no memory regression; measured unload tolerance; stop before Stage 2. Production readiness remains separately blocked.
@@ -169,13 +179,25 @@ remain open until their full acceptance criteria pass.
 - Risks/blockers: No stage completion based solely on mocks or compilation.
 
 
+## S2-00 — First local HTTP server (active priority override)
+
+- Status: **completed**, ahead of deferred Stage1 by explicit user decision.
+- Validation:113 package passes +3 skips; release; six checker tests; real
+  JSON/SSE/reuse/context/disconnect/shutdown HTTP smoke passes. Initial signal
+  isolation crash fixed and failed-run evidence preserved. See S2-00 evidence.
+- Scope: SwiftNIO HTTP1, one Core runner, loopback bearer auth, bounded serial queue,
+  health/models/chat JSON+SSE, cancellation/shutdown; no tools or prefix reuse.
+- Tests: protocol/validation/auth/SSE/queue/cancellation/init/shutdown; real HTTP
+  generation gate. Preserve strict131/132 release blocker independently.
+- Next: S2-01 structured tools after this milestone; not started here.
+
 ## Stage 2 — Qwen chat and structured tools
 
 ### S2-01 — Derive typed role/tool history from actual checkpoint template
 
 - Stage/priority/status: 2 / P0 / **pending**.
 - Files: `QwenGenerationSupport.swift; QwenTokenizer; new bounded protocol types`.
-- Dependencies: S1-06 plus review.
+- Dependencies: S2-00 functional server milestone plus explicit next-task review; earlier S1-06 ordering is superseded.
 - Acceptance: System/developer/user/assistant/tool history, IDs and multiple calls round-trip; thinking and special tokens exact.
 - Required tests: Checkpoint template/token fixtures; multi-turn tools; ID matching.
 - Risks/blockers: Official/current template must be inspected before design.
@@ -200,6 +222,10 @@ remain open until their full acceptance criteria pass.
 
 
 ## Stage 3 — QwenFieldfareServer
+
+Historical decomposition: S2-00 now supplies the minimal text HTTP subset.
+Pending items below cover broader protocol/ownership/client qualification, not
+the absence of an HTTP executable. Do not begin them in the S2-00 milestone.
 
 ### S3-01 — Select maintained minimal HTTP dependency and define API
 

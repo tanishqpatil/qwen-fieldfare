@@ -5,15 +5,20 @@ let package = Package(
     name: "QwenFieldfare",
     platforms: [.macOS(.v26)],
     products: [
+        .executable(name: "QwenFieldfareServer", targets: ["QwenFieldfareServer"]),
         .library(name: "QwenFieldfareCore", targets: ["QwenFieldfareCore"]),
         .executable(name: "QwenFieldfareMac", targets: ["QwenFieldfareMac"]),
         .executable(name: "QwenFieldfareBench", targets: ["QwenFieldfareBench"]),
         .executable(name: "QwenFieldfarePack", targets: ["QwenFieldfarePack"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-nio.git", exact: "2.101.3"),
         .package(url: "https://github.com/huggingface/swift-transformers", from: "1.3.0"),
     ],
     targets: [
+        .target(name: "QwenFieldfareServerSupport", dependencies: ["QwenFieldfareCore", .product(name: "NIOCore", package: "swift-nio"), .product(name: "NIOHTTP1", package: "swift-nio"), .product(name: "NIOPosix", package: "swift-nio")]),
+        .executableTarget(name: "QwenFieldfareServer", dependencies: ["QwenFieldfareServerSupport", "QwenFieldfareCore"]),
+        .testTarget(name: "QwenFieldfareServerTests", dependencies: ["QwenFieldfareServerSupport"]),
         .target(
             name: "QwenFieldfareCore",
             dependencies: [.product(name: "Tokenizers", package: "swift-transformers")],
