@@ -13,6 +13,7 @@ public struct ParsedTurn: Sendable {
 public final class NativeToolParser {
     private enum State { case prose, calls, finished, failed }
     private var state: State = .prose
+    var isBufferingCalls: Bool {state == .calls}
     private var pending = ""
     private var content = ""
     private var byteCount = 0

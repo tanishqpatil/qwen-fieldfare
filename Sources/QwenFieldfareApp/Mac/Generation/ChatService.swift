@@ -103,6 +103,8 @@ public final class ChatService {
         case error = "Error"
     }
 
+    public private(set) var serverModeActive = false
+    private var directLoading = false
     public var currentResponse = ""
     public var messages: [ChatMessage] = []
     public var isGenerating = false
@@ -281,6 +283,9 @@ public final class ChatService {
     }
 
     public func loadModelIfNeeded() async throws {
+        guard !serverModeActive else {throw NSError(domain:"ChatService",code:4,userInfo:[NSLocalizedDescriptionKey:"Stop server mode before loading native chat."])}
+        directLoading = true
+        defer {directLoading = false;if serverModeActive {finishUnload()}}
         guard activeRunner == nil && chatRunner == nil else { return }
         let (allowed, warning) = preflightMemoryCheck()
         memoryWarning = warning
@@ -308,10 +313,23 @@ public final class ChatService {
             )
         }
         tokenizer = try await QwenTokenizer.load(from: URL(fileURLWithPath: modelPath))
+        if serverModeActive {throw CancellationError()}
         metrics.loadDurationMs = (CFAbsoluteTimeGetCurrent() - started) * 1_000.0
         setState(.ready)
         updateTelemetry()
     }
+
+    public func prepareForServer() async throws {
+        serverModeActive = true
+        cancelIdleTimer()
+        unloadRequested = true
+        cancelGeneration()
+        if let task = generationTask {await task.value}
+        while directLoading {try await Task.sleep(for:.milliseconds(20))}
+        generationTask = nil
+        finishUnload()
+    }
+    public func resumeAfterServer() {serverModeActive = false;resetIdleTimer()}
 
     public func unloadModel() {
         cancelIdleTimer()
@@ -374,7 +392,7 @@ public final class ChatService {
 
     public func send(message: String) {
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !isGenerating else { return }
+        guard !trimmed.isEmpty, !isGenerating, !serverModeActive else { return }
 
         cancelIdleTimer()
         isGenerating = true

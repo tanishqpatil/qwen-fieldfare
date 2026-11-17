@@ -1,0 +1,79 @@
+{
+  "kind": "real checkpoint already owned by native UI; client executes no filesystem/shell model tools",
+  "json": {
+    "seconds": 0.925447040994186,
+    "usage": {
+      "completion_tokens": 1,
+      "prompt_tokens": 17,
+      "total_tokens": 18
+    },
+    "finish": "stop",
+    "content": "hello"
+  },
+  "sse": {
+    "seconds": 0.59615666600439,
+    "usage": {
+      "completion_tokens": 1,
+      "prompt_tokens": 17,
+      "total_tokens": 18
+    },
+    "content": "hello"
+  },
+  "tool": {
+    "seconds": 16.123924291998264,
+    "usage": {
+      "completion_tokens": 27,
+      "prompt_tokens": 290,
+      "total_tokens": 317
+    },
+    "name": "get_project_status"
+  },
+  "tool_continuation": {
+    "seconds": 17.32456291699782,
+    "content": "The current status of the project \"fieldfare\" is \"building-local-agent\".",
+    "usage": {
+      "completion_tokens": 16,
+      "prompt_tokens": 347,
+      "total_tokens": 363
+    }
+  },
+  "opencode": {
+    "version": "1.19.5",
+    "exit": 0,
+    "seconds": 11.062161707995983
+  },
+  "final_health": {
+    "diagnostics": {
+      "memoryBudgetGiB": 5,
+      "context": 8192,
+      "metalAllocatedBytes": 5291294720
+    },
+    "requests": {
+      "cancelled": 0,
+      "completed": 5,
+      "rejected": 1,
+      "failed": 0,
+      "lastRequest": {
+        "prefillMs": 9479.467988014221,
+        "tokenizationMs": 4.376583332486916,
+        "admissionMs": 0.28033333364874125,
+        "formattingMs": 0.05008333391742781,
+        "queueWaitMs": 0.039749997085891664,
+        "firstGeneratedTokenMs": 9490.339500000118,
+        "firstVisibleSSEMs": 9490.513791664853,
+        "promptTokens": 210,
+        "overallMs": 9534.786416668794,
+        "outcome": "completed",
+        "decodeAfterFirstTokenMs": 44.2597916626255,
+        "outputTokens": 1
+      }
+    },
+    "service": "QwenFieldfareServer",
+    "queued_requests": 0,
+    "model": "qwen-fieldfare",
+    "queue_capacity": 2,
+    "status": "ready",
+    "tools": true,
+    "active_generations": 0
+  }
+}

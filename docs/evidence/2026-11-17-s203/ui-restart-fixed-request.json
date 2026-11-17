@@ -1,0 +1,45 @@
+{
+  "status": 200,
+  "seconds": 0.9711969589989167,
+  "reply": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "hello",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1794937815,
+    "id": "chatcmpl-354DC9DD-EE1E-4A32-AF06-A86742768458",
+    "model": "qwen-fieldfare",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1,
+      "prompt_tokens": 17,
+      "total_tokens": 18
+    }
+  },
+  "health": {
+    "diagnostics": {
+      "memoryBudgetGiB": 5,
+      "context": 8192,
+      "metalAllocatedBytes": 5291294720
+    },
+    "status": "ready",
+    "model": "qwen-fieldfare",
+    "active_generations": 0,
+    "queue_capacity": 2,
+    "queued_requests": 0,
+    "service": "QwenFieldfareServer",
+    "tools": true,
+    "requests": {
+      "failed": 0,
+      "cancelled": 0,
+      "completed": 0,
+      "rejected": 0
+    }
+  }
+}

@@ -1,6 +1,14 @@
 # QwenFieldfare
 
-## Current milestone — S2-02 CLI and real OpenCode qualification
+## Current milestone — S2-03 native server management
+
+Explicit user authorization supersedes S2-02 stop. Checkpoint S2-02, reuse the
+existing Core/backend/HTTP implementation in native server controls, preserve
+single ownership and client-only tools. Stop and locally commit after S2-03.
+No prefix reuse, inference math changes, remote push or merge.
+
+
+## Historical milestone — S2-02 CLI and real OpenCode qualification
 
 Explicit user authorization supersedes the prior S2-01 stop. Preserve completed
 server/tools/readers and known131/132 release blocker. Implement validated CLI

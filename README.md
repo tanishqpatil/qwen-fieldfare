@@ -1,15 +1,16 @@
 <p align="center">
 
-Local HTTP server S2-00 is implemented. Build/run commands and the exact
-supported request subset are in [the server guide](docs/AGENT_INTEGRATION.md).
-The bounded Qwen function-tool contract is implemented; OpenCode/Hermes client
-qualification remains unimplemented. Strict
-MLX131/132 remains an unresolved release blocker.
   <img src="Sources/QwenFieldfareApp/Mac/Resources/qwenfieldfare-app-icon.png"
        width="128" alt="QwenFieldfare app icon">
 </p>
 
 <h1 align="center">QwenFieldfare</h1>
+
+Authenticated local Chat Completions, SSE and validated Qwen function calls are
+implemented. OpenCode1.19.5 completed a real disposable coding workflow. The native
+app can manage an exclusive server mode or observe an independent CLI server.
+See [usage and limits](docs/AGENT_INTEGRATION.md). Strict MLX131/132 remains an
+unresolved release blocker; this is not production-qualified inference.
 
 **Local Qwen 3.6 35B-A3B Q4 mixture-of-experts inference near 5 GiB of Metal
 allocation.**
@@ -212,6 +213,40 @@ Press **Return** to send, **Shift+Return** for a newline, or use the stop button
 to cancel generation. **New Chat** clears retained conversation context without
 changing the loaded runtime.
 
+## Native and standalone server modes
+
+Build release, then open `.build/release/QwenFieldfareMac`. Click **Local Server**
+in the header. Choose the checkpoint, port, context,3/4/5GiB Metal target and queue
+limit; **Start Server** cancels/drains/unloads native chat and starts the existing
+Core/HTTP server in the app process. Native chat is disabled until **Stop Server**
+finishes. **Restart** safely reloads; settings persist but never auto-start on reopen.
+Quitting drains the owned server. No second runner or child process is created.
+
+Authentication is required. The app stores its credential in Keychain and uses
+the CLI's private0600 key-file validation contract. **Copy API URL** and **Copy
+OpenCode Guidance** contain no key. Copy/reveal/export of the key is explicit and
+warned; an exported file must use a new private path. Import an owned private CLI
+key and choose **Observe CLI** to inspect an independent server; **Disconnect**
+and quitting the app leave that process running. Other model owners produce a
+recoverable conflict, never a second allocation.
+
+For independent headless operation:
+
+```bash
+# Set QWENFIELDFARE_API_KEY privately OR provide an owned0600 key file:
+.build/release/QwenFieldfareServer --model /absolute/path/to/Qwen3.6-35B-A3B-4bit \
+  --host 127.0.0.1 --port 8080 --context 8192 --memory-gib 5 \
+  --queue-capacity 2 --api-key-file /absolute/private/path/api-key
+```
+
+The [server/OpenCode guide](docs/AGENT_INTEGRATION.md) has authenticated health,
+request, shutdown and OpenCode1.19.5 configuration commands. Server diagnostics
+show actual occupancy/counters,Metal allocation and one bounded last-request timing
+record; missing measurements stay unavailable. Metal allocation is not total RAM
+or an exact peak. The earlier28m17s coding workflow/167.9s first-content baseline
+is preserved; S2-03 introduces diagnostics, not prefix reuse or a speed claim.
+[Validation and limitations](docs/evidence/2026-11-17-s203/README.md).
+
 ## Benchmark command line
 
 `QwenFieldfareBench` is the supported command-line Qwen entry point. It
@@ -344,7 +379,7 @@ See the [product roadmap](docs/PRODUCT_ROADMAP.md) for reliability,
 distribution, and feature priorities.
 See the [local agent and memory plan](docs/AGENT_RUNTIME_PLAN.md) for proposed
 memory budgets, faster prompt processing, and OpenCode/Hermes server support.
-These server integrations are planned, not currently available.
+OpenCode is qualified for the documented bounded workflow; Hermes and prefix reuse remain planned.
 
 ## How active-expert streaming works
 
@@ -414,8 +449,7 @@ full numerical-equivalence claim is made. [Evidence](docs/evidence/2026-11-17-s1
 The [authoritative backlog](TODO.md), [architecture](docs/ARCHITECTURE.md) and
 [recovery memory](docs/AGENT_MEMORY.md) track the local coding-agent mission.
 The Qwen-specific local server is authorized for later gated implementation;
-S2-00 implements the minimal local text HTTP server; structured function tools are implemented in S2-01. OpenCode/Hermes client
-qualification remains unimplemented.
+S2-00/01 implement local HTTP/tools; S2-02 qualifies OpenCode1.19.5 and S2-03 adds native server controls. Hermes remains unqualified.
 
 ## Repository map
 
@@ -436,7 +470,7 @@ qualification remains unimplemented.
 - Decode speed remains below the full-resident MLX reference.
 - The runtime is text-only; vision, audio, video, tool execution, and MTP
   speculative decoding are not implemented.
-- Qwen is not currently exposed through an OpenAI-compatible server.
+- The local server supports a bounded Chat Completions subset; advanced schemas, generic multi-model hosting and server-side tool execution are unsupported.
 - The app does not download the model. Install the model with `hf download`
   before first use.
 - True cold-storage state, thermal state, and macOS file-page-cache state can

@@ -1,11 +1,18 @@
 import AppKit
 import QwenFieldfarePresentation
 import SwiftUI
+import QwenFieldfareServerManagement
 
 // Run as a regular foreground app even when launched as a bare SwiftPM
 // executable (no .app bundle): Dock icon, click-to-activate, full main menu
 // with Quit (Cmd+Q).
-private final class ForegroundAppDelegate: NSObject, NSApplicationDelegate {
+@MainActor private final class ForegroundAppDelegate: NSObject, NSApplicationDelegate {
+    var serverController: ServerController?
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let controller = serverController,controller.blocksNativeChat else {return .terminateNow}
+        Task {let stopped = await controller.shutdown();sender.reply(toApplicationShouldTerminate:stopped)}
+        return .terminateLater
+    }
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         if let icon = MacAppIcon.load() {
@@ -23,11 +30,18 @@ private final class ForegroundAppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct QwenFieldfareMacApp: App {
     @NSApplicationDelegateAdaptor private var appDelegate: ForegroundAppDelegate
-    @State private var chatService = ChatService()
+    @State private var chatService: ChatService
+    @State private var serverController: ServerController
+    init() {
+        let chat = ChatService()
+        _chatService = State(initialValue:chat)
+        _serverController = State(initialValue:ServerController(modelPath:chat.modelPath,prepareChat:{try await chat.prepareForServer()},resumeChat:{chat.resumeAfterServer()}))
+    }
 
     var body: some Scene {
         Window("QwenFieldfare", id: "main") {
-            RootView(chatService: chatService)
+            RootView(chatService: chatService,serverController:serverController)
+                .onAppear {appDelegate.serverController = serverController}
                 .frame(minWidth: 1040, minHeight: 560)
         }
         .windowStyle(.hiddenTitleBar)

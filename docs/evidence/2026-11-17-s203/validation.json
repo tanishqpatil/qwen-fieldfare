@@ -1,0 +1,73 @@
+{
+  "task": "S2-03",
+  "base_checkpoint": "f2f5672",
+  "architecture": "in-process CoreBackend/LocalServer; exclusive native chat/server modes; external CLI read-only observation",
+  "package_passed": 150,
+  "package_skipped": 3,
+  "package_total": 153,
+  "suites": {
+    "server": 30,
+    "management": 10,
+    "presentation": 17,
+    "core_including_skips": 96
+  },
+  "release": "final36.68s; real model integration used37.90s before rebind fix and36.97s after fix",
+  "checker_tests": 6,
+  "strict_parity": "No fresh replay. Unresolved131/132 token61 expected14988 actual10000 remains release blocker.",
+  "protected_paths_identical_to_S202": [
+    "Sources/QwenFieldfareCore",
+    "Sources/QwenFieldfareBench",
+    "Package.resolved",
+    "Scripts/test_teacher_reference.py",
+    "docs/evidence/2026-11-17-parity/reference.json",
+    "docs/numerical_non_regression_baseline.json"
+  ],
+  "reference_fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "real_ui_checks": [
+    "native chat hello before server and after release/reopen",
+    "server start using Keychain/private CLI-file parser",
+    "real JSON/SSE and native tool/result/final continuation",
+    "actual OpenCode1.19.5 against UI-owned instance",
+    "active-prefill Stop and closed listener",
+    "immediate used-port Restart after SO_REUSEADDR fix",
+    "owned app Quit exits/closes listener",
+    "reopen stopped/unloaded with persisted18094 settings",
+    "CLI rejects before allocation while native chat owns model",
+    "explicit native unload permits independent CLI",
+    "UI detects occupied port then observes CLI read-only",
+    "observer app Quit leaves independent CLI generating",
+    "our independent test CLI exits0 after graceful SIGTERM"
+  ],
+  "deviations": [
+    "Disposable .app wrapper needed for CUA; same release binary/resource bundles; no packaging/signing claim.",
+    "Initial UI export default target refused recoverably; no successful target export claimed; private export/import contract passes model-free tests.",
+    "Initial immediate restart failure preserved, fixed with SO_REUSEADDR on probe/listener and regression-tested; no SO_REUSEPORT.",
+    "App intentionally running unloaded during independent CLI observation; one model owner and normal pressure verified.",
+    "Post-integration provider-guidance-only safety refinement tested with exact generated JSON via installed OpenCode debug config; no repeated model run."
+  ],
+  "performance": "Diagnostic timings only; preserved S2-02 full28m17s/167.9s/173.4s baseline; no optimization or broad throughput claim.",
+  "memory": "Metal5291294720 bytes. UI combined RSS snapshot5052688KiB; not an exact peak/physical footprint. CLI load footprint1156667344/drained5141734112 bytes. No second model cache/process.",
+  "cleanup": "All test model processes stopped; temporary private key/client directory and .app wrapper removed. App credential remains only in Keychain.",
+  "source_sha256": {
+    "Package.swift": "7bd7489b1058e3a32fb48be2766fd43038dc1f9ed995d452c795603702454132",
+    "Sources/QwenFieldfareApp/Mac/App/QwenFieldfareMacApp.swift": "2a08598de6318bbde16901be3c5444ebbadc250cc9c9621c760d6b2073283c26",
+    "Sources/QwenFieldfareApp/Mac/App/RootView.swift": "5e2a9361013b958e7ac1be3cdfe8e5dbb58cda6e758da5dd36edee0911d38d23",
+    "Sources/QwenFieldfareApp/Mac/Generation/ChatService.swift": "7c39ad0be2e1bee6f3242df928b21aacca7413a7e1fb3c5c891c112fa24ad43d",
+    "Sources/QwenFieldfareApp/Mac/Server/ServerSettingsView.swift": "3171d07e6a538a388f121df44cf949546adaade570d0a6aef0e30a8e8993d095",
+    "Sources/QwenFieldfareServerManagement/Credentials.swift": "908e25a5ae1051245d173cf0f6d3d087718c922d4c92f90d23bf2e78aa244ccb",
+    "Sources/QwenFieldfareServerManagement/ServerController.swift": "46a8db80d776397d9c1f7401884fdc63ce5499708a889806a02f84f44b95d79e",
+    "Sources/QwenFieldfareServerManagement/ServerSession.swift": "2b74e33b1bab1dd84bf5edaa4c050f87ca28406c7349ae814033e148c112c633",
+    "Sources/QwenFieldfareServerManagement/ServerSettings.swift": "5fe66e34391b9068510968ce9664809a9cb3896357f44546250517e4e01e7cdf",
+    "Sources/QwenFieldfareServerSupport/HTTP.swift": "0b3e8c4a5094a18d9d82927dff321163f562a442609c946842d418346d3c6288",
+    "Sources/QwenFieldfareServerSupport/NativeTools.swift": "f3f5f1913249c01d6ddc1ab21bbc2eaeb1e6d57676ef0e4eae2f7d18ca322726",
+    "Sources/QwenFieldfareServerSupport/Service.swift": "9fccd35cef7212637fe71c4b3838e3e088ba2f1edde82bf7fccd1e3a8dc48eb6",
+    "Sources/QwenFieldfareServerSupport/Telemetry.swift": "e54750eeec381d4294e34d6d3de96acf578079a349300324e54729642e3456a0"
+  },
+  "final_release_sha256": "e6b89ae87d66b17f9c8659cb171466dfe85560a606b90b6651165e0eb4f1539a",
+  "git": "S2-02 local checkpoint f2f5672; S2-03 locally checkpointed as feat: manage exclusive local server mode in native macOS app. No push/merge; clean working tree verified after commit.",
+  "markdown_files_checked": 28,
+  "diff_check": "passed",
+  "source_identity_review": "passed; final release/source hashes match; Core/Bench/pins/reference protected",
+  "artifact_review": "scoped public synthetic text/aggregate logs only; no models, keys, database or generated binaries",
+  "final_git_policy": "Scoped local commit authorized; no push/merge. Stop after S2-03."
+}

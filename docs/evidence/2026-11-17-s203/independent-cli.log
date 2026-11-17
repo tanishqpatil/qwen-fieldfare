@@ -1,0 +1,3 @@
+QwenFieldfareServer ready 127.0.0.1:18094; load_seconds=0.8208509683609009; context=8192, budget_gib=5, queue=2
+Loaded footprint_bytes=1156667344, metal_bytes=5291294720
+Shutdown drained footprint_bytes=5141734112, metal_bytes=5291294720

@@ -17,6 +17,8 @@ let package = Package(
         .package(url: "https://github.com/huggingface/swift-transformers", from: "1.3.0"),
     ],
     targets: [
+        .target(name: "QwenFieldfareServerManagement", dependencies: ["QwenFieldfareCore", "QwenFieldfareServerSupport"]),
+        .testTarget(name: "QwenFieldfareServerManagementTests", dependencies: ["QwenFieldfareServerManagement", "QwenFieldfareServerSupport"]),
         .target(name: "QwenFieldfareServerSupport", dependencies: ["QwenFieldfareCore", .product(name: "Jinja", package: "swift-jinja"), .product(name: "NIOCore", package: "swift-nio"), .product(name: "NIOHTTP1", package: "swift-nio"), .product(name: "NIOPosix", package: "swift-nio")]),
         .executableTarget(name: "QwenFieldfareServer", dependencies: ["QwenFieldfareServerSupport", "QwenFieldfareCore"]),
         .testTarget(name: "QwenFieldfareServerTests", dependencies: ["QwenFieldfareServerSupport"], resources: [.copy("Fixtures")]),
@@ -58,9 +60,10 @@ let package = Package(
         ),
         .executableTarget(
             name: "QwenFieldfareMac",
-            dependencies: ["QwenFieldfareCore", "QwenFieldfarePresentation"],
+            dependencies: ["QwenFieldfareCore", "QwenFieldfarePresentation", "QwenFieldfareServerManagement"],
             path: "Sources/QwenFieldfareApp/Mac",
             sources: [
+                "Server/ServerSettingsView.swift",
                 "App/MacAppIcon.swift",
                 "App/RootView.swift",
                 "App/QwenFieldfareMacApp.swift",

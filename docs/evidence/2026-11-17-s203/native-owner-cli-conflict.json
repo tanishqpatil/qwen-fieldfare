@@ -1,0 +1,4 @@
+{
+  "exit": 1,
+  "error": "QwenFieldfareServer: Another QwenFieldfare app, server or benchmark owns inference. Stop or unload it before loading this model."
+}

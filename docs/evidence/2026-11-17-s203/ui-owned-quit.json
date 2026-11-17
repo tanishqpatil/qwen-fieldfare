@@ -1,0 +1,6 @@
+{
+  "owned_app_quit": true,
+  "listener_closed": true,
+  "app_process_exited": true,
+  "architecture": "same-process server; no child process to orphan"
+}

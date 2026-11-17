@@ -42,7 +42,7 @@ rates, token latency percentiles, expert-cache occupancy, and miss rate.
 
 Every request currently resets and replays KV, Conv and DeltaNet state.
 Cross-request prefix reuse, cache idle expiry/retained-token limits/clear action,
-lazy KV growth and native UI server settings are not implemented. Expert caching
+lazy KV growth are not implemented. Native server settings are described below. Expert caching
 is separate from sequence state and conversation reuse. Selected context is an
 allocation capacity, not measured occupied-history qualification. Current
 teacher-forced correctness is blocked; see [baseline](PERFORMANCE_BASELINES.md).
@@ -65,6 +65,22 @@ before switching. Other inference products still require manual exclusion.
 
 JSON/SSE content and validated function calls/results are supported; tools execute
 only in clients. OpenCode1.19.5 provider qualification is documented separately.
-Native app server controls, Keychain management and tool-call display remain S2-03
-proposals and are not implemented here. Existing app chat behavior is retained.
+Native server controls and Keychain authentication are implemented in S2-03.
+Click Local Server for validated persistent settings,start/stop/restart and status.
+It shares the existing in-process server/backend, cancels/drains/unloads native
+chat before server loading and blocks native sends until stop. Native chat works
+again after server release. Observe CLI is authenticated/read-only; Disconnect
+and app Quit never stop the independent CLI. App Quit drains its own server.
+No auto-start on reopen,no child process,no app tool executor or server-chat tool
+frame display. OpenCode alone executes tools. Copy/reveal/export credentials are
+explicit warned actions; provider guidance contains an environment placeholder.
+
+The server section shows active/queued/completed/rejected/failed/cancelled counts,
+current context/budget,observed Metal allocation and one last finished request
+record. Admission/queue,format/tokenize,prefill,first generated token,visible SSE,
+validated tool buffering,decode-after-first and overall time are measured where
+observable; unavailable values stay unavailable. Metal allocation is not total
+RAM or a measured peak. Native inspector timings refer to its last native run.
+See the integration guide for metric definitions,Keychain/private-file contract,
+external observation version requirements and remaining lifecycle limitations.
 The known131/132 numerical release blocker remains unchanged.

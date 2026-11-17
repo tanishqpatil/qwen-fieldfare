@@ -90,8 +90,8 @@ Use Ctrl-C for foreground shutdown or SIGTERM to the exact server PID, then wait
 for exit before starting another owner. Authenticated health includes status,
 model,tools,active_generations,queued_requests,queue_capacity. It reports ready
 while work is active; counts are observational, not admission reservations.
-No loading endpoint exists before the listener binds. Native app server controls
-are not implemented in S2-02; the app continues using its own exclusive runner.
+No loading endpoint exists before the listener binds. S2-03 now offers native server controls in the app, using the same CoreBackend
+and LocalServer in-process with exclusive native-chat/server modes (details below).
 
 1MiB body,128 messages,4096 output tokens (default256), prompt+requested output
 must fit selected context.32 accepted connections,15s header/body deadline,one
@@ -249,3 +249,81 @@ latency, retries, memory, first failed permission attempt and known limitations.
 Tool SSE is still delayed until complete native-turn validation/EOS; safe prose
 streams earlier. A600s client timeout accommodates observed prefill/tool latency;
 this is functional qualification, not a throughput claim or long-context benchmark.
+
+## Native server management (S2-03)
+
+Open the macOS application and choose **Local Server** in the header. It reuses
+CoreBackend/LocalServer in-process; the standalone executable remains independent.
+Choose a compatible directory,loopback port (0 ephemeral),context,3/4/5GiB target,
+and queue0–8. Invalid port/context/budget combinations disable Start. Missing or
+incompatible models return recoverable load errors. Stop before editing/reloading;
+settings persist in UserDefaults,not credentials. Reopen never auto-starts.
+
+Start first blocks new native sends, cancels/drains existing native work and
+unloads it; only then constructs the server. Native chat is intentionally disabled
+while owned or observed server mode is active (option B). Stop cancels/drains HTTP
+work, releases the server/runner/lease, then re-enables chat. Restart uses the same
+path; SO_REUSEADDR permits the used port to rebind without SO_REUSEPORT or shared
+listeners. App Quit waits for drain. There is no supervised child to orphan, and
+an app crash shares the server's fate. A blocked GPU/legacy fatal failure is not
+made recoverable by this controller; immediate load cancellation is not promised.
+
+The app's bearer key lives in the local,non-synchronizing Keychain item
+QwenFieldfare.local-server/default (WhenUnlockedThisDeviceOnly). Each startup uses
+a private0700 temporary directory/0600 key file and the exact CLI configuration
+parser; the temporary file is removed before serving. No bearer token appears in
+argv,defaults,diagnostics or safe provider guidance. Explicit Copy/Reveal/Export
+asks for confirmation; exported files are0600,new-file-only,no-follow,never
+overwritten. Use a new writable private path if export fails. Keychain access can
+require an OS prompt; unlock/retry on failure. Import CLI Key requires its same
+owned/private/regular bounded file contract. There is no plaintext-defaults fallback.
+
+**Copy API URL** copies the bound endpoint; port0 is resolved after start.
+**Copy OpenCode Guidance** includes a key environment placeholder,observed model/context
+and a conservative output limit,using tested1.19.5 v1 provider fields and the
+bounded fieldfare agent. Use the supplied --agent fieldfare command; unrestricted
+default client agents can send unsupported schemas or require broader permissions. Set the
+matching key privately in the client environment; keep client tool permissions
+restricted. The GUI-managed instance passed real JSON/SSE,a native function/result
+continuation and installed OpenCode; the prior full coding-workflow evidence is
+retained and not replaced with a new performance claim. Native chat does not
+consume tool-call frames in this exclusive mode; OpenCode executes tools externally.
+
+For an already running CLI, import its matching private key file,select its port
+and click **Observe CLI**. It authenticates GET /health only, rejects redirects,
+uses no proxy/cookies/cache,and bounds response bytes to64KiB. Current S2-03 health
+metadata is required; older processes without the service/diagnostic fields cannot
+be observed until restarted with the current executable. This is read-only:
+Disconnect or Quit never signals/stops/reconfigures an independent CLI.
+Disconnect resumes native input, but the independent CLI must be stopped by its
+owner before native model loading can succeed; the Core lease enforces that. A port
+conflict offers observation/change-port guidance; a different-port model owner
+returns the shared inference-ownership error. Never delete ownership lock files
+while a process holds them. Other inference products still require manual exclusion.
+
+Health now adds service,diagnostics and requests to the existing fields. Counters:
+completed=successfully flushed chat responses;rejected=HTTP4xx/5xx validation/auth/
+route replies before admission;failed=admitted generation/parser errors;
+cancelled=active or queued cancellation. Health/models reads do not count as
+completed chats. Counters saturate and reset per server lifetime. The UI polls
+owned state directly once/sec; external state uses bounded authenticated GET.
+Counts are snapshots and can miss brief active phases; they are not reservations.
+
+One last finished request records server-header receipt through admission,queue
+wait,prompt-format/tokenize time and token count,Core prefill callback,first
+emitted non-EOS token,first successfully flushed visible SSE content,recognized
+complete tool-opening delimiter through validated commit,decode-after-first-token
+and overall duration/output count where observed. Generated/visible/overall times
+share a monotonic request origin; prefill uses the existing Core timer. Decode
+includes callbacks/output work and finishing EOS; it is not pure GPU kernel time.
+SSE flush is not client receipt. JSON/empty/cancelled/no-tool paths leave relevant
+values unavailable. No prompts,arguments,source text or token arrays are stored.
+This instrumentation does not optimize or attribute the older long-workflow
+latency without a future controlled investigation. No prefix-state reuse exists.
+
+See [S2-03 evidence](evidence/2026-11-17-s203/README.md) for real lifecycle tests,
+initial restart failure/fix,model-free gates,measurement limits and unchanged
+numerical release blocker. The private explicit test client can be reproduced
+against a running managed instance with `python3 Scripts/test_managed_server.py
+--key-file /private/path/key --port 8080`; it never loads another model and saves
+only public synthetic fixture exchanges/aggregate measurements.

@@ -479,8 +479,8 @@ Metal/model allocations. A per-user0600 persistent flock file,O_NOFOLLOW/O_CLOEX
 regular/ownership/mode checks and ARC close provide cooperative exclusivity across
 app/Bench/server,including failed initialization. Never unlink a live lock file.
 This is not a malicious-same-UID security boundary or an exclusion mechanism for
-MLX/Ollama/LM Studio. Existing UI chat uses the guarded constructors; no UI server
-controls,shared in-app server session or connection-to-CLI behavior exists yet.
+MLX/Ollama/LM Studio. Existing UI chat uses the guarded constructors; at that milestone no UI controls or connection-to-CLI existed; S2-03 below now
+implements in-process exclusive server mode and read-only CLI observation.
 
 Installed OpenCode1.19.5 emits explicit2020-12 schema metadata and numeric bounds.
 The supported subset now validates/enforces those constraints (precise Int64
@@ -498,3 +498,65 @@ failure is preserved. No server filesystem/shell execution occurs. First content
 sequence state still resets/replays each request; no prefix-reuse claim. Context/
 output errors and admitted client cancellation/recovery are verified. See
 [S2-02 evidence](evidence/2026-11-17-s202/README.md) for memory and limitations.
+
+## S2-03 design before implementation
+
+Use an in-process observable management controller over the existing CoreBackend
+and LocalServer, not a child executable. This reuses model/HTTP/tool/queue code,
+has no binary-location/package/supervision problem and cannot orphan a child on
+app exit. Native chat is explicitly suspended, cancelled, drained and unloaded
+before server construction; remains disabled until owned server shutdown/model
+release. Both Q4 lease guards remain the cross-process backstop. App termination
+waits for graceful drain. A crash shares the app/server fate; no independent child
+survives. Server settings persist, server never auto-starts on launch.
+
+Independently launched CLI instances can be authenticated and observed over
+loopback using the same credential; never stopped/reconfigured by the UI. Port
+or model-owner conflicts produce recoverable errors. Keychain stores the app's
+credential; private temporary0600 file uses the exact CLI parser/auth contract.
+Explicit reveal/copy/export requires user action; no secrets in defaults/logs or
+provider guidance. Loopback health observation rejects redirects and caps bytes.
+
+Add bounded aggregate health counters and one last-request timing record. Measure
+admission/queue,format/tokenize,prefill/first generated token,visible SSE,parser
+buffering,decode-after-first and overall duration where observable. No prompts,
+source,tool data or tokens are retained in diagnostics. No Core math or cache
+reuse changes. Native chat does not consume server tool calls in this milestone;
+external OpenCode alone executes tools. UI unavailable metrics remain unavailable.
+
+## S2-03 implemented outcome
+
+New QwenFieldfareServerManagement target holds observable ServerController,
+ServerSettings,Keychain credential store,bounded loopback observer and
+InProcessServerSession. Its injected async session factory enables model-free
+state/lifecycle tests;the production factory constructs exactly the existing
+CoreBackend and LocalServer. No dependency pins changed. The native executable
+adds a dedicated settings sheet;AppDelegate delays Quit until owned drain.
+
+ChatService adds a server-mode guard and async cancellation/unload barrier that
+waits for detached generation and its separate loading path before model release.
+Native send/load are blocked in server mode. Server shutdown drops the backend
+before unblocking native chat. External mode only uses authenticated bounded GET
+health;Stop becomes Disconnect and Quit leaves that CLI alive. Settings persist,
+keys do not enter defaults,and reopening never starts inference. The existing
+cross-process Core Q4 lease remains the final ownership guard. A restart regression
+found TCP cleanup rejection;SO_REUSEADDR now permits immediate rebinding without
+SO_REUSEPORT. Actual bind/ownership checks remain authoritative against races.
+
+Server health adds typed diagnostics,capped counters and one last finished
+request. Per-request recorder timestamps format/tokenize,prefill callback,
+first generated token/visible SSE flush,tool delimiter buffering through commit,
+queue/admission and finishing durations. Native parser's only added API exposes
+its existing buffering state;no parser acceptance or mathematical path changed.
+Counters classify parser failure separately from cancellation,including queued
+cancellation that skips inference. No payload/token history is retained.
+
+150 package passes +3 skips,release36.68s. Controlled real native UI checks pass
+for generation before/after,exclusive transition,JSON/SSE/tools/OpenCode,start/
+active-prefill stop/restart,owned Quit/reopen and independent CLI observation/quit
+non-interference. The UI automation required a disposable .app wrapper around the
+exact SwiftPM release binary/resources;no distribution/signing claim follows.
+All Core and Bench source,dependency pins,teacher harness/reference remain
+byte-identical to f2f5672. Strict131/132 remains unresolved;no new parity replay.
+S2-03 is diagnostic/lifecycle work,not prefix reuse,kernel optimization or a
+measurement of improvement over the preserved long OpenCode workflow.

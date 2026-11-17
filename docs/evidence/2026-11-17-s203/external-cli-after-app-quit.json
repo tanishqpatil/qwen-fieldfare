@@ -1,0 +1,26 @@
+{
+  "app_exited": true,
+  "independent_cli_still_serves": true,
+  "status": 200,
+  "reply": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "hello",
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1794938070,
+    "id": "chatcmpl-98F10FFD-7E71-481D-950B-4F32C1019C80",
+    "model": "qwen-fieldfare",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 1,
+      "prompt_tokens": 17,
+      "total_tokens": 18
+    }
+  }
+}

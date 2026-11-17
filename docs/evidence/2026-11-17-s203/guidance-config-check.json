@@ -1,0 +1,8 @@
+{
+  "kind": "model-free installed OpenCode debug config; exact JSON from ServerController.providerConfigurationJSON unit test",
+  "version": "1.19.5",
+  "exit": 0,
+  "contains_fieldfare_agent": true,
+  "credential": "non-production placeholder only",
+  "stderr": ""
+}

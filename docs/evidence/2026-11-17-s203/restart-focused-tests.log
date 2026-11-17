@@ -1,0 +1,116 @@
+Building for debugging...
+[Computing dependencies]
+[Using on-disk description]
+[33 / 177]
+[56 / 180] CNIOWASI
+[76 / 180] InternalCollectionsUtilities
+[86 / 179] ContainersPreview
+[98 / 164] OrderedCollections
+[104 / 171] DequeModule
+[109 / 166] yyjson
+[118 / 177] yyjson
+[121 / 177] NIOCore
+[121 / 177] CNIOAtomics
+[121 / 177] NIOCore
+[121 / 177] CNIOAtomics
+[122 / 176] NIOCore
+[133 / 198] NIOEmbedded
+[137 / 201] EventSource
+[151 / 219] NIOEmbedded
+[155 / 215] NIOPosix
+[158 / 226] NIOPosix
+[162 / 226] HuggingFace
+[164 / 226] HuggingFace
+[166 / 226] NIOPosix
+[169 / 222] NIOPosix
+[171 / 228] HuggingFace
+[173 / 227] HuggingFace
+[179 / 232] HuggingFace
+[179 / 232] NIOHTTP1
+[188 / 244] NIOHTTP1
+[195 / 246] NIOHTTP1
+[197 / 243] Hub
+[206 / 250] Hub
+[209 / 253] Hub
+[209 / 253] Tokenizers
+[218 / 264] Tokenizers
+[221 / 263] Tokenizers
+[225 / 263] Tokenizers
+[238 / 274] QwenFieldfareCore
+[243 / 279] QwenFieldfareCore
+[243 / 279] QwenFieldfarePack-product
+[253 / 299]
+[261 / 299] QwenFieldfareServerSupport
+[269 / 303] QwenFieldfareServer-product
+[269 / 303] QwenFieldfareServerSupport
+[277 / 310] QwenFieldfareCore
+[285 / 307] QwenFieldfareServerManagement
+[287 / 318] QwenFieldfareServerManagement
+[294 / 315] QwenFieldfareServerTests-product
+[300 / 327] QwenFieldfareServerManagement
+[302 / 327] QwenFieldfareServerTests-product
+[307 / 328] QwenFieldfareServerTests-product
+[311 / 328] QwenFieldfareCoreTests-product
+[313 / 328] QwenFieldfareBench-product
+[316 / 330] QwenFieldfareCoreTests-product
+[322 / 345] QwenFieldfareServerManagementTests-product
+[324 / 345] QwenFieldfareServerManagementTests-product
+[327 / 351] QwenFieldfareMac-product
+[338 / 350] QwenFieldfareMac-product
+[339 / 350] QwenFieldfareMac-product
+[345 / 352] QwenFieldfareServerTests-product
+[348 / 353] QwenFieldfareMac-product
+[353 / 355] QwenFieldfarePack-product
+[358 / 360] QwenFieldfareMac-product
+[360 / 362] QwenFieldfareMac-product
+Build complete! (11.08 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite TelemetryTests started.
+◇ Test healthCountersAndTimingsRetainNoPayload() started.
+✔ Test healthCountersAndTimingsRetainNoPayload() passed after 0.017 seconds.
+◇ Test queuedCancellationIsCountedWithoutExecutingWork() started.
+✔ Test queuedCancellationIsCountedWithoutExecutingWork() passed after 0.006 seconds.
+◇ Test restartImmediatelyRebindsUsedPort() started.
+✔ Test restartImmediatelyRebindsUsedPort() passed after 0.001 seconds.
+✔ Suite TelemetryTests passed after 0.025 seconds.
+✔ Test run with 3 tests in 1 suite passed after 0.025 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ControllerTests started.
+◇ Test startStopRestartPersistenceAndRedaction() started.
+✔ Test startStopRestartPersistenceAndRedaction() passed after 0.059 seconds.
+◇ Test invalidAuthAndMissingModelAreRecoverable() started.
+✔ Test invalidAuthAndMissingModelAreRecoverable() passed after 0.023 seconds.
+◇ Test occupiedPortRejectsBeforeModelLoad() started.
+✔ Test occupiedPortRejectsBeforeModelLoad() passed after 0.011 seconds.
+◇ Test observingCLIHasNoStopAuthority() started.
+✔ Test observingCLIHasNoStopAuthority() passed after 0.024 seconds.
+◇ Test stoppingWhileLoadingCancelsAndResumesChat() started.
+✔ Test stoppingWhileLoadingCancelsAndResumesChat() passed after 0.048 seconds.
+◇ Test privateKeyExportImportAndUnsafeFiles() started.
+✔ Test privateKeyExportImportAndUnsafeFiles() passed after 0.001 seconds.
+◇ Test unexpectedRuntimeExitRecoversAndCanReload() started.
+✔ Test unexpectedRuntimeExitRecoversAndCanReload() passed after 0.059 seconds.
+◇ Test externalHealthAuthenticationAndResponseBound() started.
+✔ Test externalHealthAuthenticationAndResponseBound() passed after 0.008 seconds.
+✔ Suite ControllerTests passed after 0.238 seconds.
+◇ Suite SettingsTests started.
+◇ Test validationReusesCLIAndPrivateFile() started.
+✔ Test validationReusesCLIAndPrivateFile() passed after 0.001 seconds.
+✔ Suite SettingsTests passed after 0.001 seconds.
+✔ Test run with 9 tests in 2 suites passed after 0.239 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenRuntimeTelemetryTests started.
+◇ Test nearestRankPercentilesAndMean() started.
+✔ Test nearestRankPercentilesAndMean() passed after 0.001 seconds.
+◇ Test boundedAccumulatorDropsOldestSamplesAndResets() started.
+✔ Test boundedAccumulatorDropsOldestSamplesAndResets() passed after 0.001 seconds.
+◇ Test cacheDerivedMetricsUseDemandRequestsOnly() started.
+✔ Test cacheDerivedMetricsUseDemandRequestsOnly() passed after 0.001 seconds.
+✔ Suite QwenRuntimeTelemetryTests passed after 0.001 seconds.
+✔ Test run with 3 tests in 1 suite passed after 0.001 seconds.

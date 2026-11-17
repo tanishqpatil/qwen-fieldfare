@@ -10,6 +10,7 @@ public final class LocalServer: @unchecked Sendable {
     func reserve() -> Bool {connectionLock.withLock {guard connections < 32 else {return false};connections += 1;return true}}
     func release() {connectionLock.withLock {connections -= 1}}
     let admission: Admission
+    let statistics = RequestStatistics()
     let queueCapacity: Int
     let backend: any GenerationBackend
     let key: String
@@ -22,10 +23,15 @@ public final class LocalServer: @unchecked Sendable {
         self.backend=backend;self.key=key;self.model=model
         group=MultiThreadedEventLoopGroup(numberOfThreads:2)
     }
+    public var snapshot: ServerHealth {
+        let occupancy=admission.occupancy
+        return ServerHealth(model:model,active_generations:occupancy.active,queued_requests:occupancy.queued,queue_capacity:queueCapacity,diagnostics:backend.diagnostics,requests:statistics.snapshot)
+    }
     public func start(host:String="127.0.0.1",port:Int) async throws -> Int {
         guard host == "127.0.0.1", (0...65535).contains(port) else {throw APIError(400,"Only IPv4 loopback binding is supported")}
         let channel = try await ServerBootstrap(group:group)
             .serverChannelOption(ChannelOptions.backlog,value:32)
+            .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr),value:1)
             .childChannelOption(ChannelOptions.autoRead,value:true)
             .childChannelOption(ChannelOptions.writeBufferWaterMark,value:ChannelOptions.Types.WriteBufferWaterMark(low:8192,high:16384))
             .childChannelInitializer { channel in
@@ -51,6 +57,7 @@ private final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
     let server: LocalServer
     var head: HTTPRequestHead?
     var body = Data()
+    var requestTiming: RequestTimingRecorder?
     var busy=false
     var rejected=false
     var deadline: Scheduled<Void>?
@@ -63,7 +70,7 @@ private final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
         switch unwrapInboundIn(data) {
         case .head(let h):
             guard !busy, head == nil else {cancellation.cancel();context.close(promise:nil);return}
-            head=h
+            head=h;requestTiming=RequestTimingRecorder()
             guard h.headers["authorization"] == ["Bearer \(server.key)"], h.headers["origin"].isEmpty else {rejected=true;respond(context.channel,status:401,data:APIError(401,"Unauthorized").data);return}
         case .body(var bytes):
             guard !rejected else {return}
@@ -73,7 +80,9 @@ private final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
             guard !rejected, let head else {return};busy=true;deadline?.cancel()
             let channel=context.channel
             if head.method == .GET && head.uri == "/health" {
-                respond(channel,status:200,data:wire(["status":"ready","model":server.model,"tools":true,"active_generations":server.admission.occupancy.active,"queued_requests":server.admission.occupancy.queued,"queue_capacity":server.queueCapacity]));return
+                do {respond(channel,status:200,data:try JSONEncoder().encode(server.snapshot))}
+                catch {respond(channel,status:500,data:APIError(500,"Health encoding failed").data)}
+                return
             }
             if head.method == .GET && head.uri == "/v1/models" {
                 respond(channel,status:200,data:wire(["object":"list","data":[["id":server.model,"object":"model","created":0,"owned_by":"local"]]]));return
@@ -83,12 +92,17 @@ private final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
                 guard head.headers["content-type"].first?.split(separator:";").first == "application/json" else {throw APIError(415,"Expected application/json")}
                 let request=try ChatRequest(data:body,model:server.model)
                 body=Data()
-                try server.admission.submit(cancellation) { [server,cancellation] in
-                    let output=Output(channel:channel,model:server.model,stream:request.stream,includeUsage:request.includeUsage,tools:request.toolConversation.map { $0.allowsCalls ? $0.tools : [] },cancellation:cancellation)
+                let timing=requestTiming ?? RequestTimingRecorder();timing.enqueue()
+                try server.admission.submit(cancellation,onCancelled:{ [server] in server.statistics.finish(timing.finish("cancelled")) }) { [server,cancellation] in
+                    timing.start()
+                    var outcome="failed"
+                    defer {server.statistics.finish(timing.finish(outcome))}
+                    let output=Output(channel:channel,model:server.model,stream:request.stream,includeUsage:request.includeUsage,timing:timing,tools:request.toolConversation.map { $0.allowsCalls ? $0.tools : [] },cancellation:cancellation)
                     do {
-                        let result=try await server.backend.generate(request) { output.delta($0) }
-                        if !cancellation.isCancelled {try output.complete(result,usage:request.includeUsage)}
+                        let result=try await server.backend.generate(request,timing:timing) { output.delta($0) }
+                        if !cancellation.isCancelled {try output.complete(result,usage:request.includeUsage);outcome="completed"} else {outcome=output.parserFailed ? "failed":"cancelled"}
                     } catch {
+                        if cancellation.isCancelled && !output.parserFailed {outcome="cancelled"}
                         if !cancellation.isCancelled {output.fail(error as? APIError ?? APIError(error is NativeToolError ? 502 : 500,error is NativeToolError ? "Invalid native tool output: \(error)" : "Generation failed"))}
                     }
                     _ = try? await channel.close().get()
@@ -97,6 +111,7 @@ private final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
         }
     }
     private func respond(_ channel:Channel,status:Int,data:Data) {
+        if status >= 400 {server.statistics.reject()}
         var h=HTTPHeaders();h.add(name:"content-type",value:"application/json");h.add(name:"content-length",value:"\(data.count)");h.add(name:"connection",value:"close")
         channel.write(HTTPServerResponsePart.head(HTTPResponseHead(version:.http1_1,status:.init(statusCode:status),headers:h)),promise:nil)
         channel.write(HTTPServerResponsePart.body(.byteBuffer(channel.allocator.buffer(bytes:data))),promise:nil)
@@ -111,8 +126,9 @@ private final class Output: @unchecked Sendable {
     var started=false
     var parser: NativeToolParser?
     var parserFailed=false
-    init(channel:Channel,model:String,stream:Bool,includeUsage:Bool,tools:[FunctionTool]?,cancellation:Cancellation) {
-        self.channel=channel;self.model=model;self.stream=stream;self.includeUsage=includeUsage;self.cancellation=cancellation
+    let timing: RequestTimingRecorder
+    init(channel:Channel,model:String,stream:Bool,includeUsage:Bool,timing:RequestTimingRecorder,tools:[FunctionTool]?,cancellation:Cancellation) {
+        self.channel=channel;self.model=model;self.stream=stream;self.includeUsage=includeUsage;self.cancellation=cancellation;self.timing=timing
         if let tools {parser=NativeToolParser(tools:tools,emit:{ [weak self] text in self?.proseDelta(text) })}
     }
     func write(_ part:HTTPServerResponsePart) throws {
@@ -137,7 +153,7 @@ private final class Output: @unchecked Sendable {
     func delta(_ text:String) {
         guard !parserFailed else {return}
         do {
-            if let parser {try parser.append(text)} else {proseDelta(text)}
+            if let parser {try parser.append(text);if parser.isBufferingCalls {timing.buffering()}} else {proseDelta(text)}
         } catch {
             parserFailed=true
             fail(APIError(502,"Invalid native tool output: \(error)"))
@@ -146,12 +162,13 @@ private final class Output: @unchecked Sendable {
     }
     func proseDelta(_ text:String) {
         guard stream else {return}
-        do {try begin();try send(chunk(delta:["content":text]))} catch {cancellation.cancel()}
+        do {try begin();try send(chunk(delta:["content":text]));if !text.isEmpty {timing.visible()}} catch {cancellation.cancel()}
     }
     func complete(_ value:Completion,usage:Bool) throws {
         guard !parserFailed else {throw NativeToolError.closed}
         let parsed = try parser?.finish(endedNormally:value.reason == "stop")
         let calls = parsed?.calls ?? []
+        if !calls.isEmpty {timing.committed()}
         let content = parsed?.content ?? value.text
         let reason = calls.isEmpty ? value.reason : "tool_calls"
         try begin()

@@ -1,5 +1,6 @@
 import Foundation
 import Darwin
+import Metal
 import QwenFieldfareCore
 
 public final class Cancellation: @unchecked Sendable {
@@ -16,28 +17,28 @@ public final class Cancellation: @unchecked Sendable {
 /// cannot permit simultaneous inference. Jobs retain all model resources.
 public final class Admission: @unchecked Sendable {
     private let lock = NSLock()
-    private var jobs: [(Cancellation,@Sendable () async -> Void)] = []
+    private var jobs: [(Cancellation,@Sendable () async -> Void,@Sendable () -> Void)] = []
     private var active: Cancellation?
     private var closed = false
     private let capacity: Int
     public init(capacity: Int = 2) {self.capacity = capacity}
     public var occupancy: (active: Int, queued: Int) {lock.withLock {(active == nil ? 0:1,jobs.count)}}
     public var idle: Bool { lock.withLock { active == nil } }
-    public func submit(_ cancellation: Cancellation, work: @escaping @Sendable () async -> Void) throws {
+    public func submit(_ cancellation: Cancellation, onCancelled: @escaping @Sendable () -> Void = {}, work: @escaping @Sendable () async -> Void) throws {
         try lock.withLock {
             guard !closed else { throw APIError(503,"Server stopping") }
             guard active == nil || jobs.count < capacity else { throw APIError(429,"Generation queue full") }
-            if active == nil { active = cancellation; start(cancellation,work) } else { jobs.append((cancellation,work)) }
+            if active == nil { active = cancellation; start(cancellation,work,onCancelled) } else { jobs.append((cancellation,work,onCancelled)) }
         }
     }
-    private func start(_ cancellation: Cancellation, _ work: @escaping @Sendable () async -> Void) {
+    private func start(_ cancellation: Cancellation, _ work: @escaping @Sendable () async -> Void,_ onCancelled: @escaping @Sendable () -> Void) {
         let task = Task.detached {
-            if !cancellation.isCancelled { await work() }
+            if !cancellation.isCancelled { await work() } else {onCancelled()}
             cancellation.finish()
             self.lock.withLock {
                 self.active = nil
                 if !self.jobs.isEmpty {
-                    let next = self.jobs.removeFirst(); self.active = next.0; self.start(next.0,next.1)
+                    let next = self.jobs.removeFirst(); self.active = next.0; self.start(next.0,next.1,next.2)
                 }
             }
         }
@@ -50,17 +51,25 @@ public struct Completion: Sendable {
     public init(text: String,prompt: Int,count: Int,reason: String) { self.text=text;self.prompt=prompt;self.count=count;self.reason=reason }
 }
 public protocol GenerationBackend: Sendable {
+    var diagnostics: BackendDiagnostics {get}
+    func generate(_ request: ChatRequest, timing: RequestTimingRecorder, emit: @escaping @Sendable (String) -> Void) async throws -> Completion
     func generate(_ request: ChatRequest, emit: @escaping @Sendable (String) -> Void) async throws -> Completion
+}
+public extension GenerationBackend {
+    var diagnostics: BackendDiagnostics {BackendDiagnostics()}
+    func generate(_ request: ChatRequest, timing: RequestTimingRecorder, emit: @escaping @Sendable (String) -> Void) async throws -> Completion {try await generate(request,emit:emit)}
 }
 public final class CoreBackend: GenerationBackend, @unchecked Sendable {
     private let runner: QwenQ4ActiveExpertStreamingRunner
     private let tokenizer: QwenTokenizer
     private let context: Int
     private let toolPrompt: ToolPrompt
+    private let budget: Int
+    public var diagnostics: BackendDiagnostics {BackendDiagnostics(context:context,memoryBudgetGiB:budget,metalAllocatedBytes:MTLCreateSystemDefaultDevice().map {UInt64($0.currentAllocatedSize)})}
     public init(path: String, context: Int, budget: QwenActiveStreamingMemoryBudget) async throws {
         let path = try QwenModelDirectory.validate(path:path)
         let plan = try QwenActiveStreamingMemoryConfiguration.make(budget:budget,contextLength:context)
-        self.context = context
+        self.context = context; self.budget = budget.rawValue
         let root = URL(fileURLWithPath:path).resolvingSymlinksInPath()
         let url = root.appendingPathComponent("chat_template.jinja").resolvingSymlinksInPath()
         guard url.deletingLastPathComponent().path == root.path else {throw APIError(400,"Template resolves outside model root")}
@@ -77,13 +86,20 @@ public final class CoreBackend: GenerationBackend, @unchecked Sendable {
         runner = try QwenQ4ActiveExpertStreamingRunner(modelPath:path,maxSeqLen:context,expertCacheCapacity:plan.expertCacheSlots,usePersistentExpertCache:true,keepDenseWeightsResident:true)
     }
     public func generate(_ request: ChatRequest, emit: @escaping @Sendable (String) -> Void) async throws -> Completion {
+        try await generate(request,timing:RequestTimingRecorder(),emit:emit)
+    }
+    public func generate(_ request: ChatRequest, timing: RequestTimingRecorder, emit: @escaping @Sendable (String) -> Void) async throws -> Completion {
+        let formattingStarted = ProcessInfo.processInfo.systemUptime
         let last = request.messages.last!
         let prompt = try request.toolConversation.map {try toolPrompt.render($0)}
             ?? QwenChatTemplate.format(messages:Array(request.messages.dropLast()),appendingUser:last.content,enableThinking:false)
+        let tokenizationStarted = ProcessInfo.processInfo.systemUptime
         let tokens = tokenizer.encode(prompt)
+        timing.prompt(formattingMs:(tokenizationStarted-formattingStarted)*1000,tokenizationMs:(ProcessInfo.processInfo.systemUptime-tokenizationStarted)*1000,count:tokens.count)
         try validateContextReservation(promptTokens:tokens.count,outputTokens:request.configuration.maxNewTokens,context:context)
         let decoder = Decoder(tokenizer:tokenizer,emit:emit)
-        let result = try await runner.generateResult(promptTokens:tokens,configuration:request.configuration,onToken:{ decoder.append($0) })
+        let result = try await runner.generateResult(promptTokens:tokens,configuration:request.configuration,onPrefillComplete:{timing.prefill($0)},onToken:{timing.token(); decoder.append($0) })
+        timing.generatedOutput(count:result.tokens.count)
         try decoder.flush()
         let reason: String
         switch result.finishReason { case .endOfSequence: reason="stop"; case .contextLength,.maxNewTokens: reason="length" }

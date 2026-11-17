@@ -1,9 +1,12 @@
 import AppKit
 import SwiftUI
 import QwenFieldfareCore
+import QwenFieldfareServerManagement
 
 struct RootView: View {
     let chatService: ChatService
+    let serverController: ServerController
+    @State private var showServer = false
     @State private var userMessage: String = ""
     @State private var showInspector: Bool = false
 
@@ -66,6 +69,10 @@ struct RootView: View {
                         .background(Color.orange.opacity(0.1))
                     }
 
+                    if serverController.blocksNativeChat {
+                        Label("Server mode owns inference. Stop or disconnect it in Local Server to resume native chat.",systemImage:"network")
+                            .font(.callout).padding().frame(maxWidth:.infinity).background(Color.blue.opacity(0.1))
+                    }
                     // Multi-turn Chat Scroll Area
                     ChatScrollView(
                         messages: chatService.messages,
@@ -76,6 +83,7 @@ struct RootView: View {
                             sendMessage()
                         }
                     )
+                    .disabled(serverController.blocksNativeChat)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(nsColor: .textBackgroundColor).opacity(0.35))
 
@@ -89,7 +97,7 @@ struct RootView: View {
                         onStop: {
                             chatService.cancelGeneration()
                         }
-                    )
+                    ).disabled(serverController.blocksNativeChat)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -109,6 +117,7 @@ struct RootView: View {
             }
         }
         .frame(minWidth: 960, minHeight: 600)
+        .sheet(isPresented:$showServer) {ServerSettingsView(controller:serverController)}
     }
 
     // MARK: - Header Bar
@@ -187,6 +196,8 @@ struct RootView: View {
 
             // Right: Toolbar Actions
             HStack(spacing: 8) {
+                Button {showServer = true} label: {Label("Local Server",systemImage:"network")}
+                    .controlSize(.small).accessibilityIdentifier("server-settings")
                 // New Chat Button
                 Button {
                     chatService.resetConversation()
@@ -245,7 +256,7 @@ struct RootView: View {
 
     private func sendMessage() {
         let msg = userMessage.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !msg.isEmpty, !chatService.isGenerating else { return }
+        guard !msg.isEmpty, !chatService.isGenerating, !serverController.blocksNativeChat else { return }
         userMessage = ""
         chatService.send(message: msg)
     }

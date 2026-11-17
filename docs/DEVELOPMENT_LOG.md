@@ -1057,3 +1057,81 @@ Historical broad S3-02–05 qualification remains in progress despite delivered
 functional implementation;no exhaustive crash/socket/memory-soak claim. Logs
 remain local under existing *.log ignore and require explicit reviewed staging
 for a future checkpoint. No local commit,push or merge;S2-02 boundary reached.
+
+## S2-03 started
+
+Reloaded directives/TODO/recovery/architecture/log/integration and app/ChatService/
+Core lease/server/tests. S2-02 recorded source hashes match;rerun136 pass +3skip,
+prior release/evidence intact,diff clean. Scoped local checkpoint f2f5672 includes
+reviewed synthetic evidence/aggregate logs;no remote action. Chose in-process
+CoreBackend+LocalServer with exclusive native-chat/server modes for simplest
+lifetime/no-orphan behavior;design/tradeoffs recorded before edits. Implement
+one small testable iteration at a time,model-free first. Strict131/132 preserved.
+
+S2-03 real UI iteration:disposable .app wrapper required because CUA cannot target
+bundleless SwiftPM process. Exact release binary/resource bundles;no source/model
+artifact changes. Native chat hello succeeds,then server mode unloads native model
+and starts same CoreBackend/LocalServer with Keychain credential. Real JSON/SSE,
+function/result/final continuation and actual OpenCode1.19.5 single response pass.
+Health reports5 completed/1 rejected,Metal4.928GiB and last request phase timings.
+Private export to default save target returned recoverable no-overwrite/create
+error;no target overwritten;Keychain-backed loopback authentication verified
+privately without token logging. Unit export/import and permissions pass.
+
+Real Stop during admitted2000-word prefill cancels request/RemoteDisconnected and
+closes listener;UI stopped/chat released. Immediate Start exposed recently used
+port/TCP cleanup rejection. Preserve failure;add SO_REUSEADDR to probe and actual
+listener (no SO_REUSEPORT),model-free immediate rebind test and rerun UI lifecycle.
+No numerical/math/cache changes. Final parser-failure counters also distinguish
+failed native output from transport cancellation;existing protocol errors unchanged.
+
+## S2-03 complete — lifecycle, diagnostics and boundary
+
+Actual final runtime UI tests:fixed SO_REUSEADDR release immediate Restart works
+on18094,counters reset,Metal5291294720. App Quit while owning server closes listener/
+exits. Reopen unloaded/stopped,port18094 persisted;native hello reload succeeds,
+1 token/TTFT838ms. CLI probe while native chat owns exits1 before allocation.
+After explicit native Unload,independent CLI starts0.820851s and UI Start correctly
+reports occupied port. Observe CLI is authenticated Ready/Independent CLI with
+Disconnect only. Observer app Quit leaves CLI generating hello;then only our own
+test CLI getsSIGTERM/exits0. No unrelated process was stopped. App intentionally
+remained running unloaded for this observation gate;one Q4 owner/normal pressure
+verified. Wrapper app was exact release/resources,not a signed distribution.
+
+UI-owned real requests:JSON17/1 0.925447s,SSE17/1 0.596157s,tool290/27 16.123924s,
+continuation347/16 17.324563s;OpenCode1.19.5 hello client11.062162s/server210/1.
+Retained server phases:admission0.280,queue0.040,format0.050,tokenize4.377,
+prefill9479.468,first generated9490.340,first visibleSSE9490.514,
+decode-after-first44.260,overall9534.786 milliseconds. Last record is no-tool;
+parser buffering validated with focused mock timing test,not invented real value.
+Existing28m17s/167.9s/173.4s S2-02 baseline retained,no speedup/optimization claim.
+
+Final guidance review adds the bounded fieldfare agent/permission contract and
+JSON-safe observed model ID/context. Exact generated JSON,including quoted model
+ID,passes installed OpenCode1.19.5 debug config with isolated XDG/no real key/no
+model. This configuration-text-only refinement after model integration gets
+full tests/release,not redundant model replay. Native inference/server lifecycle
+source is unchanged from corrected real-tested release. All Core/Bench/pins,
+teacher harness/reference/baseline byte-identical to f2f5672;small reference SHA
+verified. No fresh strict parity:131/132 remains release blocker;historical checker
+is not new equivalence evidence. No expected tokens/tests weakened.
+
+Final150 package pass +3 skips (153:30 Server,10 Management,17 Presentation,
+96 Core incl skips),release36.68s,checker6. Current docs describe implemented
+versus proposed controls,Keychain/private-file auth,read-only CLI operation,
+actual telemetry boundaries and limitations. Remaining fatal/load/GPU/immutable
+checkpoint/soak/numerical acceptance issues explicit. Final doc/diff/artifact gates
+and scoped local checkpoint follow;no push/merge and stop after S2-03.
+Temporary private client key and disposable app wrapper removed. App credential
+persists only in Keychain as designed;no model/secret artifact in Git evidence.
+
+Final S2-03 review:all28 Markdown local links/anchors andgit diff --check pass;
+final source/release hashes match validation inventory. Core/Bench/pins/reference
+protected diff empty. Scoped public synthetic text/aggregate evidence only;no
+keys,weights,model database or generated binaries. Local checkpoint includes
+reviewed ignored .log files explicitly. Stop S2-03;no push/merge/performance work.
+
+S2-03 local checkpoint created with title `feat: manage exclusive local server
+mode in native macOS app`;recovery bookkeeping included in the same unpublished
+commit. S2-02 remains f2f5672. Working tree clean after checkpoint;no remote
+push/merge. S2-03 stop reached;next performance milestone not started.

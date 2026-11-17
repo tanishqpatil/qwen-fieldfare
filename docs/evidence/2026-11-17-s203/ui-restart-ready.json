@@ -1,0 +1,20 @@
+{
+  "diagnostics": {
+    "context": 8192,
+    "memoryBudgetGiB": 5,
+    "metalAllocatedBytes": 5291294720
+  },
+  "status": "ready",
+  "model": "qwen-fieldfare",
+  "active_generations": 0,
+  "queue_capacity": 2,
+  "queued_requests": 0,
+  "service": "QwenFieldfareServer",
+  "tools": true,
+  "requests": {
+    "rejected": 0,
+    "failed": 0,
+    "cancelled": 0,
+    "completed": 0
+  }
+}

@@ -1,6 +1,74 @@
 # Agent recovery memory
 
-## Current milestone — S2-02 CLI and real OpenCode qualification
+## Current milestone — S2-03 native server management
+
+Explicit user authorization supersedes S2-02 stop. Checkpoint S2-02, reuse the
+existing Core/backend/HTTP implementation in native server controls, preserve
+single ownership and client-only tools. Stop and locally commit after S2-03.
+No prefix reuse, inference math changes, remote push or merge.
+
+
+## S2-03 completed — current recovery handoff
+
+Stop at S2-03. S2-02 checkpoint f2f5672 made locally after source-identity/full
+baseline validation;S2-03 is locally checkpointed under `feat: manage exclusive local server mode in native macOS app`;see git log for its current hash. No push/merge. Next is
+bounded measured repeated-turn latency/prefix-state design,not begun here.
+
+New ServerManagement target:Observable MainActor ServerController,settings,
+KeychainServerCredential,InProcessServerSession and bounded no-redirect loopback
+observer. Production reuses CoreBackend+LocalServer in-process. Native chat is
+option B:blocked,cancelled,drained and unloaded before server construction;waits
+for generationTask and separate direct-loading path;server stop releases backend
+before native sends resume. No child/orphan or second HTTP/inference/tool executor.
+AppDelegate waits on controller shutdown before Quit. External CLI is observation
+only with matching key/current health schema;Disconnect/Quit never stop it.
+
+ServerSettings persist in defaults;credentials only in local non-sync Keychain
+service QwenFieldfare.local-server/account default. Startup uses temporary0700/
+0600 key file through exact CLI parser,then removes it. Explicit key actions warn;
+export is private/new-file-only/no overwrite. Initial default-target UI export
+was refused recoverably;do not claim an actual exported file was created there.
+Unit private export/import/mode/unsafe cases pass. Actual Keychain auth and same
+key's standalone CLI/OpenCode operation verified privately;no token in evidence.
+Copy endpoint/safe guidance no secret. No auto-start on reopen.
+
+Typed health adds capped completed/rejected/failed/cancelled counters,context/
+budget/observed Metal and one last finished timing record. Admission/queue,
+format/tokenize,prefill,first non-EOS generated token,visible SSE flush,recognized
+tool-opening through validated commit,decode-after-first and overall duration
+where measured. Unavailable stays unavailable;no payload/token retention. Core
+callback only records time. SSE flush isn't client receipt;decode includes output
+callbacks/finishing;Metal isn't total RAM or exact peak. SO_REUSEADDR added to
+probe/listener after real immediate-restart failure;no SO_REUSEPORT.
+
+Final full150 pass +3 skips (153:30 Server,10 Management,17 Presentation,96 Core
+incl skips);release36.68s,checker6,docs/diff/source gates. Real model: native hello
+before/server-unload and after/reload;UI JSON17/1 tokens0.925s,SSE17/1 0.596s;
+tool290/27 16.124s,continuation347/16 17.325s;actual OpenCode1.19.5 response11.062s,
+210/1 tokens. Last real record prefill9479.468ms,first generated9490.340ms,
+visible9490.514ms,format0.050ms,tokenize4.377ms,queue0.040ms,overall9534.786ms.
+This small no-tool OpenCode request isn't the earlier full28m17s workflow.
+Prior first-content167.9s/tool173.4s baseline remains;no improvement claim.
+
+Actual active2000-word prefill Stop disconnects,listener closes;initial immediate
+rebind failure retained/fixed/regression-tested;corrected UI Restart ready with
+counters reset andMetal5291294720. Owned Quit exits/closes listener;reopen is
+unloaded/stopped,port18094 persists. Native chat reload hello TTFT838ms. CLI probe
+while native owned exits1 before allocation. After explicit native unload,CLI
+starts0.821s;UI detects conflict then observes ready,Quit leaves CLI serving hello;
+only our test CLI thenSIGTERM/exits0. Wrapper .app for CUA was outside repo,exact
+release/resources;no signing/distribution claim. Normal pressure1 throughout,
+endfree69%;only one model owner. App intentionally running unloaded during CLI
+observation is a documented preflight exception required by this test.
+
+Core/Bench source,pins,teacher harness,original reference byte-identical to f2f5672;
+small fixture SHA verified;historical checker only. No fresh strict parity/no
+132/132 claim. Legacy fatal/load/cancel/immutable-checkpoint issues remain. UI
+native chat does not receive server tool frames;OpenCode executes tools. All
+models stopped,private temporary client key removed after validation. Evidence
+under docs/evidence/2026-11-17-s203;reviewed .log files need explicit staging.
+
+## Historical milestone — S2-02 CLI and real OpenCode qualification
 
 Explicit user authorization supersedes the prior S2-01 stop. Preserve completed
 server/tools/readers and known131/132 release blocker. Implement validated CLI

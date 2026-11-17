@@ -1,0 +1,6 @@
+{
+  "ui_and_cli_tested_release_sha256": "824924678566029cc3618af1e988fbe9b9d7e9940a0b49c4c1d16105e922ec0d",
+  "tested_cli_sha256": "b18c8bd17b5a0710effae2ff65c1b3aa6a6f0a5538713c122a8add8a8d9c96ef",
+  "wrapper_exact_release": true,
+  "final_review": "Provider guidance later receives bounded agent config/JSON-safe model ID; no model/runtime/HTTP change."
+}

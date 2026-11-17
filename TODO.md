@@ -1,6 +1,14 @@
 # Authoritative implementation backlog
 
-## Current milestone — S2-02 CLI and real OpenCode qualification
+## Current milestone — S2-03 native server management
+
+Explicit user authorization supersedes S2-02 stop. Checkpoint S2-02, reuse the
+existing Core/backend/HTTP implementation in native server controls, preserve
+single ownership and client-only tools. Stop and locally commit after S2-03.
+No prefix reuse, inference math changes, remote push or merge.
+
+
+## Historical milestone — S2-02 CLI and real OpenCode qualification
 
 Explicit user authorization supersedes the prior S2-01 stop. Preserve completed
 server/tools/readers and known131/132 release blocker. Implement validated CLI
@@ -35,7 +43,7 @@ Read AGENTS.md, this file and docs/AGENT_MEMORY.md at session start. Inspect
 related source and baseline before edits. Preserve unrelated work and historical
 logs. Update status whenever work changes; statuses are pending, in progress,
 blocked, completed or rejected. Every stage must pass applicable acceptance
-before the next begins. The current S2-02 stop overrides the historical Stage1 boundary. Stop
+before the next begins. The current S2-03 stop overrides the historical Stage1 boundary. Stop
 at a new applicable hardware/checkpoint/environment/correctness blocker; the
 known 131/132 baseline does not block independent engineering. Never call an
 unverified stage complete. No remote push/merge or destructive Git operation.
@@ -224,7 +232,7 @@ remain open until their full acceptance criteria pass.
   tool deltas; delimiter-bearing tool data rejected; no full OpenCode qualification.
 - Stop here; next task is OpenCode provider/configuration and real client cycle.
 
-### S2-02 — CLI usability and actual OpenCode qualification (current mission)
+### S2-02 — CLI usability and actual OpenCode qualification (completed checkpoint)
 
 - Stage/priority/status:2/P0/**completed**; supersedes the historical numbering below.
 - Files: ServerConfiguration/CLI/admission/health,Core inference lease,SDK schema
@@ -242,16 +250,33 @@ remain open until their full acceptance criteria pass.
 - Limits: slow full prompt replay (3410–5233 tokens),delayed tool deltas;sampled RSS
   is not a footprint peak;no new numerical replay. Original131/132 blocker retained.
 - Evidence: [S2-02 report](docs/evidence/2026-11-17-s202/README.md).
-- Stop after this task. Next safe task is S2-03 native server-management design,
-  sharing the existing server/Core owner; not started. No prefix reuse/Hermes.
+- Historical S2-02 stop reached and checkpointed as f2f5672. S2-03 is delivered
+  below. No prefix reuse/Hermes implementation is bundled.
 
-### S2-03 — Native macOS server management (next current-mission task)
+### S2-03 — Native macOS server management (current milestone)
 
-- Stage/priority/status:2/P0/**pending**; distinct from historical parser numbering.
-- Scope: app server controls/status/private authentication and external-owner modes,
-  preserving native chat,shared generation/protocol implementation and client-only tools.
-- Gate: explicit next-stage execution;controller/lifecycle/UI/integration tests;
-  no second runner or duplicated networking/queue/parser logic.
+- Stage/priority/status:2/P0/**completed**; stop here and locally checkpoint.
+- Delivered: native server section,validated/persistent settings,Keychain/private
+  CLI-file authentication,endpoint/safe provider guidance,read-only external CLI
+  observation,bounded health counters and last-request timing diagnostics.
+- Architecture: same-process CoreBackend+LocalServer;native chat explicitly
+  cancels/drains/unloads before server start and is blocked until stop/model
+  release. No second runner/child process/HTTP stack/tool executor.
+- Real gate: native chat before/after server;UI JSON/SSE/tool result continuation;
+  actual OpenCode1.19.5;active-prefill Stop;immediate Restart;owned app Quit/port
+  closure;reopen stopped with settings persisted;independent CLI observed and
+  still generating after observer app Quit. Conflicting CLI rejected while native
+  chat holds ownership. Initial used-port failure preserved/fixed/tested.
+- Validation:150 package passes +3 opt-in skips (153 total);release36.68s;checker6,
+  historical log stability,docs/diff/source review. No fresh strict parity replay;
+  all Core/Bench/pins/reference sources unchanged vs f2f5672. No132/132 claim.
+- Limits: shared app/server crash fate,cooperative lease,legacy fatal/load/GPU
+  cancellation paths;one timing record,flush≠client receipt,Metal≠RAM/peak;
+  current health schema needed for external observation. No native server-chat
+  transport/tool display because native chat is disabled in server mode.
+- Evidence: [S2-03 report](docs/evidence/2026-11-17-s203/README.md).
+- Next: measured repeated-turn latency investigation and exact hybrid-state prefix
+  reuse design/gates,only after this boundary. No performance implementation here.
 
 ### Historical S2-02 — Parser delivered within S2-01
 
@@ -276,7 +301,7 @@ remain open until their full acceptance criteria pass.
 
 Historical decomposition: S2-00/S2-01/S2-02 now supply the local server, tools
 and installed-client workflow. Status notes below distinguish that delivered subset
-from broader lifecycle/soak qualification. Current next task is S2-03 UI above.
+from broader lifecycle/soak qualification. Current S2-03 UI is delivered above; broad soak/release qualification remains open.
 
 ### S3-01 — Select maintained minimal HTTP dependency and define API
 
