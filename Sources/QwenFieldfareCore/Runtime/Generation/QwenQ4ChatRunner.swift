@@ -31,6 +31,7 @@ public enum QwenQ4RunnerError: Error, CustomStringConvertible {
     case metalBufferAllocationFailed(String)
     case pipelineCompilationFailed(String)
     case memoryBudgetExceeded(String)
+    case invalidConfiguration(String)
 
     public var description: String {
         switch self {
@@ -41,6 +42,7 @@ public enum QwenQ4RunnerError: Error, CustomStringConvertible {
         case .metalBufferAllocationFailed(let s): return "Metal buffer allocation failed: \(s)"
         case .pipelineCompilationFailed(let s): return "Pipeline compilation failed: \(s)"
         case .memoryBudgetExceeded(let s): return "Memory budget exceeded: \(s)"
+        case .invalidConfiguration(let s): return "Invalid runner configuration: \(s)"
         }
     }
 }
@@ -57,20 +59,12 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
         case memorySaver = "Memory Saver Streamed Q4"
     }
 
-    private struct MmapShard {
-        let fd: Int32
-        let ptr: UnsafeRawPointer
-        let size: Int
-        let headerLen: Int
-        let headerJson: [String: Any]
-    }
-
-    private struct TensorSlice {
+    // Internal for model-free reader integration tests; ranges are absolute
+    // only after shared validation has added the tensor-data-region offset.
+    struct TensorSlice {
         let shardName: String
         let fileOffset: Int
         let size: Int
-        let shape: [Int]
-        let dtype: String
     }
 
     private struct QTriplet {
@@ -184,7 +178,7 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
 
     private let metalContext: MetalContext
     private let device: MTLDevice
-    private var shards: [String: MmapShard] = [:]
+    private var shards: [String: QwenMappedSafetensorsFile] = [:]
     private var weightMap: [String: String] = [:]
 
     private var embedTriplet: QTriplet!
@@ -199,6 +193,7 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
     private var kCaches: [MTLBuffer] = []
     private var vCaches: [MTLBuffer] = []
     public let maxSeqLen: Int
+    private let kvCacheByteLength: Int
 
     // Scratch buffers
     private let hiddenBuf0: MTLBuffer
@@ -257,6 +252,8 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
     }
 
     public init(modelPath: String, maxSeqLen: Int = 2048, mode: RuntimeMode = .memorySaver, memoryBudgetGiB: Double = 5.0, hardLimitGiB: Double = 6.0, layerCacheCapacity: Int = 4) throws {
+        let contextBytes = try Self.contextAllocationLengths(maxSeqLen)
+        self.kvCacheByteLength = contextBytes.kv
         self.mode = mode
         self.maxSeqLen = maxSeqLen
         self.memoryBudgetGiB = memoryBudgetGiB
@@ -292,7 +289,7 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
               let sab = device.makeBuffer(length: 512 * 4, options: .storageModeShared),
               let eib = device.makeBuffer(length: 8 * 4, options: .storageModeShared),
               let scb = device.makeBuffer(length: 8 * 4, options: .storageModeShared),
-              let attsb = device.makeBuffer(length: 16 * maxSeqLen * 4, options: .storageModeShared),
+              let attsb = device.makeBuffer(length: contextBytes.scores, options: .storageModeShared),
               let shcb = device.makeBuffer(length: 1 * 4, options: .storageModeShared),
               let fnob = device.makeBuffer(length: 2048 * 4, options: .storageModeShared),
               let lob = device.makeBuffer(length: 248320 * 4, options: .storageModeShared) else {
@@ -349,7 +346,7 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
 
         // Load shards and index
         try loadSafetensors(modelPath: modelPath)
-        initStates()
+        try initStates()
 
         // If Fast Resident mode, pre-populate all 40 layers into cache upfront
         if mode == .fastResident {
@@ -359,54 +356,60 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
         }
     }
 
-    deinit {
-        for (_, s) in shards {
-            munmap(UnsafeMutableRawPointer(mutating: s.ptr), s.size)
-            close(s.fd)
+    /// Same fixed Qwen layouts as active streaming; reuse its existing extent
+    /// guard rather than create a second shape/dtype table. Full contract is S1-02.
+    static func validatedTensorSlice(_ name: String, weightMap: [String: String],
+                                     shards: [String: QwenMappedSafetensorsFile]) throws -> TensorSlice {
+        guard let shardName = weightMap[name], let shard = shards[shardName],
+              let info = shard.file.header.tensors[name] else {
+            throw QwenQ4RunnerError.missingTensor("Missing tensor \(name)")
         }
+        try shard.file.verifyUnchanged()
+        try QwenQ4ActiveExpertStreamingRunner.validateMappedTensor(name: name, info: info)
+        let range = try shard.tensorRange(name)
+        return TensorSlice(shardName: shardName, fileOffset: range.lowerBound, size: range.count)
     }
 
     private func getTensorSlice(_ name: String) throws -> TensorSlice {
-        guard let shardName = weightMap[name],
-              let shard = shards[shardName],
-              let dict = shard.headerJson[name] as? [String: Any],
-              let offs = dict["data_offsets"] as? [Int],
-              let shape = dict["shape"] as? [Int],
-              let dtype = dict["dtype"] as? String else {
-            throw QwenQ4RunnerError.missingTensor("Missing tensor \(name)")
-        }
-        let fileOffset = 8 + shard.headerLen + offs[0]
-        let size = offs[1] - offs[0]
-        return TensorSlice(shardName: shardName, fileOffset: fileOffset, size: size, shape: shape, dtype: dtype)
+        try Self.validatedTensorSlice(name, weightMap: weightMap, shards: shards)
     }
 
     private func makeZeroCopyBuffer(slice: TensorSlice) throws -> (buffer: MTLBuffer, offset: Int) {
         guard let shard = shards[slice.shardName] else {
             throw QwenQ4RunnerError.missingTensor("Shard \(slice.shardName) not found")
         }
-        let pageSize = Int(getpagesize())
-        let pageOffset = slice.fileOffset % pageSize
-        let alignedOffset = slice.fileOffset - pageOffset
-        let alignedLength = ((slice.size + pageOffset + pageSize - 1) / pageSize) * pageSize
-        let alignedPtr = shard.ptr.advanced(by: alignedOffset)
-        guard let buf = device.makeBuffer(
-            bytesNoCopy: UnsafeMutableRawPointer(mutating: alignedPtr),
-            length: alignedLength,
-            options: .storageModeShared,
-            deallocator: nil
-        ) else {
-            throw QwenQ4RunnerError.metalBufferAllocationFailed("Failed to make zero-copy buffer")
+        // Shared bounds prove offset + size fits Int and the actual file.
+        return try shard.makeBuffer(device: device, range: slice.fileOffset..<(slice.fileOffset + slice.size))
+    }
+
+    static func contextAllocationLengths(_ length: Int) throws -> (scores: Int, kv: Int) {
+        guard length > 0 else { throw QwenQ4RunnerError.invalidConfiguration("Context must be positive") }
+        let scores = length.multipliedReportingOverflow(by: 16 * 4)
+        let kv = length.multipliedReportingOverflow(by: 2 * 256 * 4)
+        guard !scores.overflow, !kv.overflow else {
+            throw QwenQ4RunnerError.invalidConfiguration("Context allocation size overflow")
         }
-        return (buf, pageOffset)
+        return (scores.partialValue, kv.partialValue)
+    }
+
+    private func makeConstantBuffer(_ values: [Float]) throws -> MTLBuffer {
+        let length = values.count.multipliedReportingOverflow(by: MemoryLayout<Float>.stride)
+        guard !length.overflow, length.partialValue > 0 else {
+            throw QwenQ4RunnerError.metalBufferAllocationFailed("Invalid constant buffer length")
+        }
+        guard let buffer = device.makeBuffer(bytes: values, length: length.partialValue, options: .storageModeShared) else {
+            throw QwenQ4RunnerError.metalBufferAllocationFailed("Failed to allocate constant buffer")
+        }
+        return buffer
     }
 
     private func decodeBF16Tensor(_ slice: TensorSlice) -> [Float] {
         let shard = shards[slice.shardName]!
         let count = slice.size / 2
         var out = [Float](repeating: 0, count: count)
-        let u16Ptr = shard.ptr.advanced(by: slice.fileOffset).assumingMemoryBound(to: UInt16.self)
+        let bytes = shard.ptr.advanced(by: slice.fileOffset)
         for i in 0..<count {
-            let u32Val = UInt32(u16Ptr[i]) << 16
+            let u32Val = UInt32(bytes.loadUnaligned(fromByteOffset: i * 2, as: UInt16.self)) << 16
             out[i] = Float(bitPattern: u32Val)
         }
         return out
@@ -431,38 +434,14 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
         }
         self.weightMap = wm
 
-        let shardNames = ["model-00001-of-00004.safetensors", "model-00002-of-00004.safetensors", "model-00003-of-00004.safetensors", "model-00004-of-00004.safetensors"]
-        for sName in shardNames {
-            let sPath = "\(modelPath)/\(sName)"
-            let sFd = open(sPath, O_RDONLY)
-            guard sFd >= 0 else {
-                throw QwenQ4RunnerError.failedToOpenShard("Failed to open \(sPath)")
-            }
-            var sStat = stat()
-            fstat(sFd, &sStat)
-            let sSize = Int(sStat.st_size)
-            guard let sPtr = mmap(nil, sSize, PROT_READ, MAP_SHARED, sFd, 0), sPtr != MAP_FAILED else {
-                close(sFd)
-                throw QwenQ4RunnerError.failedToMmapShard("Failed to mmap \(sPath)")
-            }
-            madvise(UnsafeMutableRawPointer(mutating: sPtr), sSize, MADV_RANDOM)
-
-            let hLen = Int(sPtr.load(as: UInt64.self))
-            let hData = Data(bytes: sPtr.advanced(by: 8), count: hLen)
-            guard let hJson = try JSONSerialization.jsonObject(with: hData) as? [String: Any] else {
-                throw QwenQ4RunnerError.invalidIndexJSON("Invalid JSON header in \(sName)")
-            }
-            shards[sName] = MmapShard(fd: sFd, ptr: sPtr, size: sSize, headerLen: hLen, headerJson: hJson)
-        }
+        shards = try QwenMappedSafetensorsFile.openShards(
+            root: URL(fileURLWithPath: modelPath), names: Set(wm.values))
 
         // Embed tokens, LM head, and final norm
         self.embedTriplet = try getQTriplet(prefix: "language_model.model.embed_tokens")
         self.lmHeadTriplet = try getQTriplet(prefix: "language_model.lm_head")
         let finalNormWeight = decodeBF16Tensor(try getTensorSlice("language_model.model.norm.weight"))
-        guard let fNormBuf = device.makeBuffer(bytes: finalNormWeight, length: 2048 * 4, options: .storageModeShared) else {
-            throw QwenQ4RunnerError.metalBufferAllocationFailed("Failed to create finalNorm buffer")
-        }
-        self.finalNormWBuf = fNormBuf
+        self.finalNormWBuf = try makeConstantBuffer(finalNormWeight)
 
         // Initialize static lightweight constants for all 40 layers
         for l in 0..<40 {
@@ -471,8 +450,8 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
 
             let inNormW = decodeBF16Tensor(try getTensorSlice("language_model.model.layers.\(l).input_layernorm.weight"))
             let postNormW = decodeBF16Tensor(try getTensorSlice("language_model.model.layers.\(l).post_attention_layernorm.weight"))
-            let inNormBuf = device.makeBuffer(bytes: inNormW, length: 2048 * 4, options: .storageModeShared)!
-            let postNormBuf = device.makeBuffer(bytes: postNormW, length: 2048 * 4, options: .storageModeShared)!
+            let inNormBuf = try makeConstantBuffer(inNormW)
+            let postNormBuf = try makeConstantBuffer(postNormW)
 
             if kind == .linearAttention {
                 let convW = decodeBF16Tensor(try getTensorSlice("language_model.model.layers.\(l).linear_attn.conv1d.weight"))
@@ -480,10 +459,10 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
                 let aL = decodeBF16Tensor(try getTensorSlice("language_model.model.layers.\(l).linear_attn.A_log"))
                 let linN = decodeBF16Tensor(try getTensorSlice("language_model.model.layers.\(l).linear_attn.norm.weight"))
 
-                let cBuf = device.makeBuffer(bytes: convW, length: 8192 * 4 * 4, options: .storageModeShared)!
-                let dtBuf = device.makeBuffer(bytes: dtB, length: 32 * 4, options: .storageModeShared)!
-                let aLBuf = device.makeBuffer(bytes: aL, length: 32 * 4, options: .storageModeShared)!
-                let lnBuf = device.makeBuffer(bytes: linN, length: 128 * 4, options: .storageModeShared)!
+                let cBuf = try makeConstantBuffer(convW)
+                let dtBuf = try makeConstantBuffer(dtB)
+                let aLBuf = try makeConstantBuffer(aL)
+                let lnBuf = try makeConstantBuffer(linN)
 
                 staticLayerConstants.append(StaticLayerConstants(
                     kind: kind, inNormBuf: inNormBuf, postNormBuf: postNormBuf,
@@ -494,8 +473,8 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
                 let qN = decodeBF16Tensor(try getTensorSlice("language_model.model.layers.\(l).self_attn.q_norm.weight"))
                 let kN = decodeBF16Tensor(try getTensorSlice("language_model.model.layers.\(l).self_attn.k_norm.weight"))
 
-                let qNBuf = device.makeBuffer(bytes: qN, length: 256 * 4, options: .storageModeShared)!
-                let kNBuf = device.makeBuffer(bytes: kN, length: 256 * 4, options: .storageModeShared)!
+                let qNBuf = try makeConstantBuffer(qN)
+                let kNBuf = try makeConstantBuffer(kN)
 
                 staticLayerConstants.append(StaticLayerConstants(
                     kind: kind, inNormBuf: inNormBuf, postNormBuf: postNormBuf,
@@ -547,7 +526,13 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
         }
     }
 
-    private func initStates() {
+    private func initStates() throws {
+        func allocate(_ length: Int) throws -> MTLBuffer {
+            guard let buffer = device.makeBuffer(length: length, options: .storageModeShared) else {
+                throw QwenQ4RunnerError.metalBufferAllocationFailed("Failed to allocate fallback state")
+            }
+            return buffer
+        }
         convStates.removeAll()
         ssmStates.removeAll()
         kCaches.removeAll()
@@ -555,23 +540,23 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
 
         for l in 0..<40 {
             if layerKinds[l] == .linearAttention {
-                let cBuf = device.makeBuffer(length: 8192 * 4 * 4, options: .storageModeShared)!
-                let sBuf = device.makeBuffer(length: 32 * 128 * 128 * 4, options: .storageModeShared)!
+                let cBuf = try allocate(8192 * 4 * 4)
+                let sBuf = try allocate(32 * 128 * 128 * 4)
                 memset(cBuf.contents(), 0, 8192 * 4 * 4)
                 memset(sBuf.contents(), 0, 32 * 128 * 128 * 4)
                 convStates.append(cBuf)
                 ssmStates.append(sBuf)
-                kCaches.append(device.makeBuffer(length: 4, options: .storageModeShared)!)
-                vCaches.append(device.makeBuffer(length: 4, options: .storageModeShared)!)
+                kCaches.append(try allocate(4))
+                vCaches.append(try allocate(4))
             } else {
-                let kBuf = device.makeBuffer(length: 2 * maxSeqLen * 256 * 4, options: .storageModeShared)!
-                let vBuf = device.makeBuffer(length: 2 * maxSeqLen * 256 * 4, options: .storageModeShared)!
-                memset(kBuf.contents(), 0, 2 * maxSeqLen * 256 * 4)
-                memset(vBuf.contents(), 0, 2 * maxSeqLen * 256 * 4)
+                let kBuf = try allocate(kvCacheByteLength)
+                let vBuf = try allocate(kvCacheByteLength)
+                memset(kBuf.contents(), 0, kvCacheByteLength)
+                memset(vBuf.contents(), 0, kvCacheByteLength)
                 kCaches.append(kBuf)
                 vCaches.append(vBuf)
-                convStates.append(device.makeBuffer(length: 4, options: .storageModeShared)!)
-                ssmStates.append(device.makeBuffer(length: 4, options: .storageModeShared)!)
+                convStates.append(try allocate(4))
+                ssmStates.append(try allocate(4))
             }
         }
     }
@@ -582,8 +567,8 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
                 memset(convStates[l].contents(), 0, 8192 * 4 * 4)
                 memset(ssmStates[l].contents(), 0, 32 * 128 * 128 * 4)
             } else {
-                memset(kCaches[l].contents(), 0, 2 * maxSeqLen * 256 * 4)
-                memset(vCaches[l].contents(), 0, 2 * maxSeqLen * 256 * 4)
+                memset(kCaches[l].contents(), 0, kvCacheByteLength)
+                memset(vCaches[l].contents(), 0, kvCacheByteLength)
             }
         }
     }
@@ -635,16 +620,16 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
     private func dequantizeEmbedding(tokenId: Int, outBuf: MTLBuffer) {
         let rowU32Offset = tokenId * 256
         let rowGroupOffset = tokenId * 32
-        let wPtr = embedTriplet.wBuf.contents().advanced(by: embedTriplet.wOff).assumingMemoryBound(to: UInt32.self)
-        let sPtr = embedTriplet.sBuf.contents().advanced(by: embedTriplet.sOff).assumingMemoryBound(to: UInt16.self)
-        let bPtr = embedTriplet.bBuf.contents().advanced(by: embedTriplet.bOff).assumingMemoryBound(to: UInt16.self)
+        let wPtr = embedTriplet.wBuf.contents().advanced(by: embedTriplet.wOff)
+        let sPtr = embedTriplet.sBuf.contents().advanced(by: embedTriplet.sOff)
+        let bPtr = embedTriplet.bBuf.contents().advanced(by: embedTriplet.bOff)
         let outPtr = outBuf.contents().assumingMemoryBound(to: Float.self)
 
         for g in 0..<32 {
-            let sF = Float(bitPattern: UInt32(sPtr[rowGroupOffset + g]) << 16)
-            let bF = Float(bitPattern: UInt32(bPtr[rowGroupOffset + g]) << 16)
+            let sF = Float(bitPattern: UInt32(sPtr.loadUnaligned(fromByteOffset: (rowGroupOffset + g) * 2, as: UInt16.self)) << 16)
+            let bF = Float(bitPattern: UInt32(bPtr.loadUnaligned(fromByteOffset: (rowGroupOffset + g) * 2, as: UInt16.self)) << 16)
             for j in 0..<8 {
-                let u = wPtr[rowU32Offset + g * 8 + j]
+                let u = wPtr.loadUnaligned(fromByteOffset: (rowU32Offset + g * 8 + j) * 4, as: UInt32.self)
                 for n in 0..<8 {
                     let nibble = Float((u >> (n * 4)) & 0x0F)
                     outPtr[g * 64 + j * 8 + n] = nibble * sF + bF
@@ -660,6 +645,13 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
         seenTokenIDs: Set<Int32> = [],
         samplePosition: Int = 0
     ) throws -> Int32 {
+        guard tokenId >= 0, tokenId < 248_320, tokenPos >= 0,
+              tokenPos < maxSeqLen, UInt32(exactly: tokenPos) != nil else {
+            throw QwenQ4RunnerError.invalidConfiguration("Token or position out of bounds")
+        }
+        // Observed mutation check, not an immutability guarantee. Loaded
+        // checkpoints must remain immutable through all CPU/GPU buffer leases.
+        for shard in shards.values { try shard.file.verifyUnchanged() }
         dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
 
         var dim2048: UInt32 = 2048

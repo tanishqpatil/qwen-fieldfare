@@ -93,14 +93,6 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         public let bytesStaged: Int
     }
 
-    private struct MmapShard {
-        let fd: Int32
-        let ptr: UnsafeRawPointer
-        let size: Int
-        let headerLen: Int
-        let headerJson: [String: Any]
-    }
-
     private struct RawSlice: Sendable {
         let shardName: String
         let fileOffset: Int
@@ -177,7 +169,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
 
     private let metalContext: MetalContext
     private let device: MTLDevice
-    private var shards: [String: MmapShard] = [:]
+    private var shards: [String: QwenMappedSafetensorsFile] = [:]
     private var weightMap: [String: String] = [:]
 
     private var layerPointers: [LayerDensePointers] = []
@@ -451,32 +443,76 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         }
     }
 
-    deinit {
-        for (_, s) in shards {
-            munmap(UnsafeMutableRawPointer(mutating: s.ptr), s.size)
-            close(s.fd)
-        }
-    }
-
     private func getRawSlice(_ name: String) throws -> RawSlice {
-        guard let shardName = weightMap[name],
-              let shard = shards[shardName],
-              let dict = shard.headerJson[name] as? [String: Any],
-              let offs = dict["data_offsets"] as? [Int] else {
+        guard let shardName = weightMap[name], let shard = shards[shardName],
+              let info = shard.file.header.tensors[name] else {
             throw QwenQ4RunnerError.missingTensor("Missing tensor \(name)")
         }
-        let fileOffset = 8 + shard.headerLen + offs[0]
-        let size = offs[1] - offs[0]
-        return RawSlice(shardName: shardName, fileOffset: fileOffset, size: size)
+        try Self.validateMappedTensor(name: name, info: info)
+        let range = try shard.tensorRange(name)
+        return RawSlice(shardName: shardName, fileOffset: range.lowerBound, size: range.count)
+    }
+
+    /// Byte extents consumed by existing fixed-layout pointer/copy sites. This
+    /// guards memory safety; full model shape/quantization preflight is S1-02.
+    static func validateMappedTensor(name: String, info: QwenTensorInfo) throws {
+        let expected: (dtype: String, bytes: Int)
+        let isWeight = name.hasSuffix(".weight")
+        let isQuant = isWeight || name.hasSuffix(".scales") || name.hasSuffix(".biases")
+        if name.hasSuffix("embed_tokens.weight") || name.hasSuffix("lm_head.weight") {
+            expected = ("U32", 248_320 * 256 * 4)
+        } else if name.contains("embed_tokens.") || name.contains("lm_head.") {
+            expected = ("BF16", 248_320 * 32 * 2)
+        } else if name.contains(".switch_mlp.") && isQuant {
+            expected = isWeight ? ("U32", 256 * 524_288) : ("BF16", 256 * 32_768)
+        } else if name.hasSuffix("input_layernorm.weight") || name.hasSuffix("post_attention_layernorm.weight") || name == "language_model.model.norm.weight" {
+            expected = ("BF16", 2048 * 2)
+        } else if name.hasSuffix("conv1d.weight") {
+            expected = ("BF16", 8192 * 4 * 2)
+        } else if name.hasSuffix("dt_bias") || name.hasSuffix("A_log") {
+            expected = ("BF16", 32 * 2)
+        } else if name.hasSuffix("linear_attn.norm.weight") {
+            expected = ("BF16", 128 * 2)
+        } else if name.hasSuffix("q_norm.weight") || name.hasSuffix("k_norm.weight") {
+            expected = ("BF16", 256 * 2)
+        } else {
+            // Packed weight bytes, followed by bytes in each BF16 scales/biases
+            // tensor. These match the pre-existing DenseLayerArena slots.
+            let projections: [(String, Int, Int)] = [
+                ("linear_attn.in_proj_qkv.", 8_388_608, 524_288),
+                ("self_attn.q_proj.", 8_388_608, 524_288),
+                ("linear_attn.in_proj_z.", 4_194_304, 262_144),
+                ("linear_attn.in_proj_b.", 32_768, 2_048),
+                ("linear_attn.in_proj_a.", 32_768, 2_048),
+                ("linear_attn.out_proj.", 4_194_304, 262_144),
+                ("self_attn.o_proj.", 4_194_304, 262_144),
+                ("self_attn.k_proj.", 524_288, 32_768),
+                ("self_attn.v_proj.", 524_288, 32_768),
+                ("mlp.gate.", 524_288, 16_384),
+                ("mlp.shared_expert_gate.", 2_048, 64),
+                ("mlp.shared_expert.gate_proj.", 524_288, 32_768),
+                ("mlp.shared_expert.up_proj.", 524_288, 32_768),
+                ("mlp.shared_expert.down_proj.", 524_288, 32_768)
+            ]
+            guard isQuant, let projection = projections.first(where: { name.contains($0.0) }) else {
+                throw QwenSafetensorsError.invalidTensor(name: name, reason: "unknown active reader extent")
+            }
+            expected = isWeight ? ("U32", projection.1) : ("BF16", projection.2)
+        }
+        guard info.dtype == expected.dtype, info.dataOffsets.count == 2,
+              info.dataOffsets[0] >= 0, info.dataOffsets[1] >= info.dataOffsets[0],
+              info.dataOffsets[1] - info.dataOffsets[0] == expected.bytes else {
+            throw QwenSafetensorsError.invalidTensor(name: name, reason: "dtype or byte extent differs from active reader layout")
+        }
     }
 
     private func decodeBF16Tensor(_ slice: RawSlice) -> [Float] {
         let shard = shards[slice.shardName]!
         let count = slice.size / 2
         var out = [Float](repeating: 0, count: count)
-        let u16Ptr = shard.ptr.advanced(by: slice.fileOffset).assumingMemoryBound(to: UInt16.self)
+        let bytes = shard.ptr.advanced(by: slice.fileOffset)
         for i in 0..<count {
-            let u32Val = UInt32(u16Ptr[i]) << 16
+            let u32Val = UInt32(bytes.loadUnaligned(fromByteOffset: i * 2, as: UInt16.self)) << 16
             out[i] = Float(bitPattern: u32Val)
         }
         return out
@@ -486,20 +522,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         guard let shard = shards[slice.shardName] else {
             throw QwenQ4RunnerError.missingTensor("Shard \(slice.shardName) not found")
         }
-        let pageSize = Int(getpagesize())
-        let pageOffset = slice.fileOffset % pageSize
-        let alignedOffset = slice.fileOffset - pageOffset
-        let alignedLength = ((slice.size + pageOffset + pageSize - 1) / pageSize) * pageSize
-        let alignedPtr = shard.ptr.advanced(by: alignedOffset)
-        guard let buf = device.makeBuffer(
-            bytesNoCopy: UnsafeMutableRawPointer(mutating: alignedPtr),
-            length: alignedLength,
-            options: .storageModeShared,
-            deallocator: nil
-        ) else {
-            throw QwenQ4RunnerError.metalBufferAllocationFailed("Failed to make zero-copy buffer")
-        }
-        return (buf, pageOffset)
+        return try shard.makeBuffer(device: device, range: slice.fileOffset..<(slice.fileOffset + slice.size))
     }
 
     private func loadModelMetadata(modelPath: String) throws {
@@ -511,27 +534,8 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         }
         self.weightMap = wm
 
-        let shardNames = ["model-00001-of-00004.safetensors", "model-00002-of-00004.safetensors", "model-00003-of-00004.safetensors", "model-00004-of-00004.safetensors"]
-        for sName in shardNames {
-            let sPath = "\(modelPath)/\(sName)"
-            let sFd = open(sPath, O_RDONLY)
-            guard sFd >= 0 else { throw QwenQ4RunnerError.failedToOpenShard("Failed to open \(sPath)") }
-            var sStat = stat()
-            fstat(sFd, &sStat)
-            let sSize = Int(sStat.st_size)
-            guard let sPtr = mmap(nil, sSize, PROT_READ, MAP_SHARED, sFd, 0), sPtr != MAP_FAILED else {
-                close(sFd)
-                throw QwenQ4RunnerError.failedToMmapShard("Failed to mmap \(sPath)")
-            }
-            madvise(UnsafeMutableRawPointer(mutating: sPtr), sSize, MADV_RANDOM)
-
-            let hLen = Int(sPtr.load(as: UInt64.self))
-            let hData = Data(bytes: sPtr.advanced(by: 8), count: hLen)
-            guard let hJson = try JSONSerialization.jsonObject(with: hData) as? [String: Any] else {
-                throw QwenQ4RunnerError.invalidIndexJSON("Invalid JSON header in \(sName)")
-            }
-            shards[sName] = MmapShard(fd: sFd, ptr: sPtr, size: sSize, headerLen: hLen, headerJson: hJson)
-        }
+        shards = try QwenMappedSafetensorsFile.openShards(
+            root: URL(fileURLWithPath: modelPath), names: Set(wm.values))
 
         // Embedding & LM Head slices
         self.embedW = try getRawSlice("language_model.model.embed_tokens.weight")
@@ -816,30 +820,18 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         copySlice(p.shDownB, toOffset: DenseLayerArena.shDownBOff)
     }
 
-    private static func preadFully(
-        fileDescriptor: Int32,
-        destination: UnsafeMutableRawPointer,
-        count: Int,
-        fileOffset: Int
-    ) -> Bool {
-        var completed = 0
-        while completed < count {
-            let result = Darwin.pread(
-                fileDescriptor,
-                destination.advanced(by: completed),
-                count - completed,
-                off_t(fileOffset + completed))
-            if result < 0 && errno == EINTR { continue }
-            guard result > 0 else { return false }
-            completed += result
-        }
-        return true
+    private final class ReadFailure: @unchecked Sendable {
+        private let lock = NSLock()
+        private var stored: (any Error)?
+        func record(_ error: any Error) { lock.withLock { if stored == nil { stored = error } } }
+        var error: (any Error)? { lock.withLock { stored } }
     }
 
     private func fetchExpertWithPread(
         layer: Int,
         expert: Int,
-        destination: UnsafeMutableRawPointer
+        destination: UnsafeMutableRawPointer,
+        failure: ReadFailure
     ) {
         if packedExpertStore?.readExpert(
             layer: layer, expert: expert, destination: destination) == true {
@@ -851,19 +843,14 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
 
         @Sendable func read(_ slice: RawSlice, expertStride: Int, count: Int, destinationOffset: Int) {
             let shard = shards[slice.shardName]!
+            // getRawSlice checked all 256 fixed-size expert extents; forward
+            // checked expert < 256. Thus multiplication and offset+count fit
+            // within this tensor and the validated Int/off_t-sized file.
             let sourceOffset = slice.fileOffset + expert * expertStride
             let target = sendableDestination.value.advanced(by: destinationOffset)
-            if !Self.preadFully(
-                fileDescriptor: shard.fd,
-                destination: target,
-                count: count,
-                fileOffset: sourceOffset)
-            {
-                // Preserve correctness if an explicit read is interrupted by
-                // an unexpected filesystem condition; telemetry will still
-                // classify the request as a cache miss.
-                memcpy(target, shard.ptr.advanced(by: sourceOffset), count)
-            }
+            do {
+                try shard.read(into: target, range: sourceOffset..<(sourceOffset + count))
+            } catch { failure.record(error) }
         }
 
         // Gate, up, and down occupy independent source ranges and destinations.
@@ -903,16 +890,13 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         let sShard = shards[embedS.shardName]!.ptr.advanced(by: embedS.fileOffset)
         let bShard = shards[embedB.shardName]!.ptr.advanced(by: embedB.fileOffset)
 
-        let wPtr = wShard.assumingMemoryBound(to: UInt32.self)
-        let sPtr = sShard.assumingMemoryBound(to: UInt16.self)
-        let bPtr = bShard.assumingMemoryBound(to: UInt16.self)
         let outPtr = outBuf.contents().assumingMemoryBound(to: Float.self)
 
         for g in 0..<32 {
-            let sF = Float(bitPattern: UInt32(sPtr[rowGroupOffset + g]) << 16)
-            let bF = Float(bitPattern: UInt32(bPtr[rowGroupOffset + g]) << 16)
+            let sF = Float(bitPattern: UInt32(sShard.loadUnaligned(fromByteOffset: (rowGroupOffset + g) * 2, as: UInt16.self)) << 16)
+            let bF = Float(bitPattern: UInt32(bShard.loadUnaligned(fromByteOffset: (rowGroupOffset + g) * 2, as: UInt16.self)) << 16)
             for j in 0..<8 {
-                let u = wPtr[rowU32Offset + g * 8 + j]
+                let u = wShard.loadUnaligned(fromByteOffset: (rowU32Offset + g * 8 + j) * 4, as: UInt32.self)
                 for n in 0..<8 {
                     let nibble = Float((u >> (n * 4)) & 0x0F)
                     outPtr[g * 64 + j * 8 + n] = nibble * sF + bF
@@ -928,8 +912,13 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         seenTokenIDs: Set<Int32> = [],
         samplePosition: Int = 0
     ) throws -> Int32 {
+        guard tokenId >= 0, tokenId < 248_320, tokenPos >= 0, tokenPos < maxSeqLen else {
+            throw QwenSafetensorsError.invalidTensor(name: "embedding", reason: "token or position out of bounds")
+        }
+        // Detect observed mutations before touching mappings; this is not a lock.
+        for shard in shards.values { try shard.file.verifyUnchanged() }
         let tStepStart = CFAbsoluteTimeGetCurrent()
-dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
+        dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
 
         var dim2048: UInt32 = 2048
         var eps: Float = 1e-6
@@ -1219,6 +1208,9 @@ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
             // servicing cache misses, so both overlap the explicit reads.
             let expPtr = expertIndicesBuf.contents().assumingMemoryBound(to: UInt32.self)
             let selectedIds = (0..<8).map { expPtr[$0] }
+            guard selectedIds.allSatisfy({ $0 < 256 }) else {
+                throw QwenSafetensorsError.invalidTensor(name: "experts", reason: "expert index out of bounds")
+            }
             perLayerRecentExperts[l] = selectedIds
 
             let tCacheLookupStart = CFAbsoluteTimeGetCurrent()
@@ -1226,6 +1218,7 @@ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
             var hitCount: UInt32 = 0
             var missPositions: [UInt32] = []
             var layerHitCommand: MTLCommandBuffer?
+            let readFailure = ReadFailure()
             let activeSlots = expertCache.acquireSlotsParallel(
                 layer: l,
                 expertIndices: selectedIds,
@@ -1317,8 +1310,15 @@ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
                     hitCommand.commit()
                     layerHitCommand = hitCommand
                 }) {
-                    self.fetchExpertWithPread(layer: $0, expert: $1, destination: $2)
+                    self.fetchExpertWithPread(layer: $0, expert: $1, destination: $2, failure: readFailure)
                 }
+            if let error = readFailure.error {
+                // Parallel reads have joined. Complete in-flight hit work before
+                // invalidating slots; no miss-consuming GPU work was submitted.
+                layerHitCommand?.waitUntilCompleted()
+                expertCache.clear()
+                throw error
+            }
             if enableGPUProfiling, let layerHitCommand {
                 profiledSharedHitCommands.append(layerHitCommand)
             }

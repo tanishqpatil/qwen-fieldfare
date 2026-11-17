@@ -1,8 +1,77 @@
 import Foundation
+import Darwin
 import Testing
 @testable import QwenFieldfareCore
 
 @Suite struct QwenModelDirectoryTests {
+    @Test(arguments: QwenModelDirectory.requiredMetadataFiles)
+    func rejectsMetadataDirectory(name: String) throws {
+        let root = try completeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent(name)
+        try FileManager.default.removeItem(at: file)
+        try FileManager.default.createDirectory(at: file, withIntermediateDirectories: false)
+        #expect(throws: QwenModelDirectoryError.invalidMetadata("\(name) is not a regular file")) {
+            try QwenModelDirectory.validate(path: root.path)
+        }
+    }
+
+    @Test(arguments: QwenModelDirectory.requiredMetadataFiles)
+    func rejectsMetadataFIFO(name: String) throws {
+        let root = try completeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent(name)
+        try FileManager.default.removeItem(at: file)
+        #expect(mkfifo(file.path, 0o600) == 0)
+        #expect(throws: QwenModelDirectoryError.invalidMetadata("\(name) is not a regular file")) {
+            try QwenModelDirectory.validate(path: root.path)
+        }
+    }
+
+    @Test(arguments: QwenModelDirectory.requiredMetadataFiles)
+    func rejectsEscapingMetadataLink(name: String) throws {
+        let root = try completeDirectory()
+        let outside = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root); try? FileManager.default.removeItem(at: outside) }
+        let file = root.appendingPathComponent(name)
+        try FileManager.default.removeItem(at: file)
+        try write("{}", named: name, in: outside)
+        try FileManager.default.createSymbolicLink(at: file, withDestinationURL: outside.appendingPathComponent(name))
+        #expect(throws: QwenModelDirectoryError.invalidMetadata("\(name) resolves outside model directory")) {
+            try QwenModelDirectory.validate(path: root.path)
+        }
+    }
+
+    @Test func acceptsInternalMetadataLink() throws {
+        let root = try completeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let index = root.appendingPathComponent("model.safetensors.index.json")
+        let target = root.appendingPathComponent("index-target.json")
+        try FileManager.default.moveItem(at: index, to: target)
+        try FileManager.default.createSymbolicLink(at: index, withDestinationURL: target)
+        #expect(try QwenModelDirectory.validate(path: root.path) == root.standardizedFileURL.path)
+    }
+
+    @Test func rejectsOversizedIndexBeforeReadingPayload() throws {
+        let root = try completeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = try FileHandle(forWritingTo: root.appendingPathComponent("model.safetensors.index.json"))
+        defer { try? file.close() }
+        try file.truncate(atOffset: UInt64(QwenModelDirectory.maximumIndexBytes + 1))
+        #expect(throws: QwenModelDirectoryError.invalidIndex("index exceeds 16 MiB limit")) {
+            try QwenModelDirectory.validate(path: root.path)
+        }
+    }
+
+    @Test func malformedIndexReturnsTypedError() throws {
+        let root = try completeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try write("{", named: "model.safetensors.index.json", in: root)
+        #expect(throws: QwenModelDirectoryError.invalidIndex("malformed JSON")) {
+            try QwenModelDirectory.validate(path: root.path)
+        }
+    }
+
     @Test func validatesCompleteDirectory() throws {
         let root = try temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -62,6 +131,17 @@ import Testing
         data.append(header)
         try data.write(to: shard)
         #expect(throws: (any Error).self) { try loader.getTensorInfo(name: "tensor") }
+    }
+
+    private func completeDirectory() throws -> URL {
+        let root = try temporaryDirectory()
+        for name in ["config.json", "tokenizer.json", "tokenizer_config.json"] {
+            try write("{}", named: name, in: root)
+        }
+        try write("shard", named: "shard.safetensors", in: root)
+        try write(#"{"weight_map":{"tensor":"shard.safetensors"}}"#,
+                  named: "model.safetensors.index.json", in: root)
+        return root
     }
 
     private func temporaryDirectory() throws -> URL {

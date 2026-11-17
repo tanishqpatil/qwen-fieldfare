@@ -10,153 +10,132 @@ public final class QwenResidentWeights: @unchecked Sendable {
     public let checkpointDirectory: String
     public let weightMap: [String: String]
     public let numLayers: Int
-    private var shardHeaders: [String: (headerSize: Int, tensors: [String: QwenTensorInfo])] = [:]
+    private struct Shard {
+        let path: String
+        let file: QwenSafetensorsFile
+    }
+    private var shards: [String: Shard] = [:]
+    private let canonicalDirectory: URL
     private let lock = NSLock()
 
     public init(checkpointDirectory: String, weightMap: [String: String] = [:], numLayers: Int = 40) {
         self.checkpointDirectory = checkpointDirectory
         self.weightMap = weightMap
         self.numLayers = numLayers
+        self.canonicalDirectory = URL(fileURLWithPath: (checkpointDirectory as NSString).expandingTildeInPath,
+                                      isDirectory: true).standardizedFileURL.resolvingSymlinksInPath()
+    }
+
+    // A serialized borrow: body must not retain the file or re-enter this reader.
+    // Cache keeps validated descriptors, not merely metadata for later path opens.
+    func withTensor<T>(name: String, _ body: (QwenSafetensorsFile, String, QwenTensorInfo) throws -> T) throws -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let shardName = weightMap[name] else {
+            throw QwenSafetensorsError.invalidTensor(name: name, reason: "not found in weight_map")
+        }
+        do {
+            let shard: Shard
+            if let cached = shards[shardName] {
+                shard = cached
+            } else {
+                guard !shardName.isEmpty, !shardName.utf8.contains(0),
+                      shardName == (shardName as NSString).lastPathComponent else {
+                    throw QwenModelDirectoryError.invalidIndex("unsafe shard name \(shardName)")
+                }
+                let url = canonicalDirectory.appendingPathComponent(shardName).resolvingSymlinksInPath()
+                guard url.deletingLastPathComponent().path == canonicalDirectory.path else {
+                    throw QwenModelDirectoryError.invalidIndex("shard resolves outside model directory: \(shardName)")
+                }
+                shard = Shard(path: url.path, file: try QwenSafetensorsFile(resolvedURL: url))
+                shards[shardName] = shard
+            }
+            try shard.file.verifyUnchanged()
+            guard let info = shard.file.header.tensors[name] else {
+                throw QwenSafetensorsError.invalidTensor(name: name, reason: "not found in shard header")
+            }
+            return try body(shard.file, shard.path, info)
+        } catch {
+            // Fail closed, release ownership, and require explicit caller retry.
+            // A retry opens/revalidates a fresh descriptor, never stale offsets.
+            shards.removeValue(forKey: shardName)
+            throw error
+        }
     }
 
     public func getTensorInfo(name: String) throws -> (shardPath: String, headerSize: Int, info: QwenTensorInfo) {
-        guard let shardFile = weightMap[name] else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 3, userInfo: [NSLocalizedDescriptionKey: "Tensor \(name) not found in weight_map"])
+        try withTensor(name: name) { file, path, info in
+            (path, file.header.headerByteCount, info)
         }
-        let shardPath = (checkpointDirectory as NSString).appendingPathComponent(shardFile)
-
-        lock.lock()
-        defer { lock.unlock() }
-
-        if let cached = shardHeaders[shardFile], let info = cached.tensors[name] {
-            return (shardPath, cached.headerSize, info)
-        }
-
-        // Read shard header
-        guard let fileHandle = FileHandle(forReadingAtPath: shardPath) else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 4, userInfo: [NSLocalizedDescriptionKey: "Cannot open shard \(shardPath)"])
-        }
-        defer { try? fileHandle.close() }
-
-        guard let lenData = try? fileHandle.read(upToCount: 8), lenData.count == 8 else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 5, userInfo: [NSLocalizedDescriptionKey: "Cannot read header length from \(shardPath)"])
-        }
-        let rawHeaderLen = lenData.withUnsafeBytes { $0.loadUnaligned(as: UInt64.self) }.littleEndian
-        let fileSize = try fileHandle.seekToEnd()
-        guard rawHeaderLen <= 100_000_000, fileSize >= 8,
-              rawHeaderLen <= fileSize - 8, let headerLen = Int(exactly: rawHeaderLen) else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 6,
-                userInfo: [NSLocalizedDescriptionKey: "Invalid or oversized Safetensors header in \(shardPath)"])
-        }
-        try fileHandle.seek(toOffset: 8)
-
-        guard let headerData = try? fileHandle.read(upToCount: headerLen), headerData.count == headerLen else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 6, userInfo: [NSLocalizedDescriptionKey: "Cannot read JSON header from \(shardPath)"])
-        }
-
-        guard let json = try? JSONSerialization.jsonObject(with: headerData) as? [String: Any] else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 7, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON header in \(shardPath)"])
-        }
-
-        var tensors: [String: QwenTensorInfo] = [:]
-        for (k, v) in json {
-            if k == "__metadata__" { continue }
-            guard let dict = v as? [String: Any],
-                  let dtype = dict["dtype"] as? String,
-                  let shape = dict["shape"] as? [Int],
-                  let offs = dict["data_offsets"] as? [Int], offs.count == 2 else { continue }
-            guard offs[0] >= 0, offs[1] >= offs[0],
-                  UInt64(offs[1]) <= fileSize - 8 - rawHeaderLen,
-                  shape.allSatisfy({ $0 >= 0 }) else {
-                throw NSError(domain: "QwenResidentCoreLoader", code: 7,
-                    userInfo: [NSLocalizedDescriptionKey: "Invalid tensor bounds for \(k) in \(shardPath)"])
-            }
-            tensors[k] = QwenTensorInfo(shape: shape, dtype: dtype, dataOffsets: offs)
-        }
-
-        shardHeaders[shardFile] = (headerLen, tensors)
-        guard let info = tensors[name] else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 8, userInfo: [NSLocalizedDescriptionKey: "Tensor \(name) not found in shard header \(shardFile)"])
-        }
-        return (shardPath, headerLen, info)
     }
 
     public func loadTensor(name: String) throws -> [Float] {
-        let (shardPath, headerLen, info) = try getTensorInfo(name: name)
-        guard let fileHandle = FileHandle(forReadingAtPath: shardPath) else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 9, userInfo: [NSLocalizedDescriptionKey: "Cannot open shard \(shardPath)"])
-        }
-        defer { try? fileHandle.close() }
-
-        let startOffset = UInt64(8 + headerLen + info.dataOffsets[0])
-        let byteCount = info.dataOffsets[1] - info.dataOffsets[0]
-
-        try fileHandle.seek(toOffset: startOffset)
-        guard let rawData = try fileHandle.read(upToCount: byteCount), rawData.count == byteCount else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 10, userInfo: [NSLocalizedDescriptionKey: "Failed to read \(byteCount) bytes for \(name)"])
-        }
-
-        if info.dtype == "BF16" {
-            let elemCount = byteCount / 2
-            var out = [Float](repeating: 0, count: elemCount)
-            rawData.withUnsafeBytes { rawPtr in
-                let u16Ptr = rawPtr.bindMemory(to: UInt16.self)
-                for i in 0..<elemCount {
-                    let u32Val = UInt32(u16Ptr[i]) << 16
-                    out[i] = Float(bitPattern: u32Val)
-                }
-            }
-            return out
-        } else if info.dtype == "F32" {
-            let elemCount = byteCount / 4
-            var out = [Float](repeating: 0, count: elemCount)
-            rawData.withUnsafeBytes { rawPtr in
-                let fPtr = rawPtr.bindMemory(to: Float.self)
-                for i in 0..<elemCount {
-                    out[i] = fPtr[i]
-                }
-            }
-            return out
-        } else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 11, userInfo: [NSLocalizedDescriptionKey: "Unsupported dtype \(info.dtype) for \(name)"])
+        try withTensor(name: name) { file, _, info in
+            let width = try Self.floatWidth(info.dtype, name: name)
+            let range = info.dataOffsets[0]..<info.dataOffsets[1]
+            let count = try Self.checkedOutputCount(range.count / width, name: name)
+            let bytes = try file.readPayload(range)
+            var output = [Float](repeating: 0, count: count)
+            Self.decode(bytes, dtype: info.dtype, into: &output, at: 0)
+            return output
         }
     }
 
     public func loadEmbedTokensRows(tokenIds: [Int], hiddenSize: Int = 2048) throws -> [Float] {
         let name = "model.language_model.embed_tokens.weight"
-        let (shardPath, headerLen, info) = try getTensorInfo(name: name)
-        guard let fileHandle = FileHandle(forReadingAtPath: shardPath) else {
-            throw NSError(domain: "QwenResidentCoreLoader", code: 12, userInfo: [NSLocalizedDescriptionKey: "Cannot open shard \(shardPath)"])
-        }
-        defer { try? fileHandle.close() }
-
-        let bytesPerRow = hiddenSize * (info.dtype == "BF16" ? 2 : 4)
-        var out = [Float](repeating: 0, count: tokenIds.count * hiddenSize)
-
-        for (idx, tok) in tokenIds.enumerated() {
-            let rowOffset = UInt64(8 + headerLen + info.dataOffsets[0] + tok * bytesPerRow)
-            try fileHandle.seek(toOffset: rowOffset)
-            guard let rawData = try fileHandle.read(upToCount: bytesPerRow), rawData.count == bytesPerRow else {
-                throw NSError(domain: "QwenResidentCoreLoader", code: 13, userInfo: [NSLocalizedDescriptionKey: "Failed to read embedding row for token \(tok)"])
+        return try withTensor(name: name) { file, _, info in
+            let width = try Self.floatWidth(info.dtype, name: name)
+            guard hiddenSize > 0, info.shape.count == 2, info.shape[1] == hiddenSize,
+                  tokenIds.allSatisfy({ $0 >= 0 && $0 < info.shape[0] }) else {
+                throw QwenSafetensorsError.invalidTensor(name: name, reason: "invalid embedding shape, hidden size or token index")
             }
-            if info.dtype == "BF16" {
-                rawData.withUnsafeBytes { rawPtr in
-                    let u16Ptr = rawPtr.bindMemory(to: UInt16.self)
-                    for i in 0..<hiddenSize {
-                        let u32Val = UInt32(u16Ptr[i]) << 16
-                        out[idx * hiddenSize + i] = Float(bitPattern: u32Val)
-                    }
+            let rowBytes = hiddenSize.multipliedReportingOverflow(by: width)
+            let count = tokenIds.count.multipliedReportingOverflow(by: hiddenSize)
+            guard !rowBytes.overflow, !count.overflow else {
+                throw QwenSafetensorsError.arithmeticOverflow(name: name)
+            }
+            let outputCount = try Self.checkedOutputCount(count.partialValue, name: name)
+            var output = [Float](repeating: 0, count: outputCount)
+            for (index, token) in tokenIds.enumerated() {
+                // Validated 2D shape/extent and token bounds prove these fit,
+                // including the final row ending exactly at the tensor bound.
+                let start = info.dataOffsets[0] + token * rowBytes.partialValue
+                let bytes = try file.readPayload(start..<(start + rowBytes.partialValue))
+                Self.decode(bytes, dtype: info.dtype, into: &output, at: index * hiddenSize)
+            }
+            return output
+        }
+    }
+
+    private static func floatWidth(_ dtype: String, name: String) throws -> Int {
+        switch dtype {
+        case "BF16": return 2
+        case "F32": return 4
+        default: throw QwenSafetensorsError.unsupportedDtype(name: name, dtype: dtype)
+        }
+    }
+
+    private static func checkedOutputCount(_ count: Int, name: String) throws -> Int {
+        guard count >= 0, !count.multipliedReportingOverflow(by: MemoryLayout<Float>.stride).overflow else {
+            throw QwenSafetensorsError.arithmeticOverflow(name: name)
+        }
+        return count
+    }
+
+    private static func decode(_ bytes: Data, dtype: String, into output: inout [Float], at start: Int) {
+        bytes.withUnsafeBytes { raw in
+            if dtype == "BF16" {
+                for index in 0..<(bytes.count / 2) {
+                    let bits = raw.loadUnaligned(fromByteOffset: index * 2, as: UInt16.self).littleEndian
+                    output[start + index] = Float(bitPattern: UInt32(bits) << 16)
                 }
             } else {
-                rawData.withUnsafeBytes { rawPtr in
-                    let fPtr = rawPtr.bindMemory(to: Float.self)
-                    for i in 0..<hiddenSize {
-                        out[idx * hiddenSize + i] = fPtr[i]
-                    }
+                for index in 0..<(bytes.count / 4) {
+                    let bits = raw.loadUnaligned(fromByteOffset: index * 4, as: UInt32.self).littleEndian
+                    output[start + index] = Float(bitPattern: bits)
                 }
             }
         }
-        return out
     }
 
     public func loadLayerWeights(layerIndex l: Int, kind: QwenLayerKind) throws -> QwenLayerWeights {
