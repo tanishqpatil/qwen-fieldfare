@@ -1,0 +1,6 @@
+{
+  "probe": "unsupported output limit5000 rejected before inference admission",
+  "exit": 1,
+  "events": "{\"type\":\"error\",\"timestamp\":1794917165238,\"sessionID\":\"ses_e16999aefffeDmzmG3AK9DbQtr\",\"error\":{\"name\":\"APIError\",\"data\":{\"message\":\"Output limit must be 1\u20134096\",\"statusCode\":400,\"isRetryable\":false,\"responseHeaders\":{\"connection\":\"close\",\"content-length\":\"102\",\"content-type\":\"application/json\"},\"responseBody\":\"{\\\"error\\\":{\\\"code\\\":\\\"http_400\\\",\\\"message\\\":\\\"Output limit must be 1\u20134096\\\",\\\"type\\\":\\\"invalid_request_error\\\"}}\",\"metadata\":{\"url\":\"http://127.0.0.1:18092/v1/chat/completions\"}}}}\n",
+  "stderr": ""
+}

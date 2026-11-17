@@ -1,0 +1,72 @@
+{
+  "workspace": "/private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-opencode-wzit37es/workspace",
+  "opencode_version": "1.19.5",
+  "relay": "Byte-preserving loopback timing relay18093 -> actual server18092; no tool execution or payload modification",
+  "request_log": "Aggregate timings/usage only, no conversation or argument logging",
+  "client_permission_policy": "OpenCode read/edit patterns are workspace-relative; outside directory deny; edits limited to two fixture files; exact unittest command only",
+  "peak_sampled_rss_bytes": 5087821824,
+  "health": {
+    "active_generations": 0,
+    "model": "qwen-fieldfare",
+    "queue_capacity": 2,
+    "queued_requests": 0,
+    "status": "ready",
+    "tools": true
+  },
+  "bench_owner_probe_exit": 1,
+  "bench_owner_rejected": true,
+  "listed_model": true,
+  "client_output_error": true,
+  "client_context_error": true,
+  "client_cancel_exit": -2,
+  "cancel_drain_seconds": 0.5423469580018718,
+  "health_after_cancel": {
+    "active_generations": 0,
+    "model": "qwen-fieldfare",
+    "queue_capacity": 2,
+    "queued_requests": 0,
+    "status": "ready",
+    "tools": true
+  },
+  "wall_seconds": 1696.7302065830008,
+  "opencode_exit": 0,
+  "tools": [
+    {
+      "tool": "read",
+      "status": "completed"
+    },
+    {
+      "tool": "grep",
+      "status": "completed"
+    },
+    {
+      "tool": "read",
+      "status": "completed"
+    },
+    {
+      "tool": "bash",
+      "status": "completed"
+    },
+    {
+      "tool": "edit",
+      "status": "completed"
+    },
+    {
+      "tool": "edit",
+      "status": "completed"
+    },
+    {
+      "tool": "bash",
+      "status": "completed"
+    }
+  ],
+  "tool_successes": 7,
+  "tool_errors": 0,
+  "final_response": true,
+  "final_tests_exit": 0,
+  "observed_failing_test": true,
+  "observed_passing_test": true,
+  "workflow_tools_complete": true,
+  "passed": true,
+  "server_exit": 0
+}

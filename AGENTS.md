@@ -1,6 +1,14 @@
 # QwenFieldfare
 
-## Current milestone — S2-01 structured tool contract
+## Current milestone — S2-02 CLI and real OpenCode qualification
+
+Explicit user authorization supersedes the prior S2-01 stop. Preserve completed
+server/tools/readers and known131/132 release blocker. Implement validated CLI
+controls and qualify installed OpenCode in a disposable repository. Stop after
+S2-02; do not begin S2-03 SwiftUI management in this execution. No push/merge.
+
+
+## Historical milestone — S2-01 structured tool contract
 
 Explicit user authorization supersedes the prior S2-00 stop. Preserve its server
 checkpoint and all reader/numerical evidence. Implement native Qwen tools, JSON
@@ -8,7 +16,7 @@ and SSE translation, matched tool results and one real continuation. Never execu
 tools in the server. Stop after S2-01; no prefix reuse/readers/Hermes/push/merge.
 
 
-## Active priority override — S2-00 (2026-11-17)
+## Historical priority override — S2-00 (2026-11-17)
 
 Explicit user decision supersedes earlier Stage1-only/order/stop directives.
 Build and qualify the minimal local QwenFieldfareServer now. S1-01e and remaining
@@ -45,7 +53,7 @@ fixture/evidence/tests; never suppress failures or claim full parity. New or
 worsened mismatches block affected changes. Production-readiness claims require
 an independently reviewed numerical policy and sufficient evidence.
 
-Current milestone: Stage 1 only; stop/report at its boundary before Stage 2.
+Historical Stage1-only boundary is superseded by the current S2-02 directive above.
 No further broad/layer-3 numerical investigation without a bounded hypothesis
 and decision it informs, or a change directly requiring it. Model-free tests
 first; model-backed checks only for inference-affecting work/integration gates.

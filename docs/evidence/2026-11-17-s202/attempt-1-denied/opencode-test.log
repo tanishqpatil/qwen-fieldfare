@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/tanishq/dev/github/turbo-fieldfare/Scripts/test_opencode.py", line 105, in <module>
+    assert metrics['passed'],'OpenCode workflow did not meet the full gate; retain artifacts and diagnose'
+           ~~~~~~~^^^^^^^^^^
+AssertionError: OpenCode workflow did not meet the full gate; retain artifacts and diagnose

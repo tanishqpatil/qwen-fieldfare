@@ -7,12 +7,20 @@ public struct ToolSchema: Sendable {
     public let required: Set<String>
     public init(_ json: ToolJSON, depth: Int = 0) throws {
         guard depth <= 12, let entries = json.members,
-              Set(entries.map(\.key)).isSubset(of: ["type","properties","required","additionalProperties","items","enum","description","title"]) else { throw APIError(400, "Unsupported JSON Schema structure or keyword") }
+              Set(entries.map(\.key)).isSubset(of: ["type","properties","required","additionalProperties","items","enum","description","title","$schema","minimum","maximum","exclusiveMinimum","exclusiveMaximum"]) else { throw APIError(400, "Unsupported JSON Schema structure or keyword") }
         let raw = json["type"]
         if let type = raw?.string { types = [type] }
         else if let list = raw?.array, !list.isEmpty, list.allSatisfy({ $0.string != nil }) { types = list.map { $0.string! } }
         else { throw APIError(400, "Schema requires explicit type") }
         guard Set(types).count == types.count, Set(types).isSubset(of: ["object","array","string","number","integer","boolean","null"]) else { throw APIError(400, "Unsupported schema type") }
+        if let dialect=json["$schema"] {
+            guard dialect.string == "https://json-schema.org/draft/2020-12/schema" else {throw APIError(400,"Unsupported schema dialect")}
+        }
+        for key in ["minimum","maximum","exclusiveMinimum","exclusiveMaximum"] {
+            if let bound=json[key] {
+                guard types.contains("number") || types.contains("integer"),case .number(let text)=bound,let value=Double(text),value.isFinite else {throw APIError(400,"Numeric schema bounds require finite numbers and numeric types")}
+            }
+        }
         for key in ["description","title"] { if let v = json[key] { guard let s = v.string else { throw APIError(400, "Invalid schema text") }; try rejectNativeMarkers(s) } }
         if let v = json["enum"] { guard let values = v.array, !values.isEmpty else { throw APIError(400, "Invalid schema enum") } }
         if let v = json["properties"] { guard types.contains("object"), let p = v.members, p.count <= 64 else { throw APIError(400, "Invalid schema properties") }; properties = p }
@@ -47,6 +55,21 @@ public struct ToolSchema: Sendable {
             }
         }
         guard match else { return false }
+        if case .number(let text)=value,let number=Double(text) {
+            for (key,inclusive,isLower) in [("minimum",true,true),("maximum",true,false),("exclusiveMinimum",false,true),("exclusiveMaximum",false,false)] {
+                if case .number(let raw)=json[key],let bound=Double(raw) {
+                    // Decimal preserves supported Int64 values that Double rounds.
+                    // Outside Decimal's exponent range both values already follow
+                    // ToolJSON's validated Double spelling/precision contract.
+                    let less: Bool, greater: Bool, equal: Bool
+                    if let n=Decimal(string:text,locale:Locale(identifier:"en_US_POSIX")),let b=Decimal(string:raw,locale:Locale(identifier:"en_US_POSIX")) {
+                        less=n < b;greater=n > b;equal=n == b
+                    } else {less=number < bound;greater=number > bound;equal=number == bound}
+                    if isLower && (less || (!inclusive && equal)) {return false}
+                    if !isLower && (greater || (!inclusive && equal)) {return false}
+                }
+            }
+        }
         if let allowed = json["enum"]?.array { return allowed.contains(where: { $0.semanticallyEquals(value) }) }
         return true
     }

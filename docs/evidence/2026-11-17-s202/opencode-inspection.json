@@ -1,0 +1,31 @@
+{
+  "installed_version": "1.19.5",
+  "binary": "/opt/homebrew/Cellar/opencode/1.19.5/bin/opencode",
+  "config_contract": "v1 provider/npm/options/agent (not current v2 providers/package/settings/agents)",
+  "request_keys": [
+    "model",
+    "max_tokens",
+    "temperature",
+    "messages",
+    "tools",
+    "tool_choice",
+    "stream",
+    "stream_options"
+  ],
+  "tool_names": [
+    "bash",
+    "edit",
+    "grep",
+    "read",
+    "write"
+  ],
+  "message_roles": [
+    "system",
+    "user",
+    "assistant",
+    "tool"
+  ],
+  "transport_mock_read": "completed; no model was loaded, not real-model qualification",
+  "cwd_caveat": "Explicit --dir and PWD must match canonical Git workspace; preserve external_directory deny",
+  "isolation": "XDG directories in /tmp; disable Claude instructions/external skills/models fetch/auto update; --pure; no user config modified"
+}

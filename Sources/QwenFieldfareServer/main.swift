@@ -16,10 +16,13 @@ import QwenFieldfareCore
     }
     static func main() async {
         do {
-            var options:[String:String]=[:];var args=CommandLine.arguments.dropFirst().makeIterator()
-            while let key=args.next() {guard ["--model","--port","--context","--memory-gib","--model-id"].contains(key),let value=args.next() else {throw APIError(400,"Expected --model PATH [--port 8080 --context 8192 --memory-gib 5 --model-id qwen-fieldfare]")};options[key]=value}
-            guard let path=options["--model"],let secret=ProcessInfo.processInfo.environment["QWENFIELDFARE_API_KEY"],let port=Int(options["--port"] ?? "8080"),let context=Int(options["--context"] ?? "8192"),let budget=QwenActiveStreamingMemoryBudget(rawValue:Int(options["--memory-gib"] ?? "5") ?? -1) else {throw APIError(400,"Require model path, valid settings and QWENFIELDFARE_API_KEY")}
-            guard secret.utf8.count >= 16, !secret.contains("\n"), (0...65535).contains(port) else {throw APIError(400,"Invalid authentication/port configuration")}
+            let action=try ServerConfiguration.parse(Array(CommandLine.arguments.dropFirst()),environment:ProcessInfo.processInfo.environment)
+            let config: ServerConfiguration
+            switch action {
+            case .help: print(ServerConfiguration.help);return
+            case .version: print(ServerConfiguration.version);return
+            case .serve(let value): config=value
+            }
             let descriptor=open("/tmp/qwenfieldfare-server-\(getuid()).lock",O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC,0o600)
             guard descriptor >= 0,flock(descriptor,LOCK_EX|LOCK_NB) == 0 else {throw APIError(503,"Another server owns inference")}
             defer {close(descriptor)}
@@ -31,15 +34,21 @@ import QwenFieldfareCore
             let shutdown=Cancellation()
             let signals=installSignals(shutdown)
             let started=Date()
-            let backend=try await CoreBackend(path:path,context:context,budget:budget)
-            let server=try LocalServer(backend:backend,key:secret,model:options["--model-id"] ?? "qwen-fieldfare")
-            let bound=try await server.start(port:port)
-            print("QwenFieldfareServer ready 127.0.0.1:\(bound); load_seconds=\(Date().timeIntervalSince(started)); context=\(context), budget_gib=\(budget.rawValue)")
+            let backend=try await CoreBackend(path:config.modelPath,context:config.context,budget:config.budget)
+            let server=try LocalServer(backend:backend,key:config.apiKey,model:config.modelID,queueCapacity:config.queueCapacity)
+            let bound=try await server.start(host:config.host,port:config.port)
+            print("QwenFieldfareServer ready 127.0.0.1:\(bound); load_seconds=\(Date().timeIntervalSince(started)); context=\(config.context), budget_gib=\(config.budget.rawValue), queue=\(config.queueCapacity)")
             print("Loaded \(memory())");fflush(stdout)
             while !shutdown.isCancelled {try await Task.sleep(for:.milliseconds(100))}
             try await server.shutdown()
             print("Shutdown drained \(memory())");fflush(stdout)
             for signal in signals {signal.cancel()}
-        } catch {fputs("QwenFieldfareServer startup/shutdown failed. Check local configuration and model compatibility.\n",stderr);exit(1)}
+        } catch {
+            let message: String
+            if let error=error as? APIError {message=error.message}
+            else if let error=error as? QwenInferenceLeaseError {message=error.localizedDescription}
+            else {message="Startup/shutdown failed. Check model compatibility or whether the port is already in use."}
+            fputs("QwenFieldfareServer: \(message)\n",stderr);exit(1)
+        }
     }
 }

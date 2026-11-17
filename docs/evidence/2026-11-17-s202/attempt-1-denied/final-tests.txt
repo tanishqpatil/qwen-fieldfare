@@ -1,0 +1,25 @@
+test_add (test_calculator.AdditionTests.test_add) ... FAIL
+test_four (test_calculator.AdditionTests.test_four) ... FAIL
+
+======================================================================
+FAIL: test_add (test_calculator.AdditionTests.test_add)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-opencode-htjx9ppj/workspace/test_calculator.py", line 6, in test_add
+    self.assertEqual(add(1, 2), 3)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+AssertionError: -1 != 3
+
+======================================================================
+FAIL: test_four (test_calculator.AdditionTests.test_four)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-opencode-htjx9ppj/workspace/test_calculator.py", line 8, in test_four
+    self.assertEqual(add(2, 2), 5)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+AssertionError: 0 != 5
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+FAILED (failures=2)

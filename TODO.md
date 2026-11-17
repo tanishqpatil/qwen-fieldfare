@@ -1,6 +1,14 @@
 # Authoritative implementation backlog
 
-## Current milestone — S2-01 structured tool contract
+## Current milestone — S2-02 CLI and real OpenCode qualification
+
+Explicit user authorization supersedes the prior S2-01 stop. Preserve completed
+server/tools/readers and known131/132 release blocker. Implement validated CLI
+controls and qualify installed OpenCode in a disposable repository. Stop after
+S2-02; do not begin S2-03 SwiftUI management in this execution. No push/merge.
+
+
+## Historical milestone — S2-01 structured tool contract
 
 Explicit user authorization supersedes the prior S2-00 stop. Preserve its server
 checkpoint and all reader/numerical evidence. Implement native Qwen tools, JSON
@@ -8,7 +16,7 @@ and SSE translation, matched tool results and one real continuation. Never execu
 tools in the server. Stop after S2-01; no prefix reuse/readers/Hermes/push/merge.
 
 
-## Active priority override — S2-00 (2026-11-17)
+## Historical priority override — S2-00 (2026-11-17)
 
 Explicit user decision supersedes earlier Stage1-only/order/stop directives.
 Build and qualify the minimal local QwenFieldfareServer now. S1-01e and remaining
@@ -27,7 +35,7 @@ Read AGENTS.md, this file and docs/AGENT_MEMORY.md at session start. Inspect
 related source and baseline before edits. Preserve unrelated work and historical
 logs. Update status whenever work changes; statuses are pending, in progress,
 blocked, completed or rejected. Every stage must pass applicable acceptance
-before the next begins. Stop for review after Stage 1 in this execution. Stop
+before the next begins. The current S2-02 stop overrides the historical Stage1 boundary. Stop
 at a new applicable hardware/checkpoint/environment/correctness blocker; the
 known 131/132 baseline does not block independent engineering. Never call an
 unverified stage complete. No remote push/merge or destructive Git operation.
@@ -216,7 +224,36 @@ remain open until their full acceptance criteria pass.
   tool deltas; delimiter-bearing tool data rejected; no full OpenCode qualification.
 - Stop here; next task is OpenCode provider/configuration and real client cycle.
 
-### S2-02 — Historical decomposition: parser delivered within S2-01
+### S2-02 — CLI usability and actual OpenCode qualification (current mission)
+
+- Stage/priority/status:2/P0/**completed**; supersedes the historical numbering below.
+- Files: ServerConfiguration/CLI/admission/health,Core inference lease,SDK schema
+  support,configuration/ownership/wire tests,OpenCode scripts and integration docs.
+- Delivered: validated host/port/context/budget/queue/model ID; env or private key
+  file; help/version/readiness/shutdown; shared app/Bench/server Q4 ownership.
+- Real OpenCode1.19.5: configured/listed/selected local provider;8 Chat Completions
+  SSE requests,7 successful read/grep/read/test/edit/edit/retest tools,zero tool
+  errors in the successful run,final answer and2 passing tests;1696.73s wall.
+  It tested before editing, a documented sequence deviation. Earlier bad absolute
+  permission attempt stopped after3 denials; evidence retained;one corrected retry.
+- Validation:136 package passes +3 skips;focused configuration/lease and precision
+  tests;release/checker/docs/diff gates. Real cancellation drains0.542s;context/
+  unsupported output errors explicit400. Competing Bench rejected before allocation.
+- Limits: slow full prompt replay (3410–5233 tokens),delayed tool deltas;sampled RSS
+  is not a footprint peak;no new numerical replay. Original131/132 blocker retained.
+- Evidence: [S2-02 report](docs/evidence/2026-11-17-s202/README.md).
+- Stop after this task. Next safe task is S2-03 native server-management design,
+  sharing the existing server/Core owner; not started. No prefix reuse/Hermes.
+
+### S2-03 — Native macOS server management (next current-mission task)
+
+- Stage/priority/status:2/P0/**pending**; distinct from historical parser numbering.
+- Scope: app server controls/status/private authentication and external-owner modes,
+  preserving native chat,shared generation/protocol implementation and client-only tools.
+- Gate: explicit next-stage execution;controller/lifecycle/UI/integration tests;
+  no second runner or duplicated networking/queue/parser logic.
+
+### Historical S2-02 — Parser delivered within S2-01
 
 - Stage/priority/status: 2 / P0 / **completed within S2-01**.
 - Files: `Core generation protocol/parser; Tests/`.
@@ -225,7 +262,7 @@ remain open until their full acceptance criteria pass.
 - Required tests: Every split point; Unicode/escapes; nested JSON; multiple calls; duplicate/missing IDs; size limits.
 - Risks/blockers: No regex-based structured parsing or partial dispatch.
 
-### S2-03 — Qualify tool conversations and streaming contract
+### Historical S2-03 — Tool conversations delivered within S2-01
 
 - Stage/priority/status: 2 / P0 / **completed within S2-01**.
 - Files: `Core protocol; Tests/; docs/AGENT_INTEGRATION.md`.
@@ -237,31 +274,32 @@ remain open until their full acceptance criteria pass.
 
 ## Stage 3 — QwenFieldfareServer
 
-Historical decomposition: S2-00 now supplies the minimal text HTTP subset.
-Pending items below cover broader protocol/ownership/client qualification, not
-the absence of an HTTP executable. Do not begin them in the S2-00 milestone.
+Historical decomposition: S2-00/S2-01/S2-02 now supply the local server, tools
+and installed-client workflow. Status notes below distinguish that delivered subset
+from broader lifecycle/soak qualification. Current next task is S2-03 UI above.
 
 ### S3-01 — Select maintained minimal HTTP dependency and define API
 
-- Stage/priority/status: 3 / P0 / **pending**.
+- Stage/priority/status: 3 / P0 / **completed within S2-00–02**.
 - Files: `Package.swift; Package.resolved; proposed Sources/QwenFieldfareServer/`.
 - Dependencies: S2-03.
 - Acceptance: Verify necessity/license/maintenance/Swift/macOS; define exact fields/errors/model ID.
 - Required tests: Dependency/API review; request decoding tests.
-- Risks/blockers: Existing transitive SwiftNIO is not an existing server.
+- Risks/blockers: SwiftNIO2.101.3 now explicitly depended on; existing pin retained.
 
 ### S3-02 — Implement exclusive owner, worker, bounded queue and shutdown
 
-- Stage/priority/status: 3 / P0 / **pending**.
+- Stage/priority/status: 3 / P0 / **in progress; implementation delivered within S2-00–02**.
 - Files: `Core lifecycle; app/bench/server ownership support`.
 - Dependencies: S3-01.
 - Acceptance: One active model owner across processes; networking independent from blocking inference; deterministic queue limits.
 - Required tests: Concurrent requests/processes; overload; shutdown; crash/stale ownership recovery.
-- Risks/blockers: Never silently instantiate a second complete model.
+- Risks/blockers: Cooperating Q4 owner/queue/shutdown implemented and tested;
+  exhaustive process-crash/stale-lock qualification remains part of S3-05.
 
 ### S3-03 — Implement loopback endpoints and authentication
 
-- Stage/priority/status: 3 / P0 / **pending**.
+- Stage/priority/status: 3 / P0 / **in progress; implementation delivered within S2-00–02**.
 - Files: `Server health/models/chat handlers; configuration`.
 - Dependencies: S3-02.
 - Acceptance: Health/models/nonstream chat; local auth; limits; context/usage/finish errors; sensitive payloads never logged.
@@ -270,42 +308,43 @@ the absence of an HTTP executable. Do not begin them in the S2-00 milestone.
 
 ### S3-04 — Implement bounded SSE and disconnect cancellation
 
-- Stage/priority/status: 3 / P0 / **pending**.
+- Stage/priority/status: 3 / P0 / **in progress; implementation delivered within S2-00–02**.
 - Files: `Server streaming transport and inference adapter`.
 - Dependencies: S3-03.
 - Acceptance: Text/tool streams with backpressure; finite buffers; disconnect releases queued/active work.
 - Required tests: Slow/disconnected clients; fragmented SSE; cancellation; tool exchange.
-- Risks/blockers: No uncontrolled simultaneous Metal mutations.
+- Risks/blockers: Serialized inference implemented; exhaustive slow-client/socket soak remains part of S3-05.
 
 ### S3-05 — Qualify server lifecycle/protocol
 
-- Stage/priority/status: 3 / P0 / **pending**.
+- Stage/priority/status: 3 / P0 / **in progress; functional subset complete**.
 - Files: `Server tests; docs/AGENT_INTEGRATION.md`.
 - Dependencies: S3-04.
 - Acceptance: Real HTTP clients generate text and simulated structured exchange; all failure gates pass.
 - Required tests: Complete server suite and real-model smoke; memory soak.
-- Risks/blockers: HTTP success alone does not qualify agent compatibility.
+- Risks/blockers: Real HTTP/tools/OpenCode functional gates pass; exhaustive memory/socket/lifecycle soak remains open.
 
 
 ## Stage 4 — OpenCode integration
 
 ### S4-01 — Inspect and pin OpenCode provider configuration
 
-- Stage/priority/status: 4 / P0 / **pending**.
+- Stage/priority/status: 4 / P0 / **completed within current S2-02**.
 - Files: `docs/AGENT_INTEGRATION.md; disposable integration fixtures`.
 - Dependencies: S3-05.
 - Acceptance: Publish configuration only for an installed tested version.
 - Required tests: Provider schema and connectivity checks.
-- Risks/blockers: Do not reuse stale configuration from historical research.
+- Risks/blockers: Pinned installed1.19.5 v1 config; current website v2 differs.
 
 ### S4-02 — Run real coding-agent read/edit/test/retry loop
 
-- Stage/priority/status: 4 / P0 / **pending**.
+- Stage/priority/status: 4 / P0 / **completed within current S2-02**.
 - Files: `Disposable repository; integration report`.
 - Dependencies: S4-01.
 - Acceptance: Actual backend completes read/search, edit, test, deliberately failing test repair and final answer.
 - Required tests: End-to-end task; record retries/tool validity/context/latency/memory.
-- Risks/blockers: Runtime/server must never execute shell or filesystem tools.
+- Risks/blockers: Tools execute in OpenCode only. First failed permission attempt and successful run
+  sequence deviation retained; this is one bounded task, not broad quality/long-context qualification.
 
 
 ## Stage 5 — Exact conversation-state reuse

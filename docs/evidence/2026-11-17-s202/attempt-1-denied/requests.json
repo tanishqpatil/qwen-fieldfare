@@ -1,0 +1,155 @@
+[
+  {
+    "number": 1,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user"
+    ],
+    "message_count": 2,
+    "body_bytes": 12810,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 25143.074649416,
+    "status": 200,
+    "header_seconds": 161.19293833399934,
+    "first_content_seconds": 161.19401966700025,
+    "first_tool_seconds": 166.28944091700032,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 112,
+      "prompt_tokens": 3401,
+      "total_tokens": 3513
+    },
+    "wall_seconds": 166.28954370899737
+  },
+  {
+    "number": 2,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 4,
+    "body_bytes": 14109,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 25309.43476325,
+    "status": 200,
+    "header_seconds": 180.73620441599996,
+    "first_tool_seconds": 180.73638991600092,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 71,
+      "prompt_tokens": 3702,
+      "total_tokens": 3773
+    },
+    "wall_seconds": 180.73645337500056
+  },
+  {
+    "number": 3,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 6,
+    "body_bytes": 14854,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 25490.2408025,
+    "status": 200,
+    "header_seconds": 190.25745774999814,
+    "first_tool_seconds": 190.25754345799942,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 71,
+      "prompt_tokens": 3870,
+      "total_tokens": 3941
+    },
+    "wall_seconds": 190.25764320799863
+  },
+  {
+    "number": 4,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 8,
+    "body_bytes": 15959,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 25680.568449166,
+    "transport_error": "RemoteDisconnected",
+    "wall_seconds": 93.60503562500162
+  }
+]

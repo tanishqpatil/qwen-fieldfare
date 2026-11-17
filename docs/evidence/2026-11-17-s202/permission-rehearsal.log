@@ -1,0 +1,107 @@
+1 <path>/private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-permission-contract-jp7o0em8/workspace/calculator.py</path>
+<type>file</type>
+<content>
+1: def add(a, b):
+2:     return a - b
+
+(End of file - total 2 lines)
+</content>
+2 Found 4 matches
+/private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-permission-contract-jp7o0em8/workspace/calculator.py:
+  Line 1: def add(a, b):
+
+
+/private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-permission-contract-jp7o0em8/workspace/test_calculator.py:
+  Line 2: from calcu
+3 Edit applied successfully.
+4 test_add (test_calculator.AdditionTests.test_add) ... ok
+test_four (test_calculator.AdditionTests.test_four) ... FAIL
+
+======================================================================
+FAIL: test_four (test_calculator.AdditionTests.test_four)
+----------------------------------------------------
+5 <path>/private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-permission-contract-jp7o0em8/workspace/test_calculator.py</path>
+<type>file</type>
+<content>
+1: import unittest
+2: from calculator import add
+3: class AdditionTests(unittest.TestCase):
+4:     def test_add(self): self.assertEqual(add
+6 Edit applied successfully.
+7 test_add (test_calculator.AdditionTests.test_add) ... ok
+test_four (test_calculator.AdditionTests.test_four) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+
+8 The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{"permission":"*","action":"allow","pattern":"*"},{"permission":"external_directory","pattern":"*","action":"ask"},{"permission":"external_directory","pattern":"/private/var/fold
+9 <path>/private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-permission-contract-jp7o0em8/workspace/opencode.json</path>
+<type>file</type>
+<content>
+1: {"$schema": "https://opencode.ai/config.json", "model": "fieldfare/qwen-fieldfare", "small_model": "fieldfare/qwen-fieldfare", "provider": {"
+10 The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{"permission":"*","action":"allow","pattern":"*"},{"permission":"*","action":"deny","pattern":"*"},{"permission":"edit","pattern":"*","action":"deny"},{"permission":"edit","patte
+11 The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{"permission":"*","action":"allow","pattern":"*"},{"permission":"*","action":"deny","pattern":"*"},{"permission":"bash","pattern":"*","action":"deny"},{"permission":"bash","patte
+{
+  "kind": "scripted mock endpoint; client permission check only, not model qualification",
+  "exit": 0,
+  "tools": [
+    {
+      "tool": "read",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "grep",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "edit",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "bash",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "read",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "edit",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "bash",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "read",
+      "status": "error",
+      "error": "The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{\"permission\":\"*\",\"action\":\"allow\",\"pattern\":\"*\"},{\"permission\":\"external_dire"
+    },
+    {
+      "tool": "read",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "edit",
+      "status": "error",
+      "error": "The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{\"permission\":\"*\",\"action\":\"allow\",\"pattern\":\"*\"},{\"permission\":\"*\",\"action\":\""
+    },
+    {
+      "tool": "bash",
+      "status": "error",
+      "error": "The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{\"permission\":\"*\",\"action\":\"allow\",\"pattern\":\"*\"},{\"permission\":\"*\",\"action\":\""
+    }
+  ]
+}
+ROOT /private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-permission-contract-jp7o0em8

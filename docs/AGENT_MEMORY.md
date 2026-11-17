@@ -1,6 +1,59 @@
 # Agent recovery memory
 
-## Current milestone — S2-01 structured tool contract
+## Current milestone — S2-02 CLI and real OpenCode qualification
+
+Explicit user authorization supersedes the prior S2-01 stop. Preserve completed
+server/tools/readers and known131/132 release blocker. Implement validated CLI
+controls and qualify installed OpenCode in a disposable repository. Stop after
+S2-02; do not begin S2-03 SwiftUI management in this execution. No push/merge.
+
+
+## S2-02 completed — current recovery handoff
+
+Stop at S2-02 boundary. Next task S2-03 native app server ownership/controller
+and UI design; not implemented in this execution. No prefix reuse/Hermes/readers.
+Base c2b1663; S2-02 remains a scoped uncommitted working tree; no push/merge.
+
+CLI now validates model/ID,explicit127.0.0.1 host,port0–65535,positive context/
+3–5GiB plan,queue0–8;help/version do not load. Auth env OR private owned regular
+key file (no key argv);redacted errors. Health includes active/queued/capacity.
+Both Q4 constructors retain new Core RAII flock lease before allocations;app/
+Bench/server cooperate. Persistent0600 lock must not be unlinked while owned;
+this does not exclude other inference products/hostile same-UID modifications.
+
+Installed OpenCode1.19.5/Bun1.4.4 uses v1 provider/npm/options/agent,not current
+website v2. Pin provider example and actual sanitized continuation fixture.
+Exact2020-12 $schema and numeric bounds supported/enforced;Int64 bound comparison
+precision tested. No dropped unsupported constraints or broader schema framework.
+Use canonical PWD/--dir,isolated XDG,--pure,no Claude/external skills/models fetch/
+autoupdate/autocompaction/LSP fetch/delegation. Tool read/edit permission patterns
+are workspace-relative;initial absolute patterns denied3 calls and were stopped
+at631.68s. Retain attempt-1-denied;mock permission rehearsal is not model evidence.
+
+One corrected actual workflow passes:read/grep/read/failing unittest/edit source/
+repair deliberately incorrect test/retest/final response.7 tools success,0 errors,
+8 SSE requests,1696.73s. Sequence deviation:model tested before edits despite
+prompt asking implementation first. Initial prompt3410/output118,final5233/155;
+total replayed35055/1079 native tokens. First prose167.929s,first tool173.368s;
+delayed validated tool SSE accepted. No prefix reuse;long prefill is a limitation.
+Actual output5000/context-overflow errors400/non-retryable;client SIGINT admission
+drains0.542s;workflow then succeeds. Competing Bench rejected before allocation.
+Normal pressure retained;M5/32GB/macOS27.2.1/Swift6.4.2,5GiB target. Metal5291294720,
+loaded footprint1157421032,drained5230895984,sampled RSS peak5087821824 bytes. These
+are distinct metrics,not exact memory peaks or process caps;server shutdown exit0.
+
+Final136 package passes +3 opt-ins skipped (139 total:26 Server,17 Presentation,
+96 Core including skips);focused6 config/3lease,release35.35s,checker6,docs/diff
+checks. Real run used earlier35.31s release;final precise numeric-bound fix affects
+operands outside exercised OpenCode safe-integer cases;schema rendering/math
+unchanged,focused/full/release rerun without redundant model replay. Only2 lease
+lines per existing Core runner plus new lease;kernel/state/sampling/precision,
+reference,teacher harness,pins unchanged. Original fixture SHA verified;archived
+131/132 log checker is historical stability only. No fresh strict replay and no
+claim of132/132;source shortcut not asserted. Release acceptance/production remain
+blocked. Details/evidence:docs/evidence/2026-11-17-s202/README.md and validation.json.
+
+## Historical milestone — S2-01 structured tool contract
 
 Explicit user authorization supersedes the prior S2-00 stop. Preserve its server
 checkpoint and all reader/numerical evidence. Implement native Qwen tools, JSON
@@ -56,7 +109,7 @@ Metal paths, immutable-checkpoint/race limitations and broad client/long-context
 qualification remain. Local final commit authorized; no remote push/merge.
 Historical sections below are superseded by this current completed handoff.
 
-## Active priority override — S2-00 (2026-11-17)
+## Historical priority override — S2-00 (2026-11-17)
 
 Explicit user decision supersedes earlier Stage1-only/order/stop directives.
 Build and qualify the minimal local QwenFieldfareServer now. S1-01e and remaining
@@ -302,3 +355,7 @@ only in a saved/isolated diagnostic checkout, never overwrite the failing fixtur
   server is authorized for later stages; generic hosting/tools inside server are not.
 - Historical head-removal prefill, cache bookkeeping, causal replacement/prefetch
   and packed speed candidates were rejected; see decisions before retrying.
+
+S2-02 handoff detail: reviewed aggregate/test evidence .log files match existing
+*.log ignore rule. Include those specific reviewed files explicitly at a later
+scoped checkpoint; do not stage scratch/user/model files or broaden ignores.

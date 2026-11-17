@@ -342,8 +342,8 @@ cleanup; broader cancellation/failure lifecycle qualification remains open. `@un
 
 Typed configuration/model/runner errors coexist with forced buffers and fatal
 encoder/command creation. Error propagation and injection are Stage 1 work;
-recoverability is not yet qualified. Cross-process exclusive ownership is a
-manual prerequisite, not an implemented process lock.
+recoverability is not yet qualified. S2-02 adds a cooperative cross-process Q4
+owner lease; unrelated inference products still require manual exclusion.
 
 ## Later architecture: partly superseded by S2-00
 
@@ -352,7 +352,7 @@ incremental parser; tools execute only in clients. S2-00 now supplies the minima
 `QwenFieldfareServer`, loopback/authenticated HTTP, bounded admission and SSE
 backpressure, disconnect cancellation, and one serialized inference owner.
 Networking must run independently from blocking GPU/IO work. App, bench and
-server must share a process-ownership policy before server qualification.
+server now share the Core Q4 lease described below; UI server management is pending.
 See [integration contract](AGENT_INTEGRATION.md).
 
 Stage 5 may retain one exact token-prefix session including KV, Conv, DeltaNet,
@@ -393,8 +393,8 @@ startup errors exit nonzero.32 connection cap and15s request-body deadline bound
 idle senders; write timeout10s covers stalled peers. Default HTTP request limits
 and serialization are in AGENT_INTEGRATION. Client disconnect cancels its job;
 server SIGTERM/SIGINT cancels and drains before event loops exit. Signal callbacks
-are installed from a nonisolated function to avoid inheriting MainActor. Server
-flock excludes other servers only, not the existing app/Bench/MLX processes.
+are installed from a nonisolated function to avoid inheriting MainActor. At that historical milestone, server
+flock excluded other servers only; S2-02 now extends ownership to both Core Q4 runners.
 Real HTTP JSON/SSE/reuse/recovery/shutdown passed; see S2-00 evidence. These tests
 do not qualify tool calling, full-context/long-agent quality, exhaustive socket
 soak or legacy fatal Core allocation/encoder paths. Strict131/132 remains open.
@@ -445,3 +445,56 @@ Unit tests and Python/official-template goldens separate parsing/transport from
 model choice. See integration guide for strict schema/delimiter restrictions,
 trust boundaries and delayed tool-SSE tradeoff. Stage1 remainder stays deferred;
 no prefix state reuse or filesystem agent has been introduced.
+
+## S2-02 design before implementation
+
+Retain existing executable/server/Core. Add a small parsed configuration value,
+help/version,explicit loopback host,permission-restricted key file or env secret,
+validated context/memory/port/queue and actionable non-sensitive startup errors.
+Admission queue capacity becomes configurable0–8,default2; existing behavior is
+preserved. A Core RAII process lease acquired before either Q4 runner allocates
+Metal prevents app/Bench/server from silently competing. No math/cache policy
+changes. This guard does not add UI controls or a second generation service.
+
+Installed OpenCode1.19.5 uses v1 provider/npm/options/agent configuration despite
+current website v2 syntax. Qualify exact installed schema via isolated XDG paths,
+explicit --dir/PWD (the CLI otherwise used inherited repo directory), --pure,
+no user plugins/Claude instructions, restricted tools and a disposable Git repo.
+Capture-only transport inspection is not model qualification. Observed tool
+schemas need $schema2020-12 and numeric bounds, which must be validated rather
+than dropped. Keep full native-output validation/delayed tool deltas unchanged.
+
+## S2-02 implemented outcome
+
+ServerConfiguration validates startup independently of model construction. CLI
+help/version need no secret/checkpoint; host is explicit loopback,port0–65535,
+context checked by existing memory planner,budget3/4/5,queue0–8. API key is env OR
+an owned/private/regular bounded descriptor read with no leaf symlink following;
+key descriptions/errors redact contents. No framework/dependency was added.
+Admission preserves one active worker and bounded FIFO waiting; health reports
+observed occupancy. Existing disconnect/drain behavior is retained.
+
+Both Q4 runner constructors retain a Core QwenInferenceLease acquired before
+Metal/model allocations. A per-user0600 persistent flock file,O_NOFOLLOW/O_CLOEXEC,
+regular/ownership/mode checks and ARC close provide cooperative exclusivity across
+app/Bench/server,including failed initialization. Never unlink a live lock file.
+This is not a malicious-same-UID security boundary or an exclusion mechanism for
+MLX/Ollama/LM Studio. Existing UI chat uses the guarded constructors; no UI server
+controls,shared in-app server session or connection-to-CLI behavior exists yet.
+
+Installed OpenCode1.19.5 emits explicit2020-12 schema metadata and numeric bounds.
+The supported subset now validates/enforces those constraints (precise Int64
+comparison with existing Double semantics outside Decimal's exponent range),
+without broad schema support or skipped constraints. The sanitized actual tool-
+continuation fixture exercises the installed SDK wire shape. Tool formatting,
+normal EOS validation,buffer limits and delayed SSE call commitment are unchanged.
+
+Actual disposable client workflow completes read/search/read,failing unittest,
+implementation and incorrect-expectation edits,retest and final answer. The model
+ran tests before edits, contrary to the requested implementation-first sequence;
+the evidence records this deviation. One earlier absolute-permission-pattern
+failure is preserved. No server filesystem/shell execution occurs. First content
+167.929s,first tool173.368s,8 requests/1696.73s total,prompt3410–5233 tokens. All
+sequence state still resets/replays each request; no prefix-reuse claim. Context/
+output errors and admitted client cancellation/recovery are verified. See
+[S2-02 evidence](evidence/2026-11-17-s202/README.md) for memory and limitations.

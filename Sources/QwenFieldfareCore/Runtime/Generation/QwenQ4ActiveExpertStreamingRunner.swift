@@ -167,6 +167,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         let kNormWBuf: MTLBuffer?
     }
 
+    private let inferenceLease: QwenInferenceLease
     private let metalContext: MetalContext
     private let device: MTLDevice
     private var shards: [String: QwenMappedSafetensorsFile] = [:]
@@ -313,6 +314,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         recordExpertAccessTrace: Bool,
         enableGPUProfiling: Bool
     ) throws {
+        self.inferenceLease = try QwenInferenceLease()
         self.maxSeqLen = maxSeqLen
         self.usePersistentExpertCache = usePersistentExpertCache
         self.keepDenseWeightsResident = keepDenseWeightsResident

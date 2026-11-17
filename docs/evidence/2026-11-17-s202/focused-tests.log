@@ -1,0 +1,54 @@
+Building for debugging...
+[Computing dependencies]
+[Pre-planning 1 / 1395]
+[Planning deferred tasks]
+[12 / 147] QwenFieldfare_QwenFieldfareCore
+[12 / 143]
+[19 / 39] QwenFieldfareCoreTests-product
+[37 / 64] QwenFieldfareCoreTests-product
+[39 / 64] QwenFieldfareCoreTests-product
+[41 / 63] QwenFieldfareServerTests-product
+[48 / 63] QwenFieldfareCoreTests-product
+[52 / 62] QwenFieldfareServerTests-product
+[54 / 62] QwenFieldfareServerTests-product
+[56 / 62] QwenFieldfareCoreTests-product
+[58 / 62] QwenFieldfareCoreTests-product
+Build complete! (2.94 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ConfigurationTests started.
+◇ Test defaultsAndHelpVersionNeedNoModelOrSecret() started.
+✔ Test defaultsAndHelpVersionNeedNoModelOrSecret() passed after 0.001 seconds.
+◇ Test invalidSettingsAreRecoverableAndSecretSafe() started.
+✔ Test invalidSettingsAreRecoverableAndSecretSafe() passed after 0.001 seconds.
+◇ Test restrictedKeyFileAndUnsafeTypes() started.
+✔ Test restrictedKeyFileAndUnsafeTypes() passed after 0.001 seconds.
+◇ Test configurableQueueSaturatesAtEachBound() started.
+✔ Test configurableQueueSaturatesAtEachBound() passed after 0.025 seconds.
+◇ Test openCodeNumericSchemaBoundsEnforced() started.
+✔ Test openCodeNumericSchemaBoundsEnforced() passed after 0.001 seconds.
+✔ Suite ConfigurationTests passed after 0.028 seconds.
+✔ Test run with 5 tests in 1 suite passed after 0.028 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenActiveStreamingMemoryConfigurationTests started.
+◇ Test eightKProfilesRetainExpectedSlotBudgets() started.
+✔ Test eightKProfilesRetainExpectedSlotBudgets() passed after 0.001 seconds.
+◇ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() started.
+✔ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() passed after 0.001 seconds.
+◇ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() started.
+✔ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() passed after 0.001 seconds.
+◇ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() started.
+✔ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() passed after 0.001 seconds.
+✔ Suite QwenActiveStreamingMemoryConfigurationTests passed after 0.001 seconds.
+◇ Suite QwenInferenceLeaseTests started.
+◇ Test exclusiveDescriptorsAndARCRelease() started.
+✔ Test exclusiveDescriptorsAndARCRelease() passed after 0.001 seconds.
+◇ Test rejectsUnsafeLockFilesWithoutBlocking() started.
+✔ Test rejectsUnsafeLockFilesWithoutBlocking() passed after 0.001 seconds.
+◇ Test bothRunnerEntryPointsRejectBeforeMetalOrModelIO() started.
+✔ Test bothRunnerEntryPointsRejectBeforeMetalOrModelIO() passed after 0.001 seconds.
+✔ Suite QwenInferenceLeaseTests passed after 0.001 seconds.
+✔ Test run with 7 tests in 2 suites passed after 0.002 seconds.

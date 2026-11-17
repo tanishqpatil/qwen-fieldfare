@@ -1,0 +1,61 @@
+{
+  "kind": "scripted mock endpoint; client permission check only, not model qualification",
+  "exit": 0,
+  "tools": [
+    {
+      "tool": "read",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "grep",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "edit",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "bash",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "read",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "edit",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "bash",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "read",
+      "status": "error",
+      "error": "The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{\"permission\":\"*\",\"action\":\"allow\",\"pattern\":\"*\"},{\"permission\":\"external_dire"
+    },
+    {
+      "tool": "read",
+      "status": "completed",
+      "error": ""
+    },
+    {
+      "tool": "edit",
+      "status": "error",
+      "error": "The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{\"permission\":\"*\",\"action\":\"allow\",\"pattern\":\"*\"},{\"permission\":\"*\",\"action\":\""
+    },
+    {
+      "tool": "bash",
+      "status": "error",
+      "error": "The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules [{\"permission\":\"*\",\"action\":\"allow\",\"pattern\":\"*\"},{\"permission\":\"*\",\"action\":\""
+    }
+  ]
+}

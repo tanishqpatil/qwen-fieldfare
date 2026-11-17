@@ -176,6 +176,7 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
     public var cacheHits: Int { layerCache.hits }
     public var cacheMisses: Int { layerCache.misses }
 
+    private let inferenceLease: QwenInferenceLease
     private let metalContext: MetalContext
     private let device: MTLDevice
     private var shards: [String: QwenMappedSafetensorsFile] = [:]
@@ -253,6 +254,7 @@ public final class QwenQ4ChatRunner: @unchecked Sendable {
 
     public init(modelPath: String, maxSeqLen: Int = 2048, mode: RuntimeMode = .memorySaver, memoryBudgetGiB: Double = 5.0, hardLimitGiB: Double = 6.0, layerCacheCapacity: Int = 4) throws {
         let contextBytes = try Self.contextAllocationLengths(maxSeqLen)
+        self.inferenceLease = try QwenInferenceLease()
         self.kvCacheByteLength = contextBytes.kv
         self.mode = mode
         self.maxSeqLen = maxSeqLen

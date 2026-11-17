@@ -19,12 +19,14 @@ public final class Admission: @unchecked Sendable {
     private var jobs: [(Cancellation,@Sendable () async -> Void)] = []
     private var active: Cancellation?
     private var closed = false
-    public init() {}
+    private let capacity: Int
+    public init(capacity: Int = 2) {self.capacity = capacity}
+    public var occupancy: (active: Int, queued: Int) {lock.withLock {(active == nil ? 0:1,jobs.count)}}
     public var idle: Bool { lock.withLock { active == nil } }
     public func submit(_ cancellation: Cancellation, work: @escaping @Sendable () async -> Void) throws {
         try lock.withLock {
             guard !closed else { throw APIError(503,"Server stopping") }
-            guard active == nil || jobs.count < 2 else { throw APIError(429,"Generation queue full") }
+            guard active == nil || jobs.count < capacity else { throw APIError(429,"Generation queue full") }
             if active == nil { active = cancellation; start(cancellation,work) } else { jobs.append((cancellation,work)) }
         }
     }

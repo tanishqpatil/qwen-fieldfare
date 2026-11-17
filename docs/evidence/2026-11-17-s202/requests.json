@@ -1,0 +1,361 @@
+[
+  {
+    "number": 1,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user"
+    ],
+    "message_count": 2,
+    "body_bytes": 12874,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 25930.055751375,
+    "status": 200,
+    "header_seconds": 167.92875154099966,
+    "first_content_seconds": 167.92937675000212,
+    "first_tool_seconds": 173.3675157079997,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 118,
+      "prompt_tokens": 3410,
+      "total_tokens": 3528
+    },
+    "wall_seconds": 173.36763520800014
+  },
+  {
+    "number": 2,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 4,
+    "body_bytes": 13691,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 26103.5008745,
+    "status": 200,
+    "header_seconds": 170.84552816599899,
+    "first_content_seconds": 170.8456574999982,
+    "first_tool_seconds": 177.0436980409977,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 125,
+      "prompt_tokens": 3641,
+      "total_tokens": 3766
+    },
+    "wall_seconds": 177.04381854099847
+  },
+  {
+    "number": 3,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 6,
+    "body_bytes": 14634,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 26280.61841475,
+    "status": 200,
+    "header_seconds": 184.55286737500137,
+    "first_content_seconds": 184.5529795830007,
+    "first_tool_seconds": 188.81206424999982,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 84,
+      "prompt_tokens": 3957,
+      "total_tokens": 4041
+    },
+    "wall_seconds": 188.8121587500027
+  },
+  {
+    "number": 4,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 8,
+    "body_bytes": 15490,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 26469.491738666,
+    "status": 200,
+    "header_seconds": 195.83207770899753,
+    "first_content_seconds": 195.8322034999983,
+    "first_tool_seconds": 201.23161879199688,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 106,
+      "prompt_tokens": 4212,
+      "total_tokens": 4318
+    },
+    "wall_seconds": 201.23173812499954
+  },
+  {
+    "number": 5,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 10,
+    "body_bytes": 17153,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 26670.868882416,
+    "status": 200,
+    "header_seconds": 214.18312495899954,
+    "first_content_seconds": 214.18323079199763,
+    "first_tool_seconds": 225.99866999999722,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 244,
+      "prompt_tokens": 4633,
+      "total_tokens": 4877
+    },
+    "wall_seconds": 225.99880279199715
+  },
+  {
+    "number": 6,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 12,
+    "body_bytes": 18021,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 26896.956207416,
+    "status": 200,
+    "header_seconds": 227.9352857920021,
+    "first_content_seconds": 227.93543108400263,
+    "first_tool_seconds": 235.67351133400007,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 149,
+      "prompt_tokens": 4899,
+      "total_tokens": 5048
+    },
+    "wall_seconds": 235.67362866700205
+  },
+  {
+    "number": 7,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 14,
+    "body_bytes": 18623,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 27132.716256958,
+    "status": 200,
+    "header_seconds": 236.35470112500116,
+    "first_content_seconds": 236.35482154200145,
+    "first_tool_seconds": 241.21890120800163,
+    "finish_reason": "tool_calls",
+    "usage": {
+      "completion_tokens": 98,
+      "prompt_tokens": 5070,
+      "total_tokens": 5168
+    },
+    "wall_seconds": 241.21899945800033
+  },
+  {
+    "number": 8,
+    "keys": [
+      "model",
+      "max_tokens",
+      "temperature",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream",
+      "stream_options"
+    ],
+    "roles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool",
+      "assistant",
+      "tool"
+    ],
+    "message_count": 16,
+    "body_bytes": 19261,
+    "tool_names": [
+      "bash",
+      "edit",
+      "grep",
+      "read",
+      "write"
+    ],
+    "started": 27374.074116291,
+    "status": 200,
+    "header_seconds": 244.23526729199875,
+    "first_content_seconds": 244.23538945899782,
+    "finish_reason": "stop",
+    "usage": {
+      "completion_tokens": 155,
+      "prompt_tokens": 5233,
+      "total_tokens": 5388
+    },
+    "wall_seconds": 251.86453662499844
+  }
+]

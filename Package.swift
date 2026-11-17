@@ -27,6 +27,7 @@ let package = Package(
             sources: [
                 "Infrastructure/Metal/MetalContext.swift",
                 "Infrastructure/ModelIO/QwenModelDirectory.swift",
+                "Infrastructure/ModelIO/QwenInferenceLease.swift",
                 "Infrastructure/ModelIO/QwenResidentCoreLoader.swift",
                 "Infrastructure/ModelIO/QwenSafetensorsHeader.swift",
                 "Infrastructure/ModelIO/QwenMappedSafetensorsFile.swift",
@@ -94,6 +95,7 @@ let package = Package(
                 "QwenActiveStreamingMemoryConfigurationTests.swift",
                 "QwenGenerationSupportTests.swift",
                 "QwenModelDirectoryTests.swift",
+                "QwenInferenceLeaseTests.swift",
                 "QwenSafetensorsHeaderTests.swift",
                 "QwenResidentWeightsTests.swift",
                 "QwenMappedSafetensorsTests.swift",

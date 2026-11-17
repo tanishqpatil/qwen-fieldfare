@@ -1,0 +1,42 @@
+{
+  "workspace": "/private/var/folders/gc/53v1nzl120n14b3dy7wtswk00000gn/T/qwen-opencode-htjx9ppj/workspace",
+  "opencode_version": "1.19.5",
+  "relay": "Byte-preserving loopback timing relay18093 -> actual server18092; no tool execution or payload modification",
+  "request_log": "Aggregate timings/usage only, no conversation or argument logging",
+  "health": {
+    "active_generations": 0,
+    "model": "qwen-fieldfare",
+    "queue_capacity": 2,
+    "queued_requests": 0,
+    "status": "ready",
+    "tools": true
+  },
+  "bench_owner_probe_exit": 1,
+  "bench_owner_rejected": true,
+  "listed_model": true,
+  "wall_seconds": 631.6826660829975,
+  "opencode_exit": -2,
+  "tools": [
+    {
+      "tool": "read",
+      "status": "error"
+    },
+    {
+      "tool": "bash",
+      "status": "error"
+    },
+    {
+      "tool": "read",
+      "status": "error"
+    }
+  ],
+  "tool_successes": 0,
+  "tool_errors": 3,
+  "final_response": true,
+  "final_tests_exit": 1,
+  "observed_failing_test": false,
+  "observed_passing_test": false,
+  "workflow_tools_complete": false,
+  "passed": false,
+  "server_exit": 0
+}

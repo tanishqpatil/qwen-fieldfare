@@ -1,0 +1,5 @@
+{
+  "exit": 1,
+  "events": "{\"type\":\"error\",\"timestamp\":1794917603653,\"sessionID\":\"ses_e1692e897ffelEYWl9FwhEPMlI\",\"error\":{\"name\":\"APIError\",\"data\":{\"message\":\"Prompt plus output reservation exceeds context\",\"statusCode\":400,\"isRetryable\":false,\"responseHeaders\":{\"connection\":\"close\",\"content-type\":\"application/json\",\"transfer-encoding\":\"chunked\"},\"responseBody\":\"{\\\"error\\\":{\\\"code\\\":\\\"http_400\\\",\\\"message\\\":\\\"Prompt plus output reservation exceeds context\\\",\\\"type\\\":\\\"invalid_request_error\\\"}}\",\"metadata\":{\"url\":\"http://127.0.0.1:18092/v1/chat/completions\"}}}}\n",
+  "stderr": ""
+}

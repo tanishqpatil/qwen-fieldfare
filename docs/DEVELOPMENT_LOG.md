@@ -968,3 +968,92 @@ full127+3skip and release34.36s. Real test's string schema and integer settings
 are unaffected, so its genuine cycle evidence is reused without expensive replay.
 All source changes remain outside Core. Scoped final commit includes only this
 contract, tests, documentation and synthetic evidence; no remote push/merge.
+
+## S2-02 started
+
+Read current directives/recovery/architecture/plans/server/tests and installed
+CLI. Clean c2b1663 baseline. User explicitly says stop after S2-02; S2-03 UI is
+next, not bundled now. OpenCode1.19.5 at Homebrew; initial sandbox cache creation
+denied, so isolated XDG cache/data/state/config in /tmp. Website current v2 docs
+differ; actual debug config accepts v1 provider/npm/options/agent contract.
+Explicit --dir and matching PWD needed to avoid inherited checkout session path.
+Local capture-only endpoint showed Chat Completions JSON/SSE,auto/usage and five
+allowed tool schemas with $schema2020-12/numeric constraints. This was not a model
+run or qualification success. No remote model or real repository tool execution.
+Design above precedes edits; keep secrets out of argv/logs and no server tools.
+
+S2-02 iteration: implemented parsed CLI/help/version/private key file, bounded
+queue settings and health occupancy; both Core Q4 runners acquire a cooperative
+RAII owner lease before allocations. Focused configuration/lease tests passed,
+then complete package136 pass +3 skips (139 total), release35.31s. Actual client
+wire fixture preserves five tool schemas; explicit2020-12 dialect/numeric bounds
+added and enforced rather than removed. Later focused review/tests cover precise
+Int64 bounds and extreme exponents; final full/build gates will follow model exit.
+
+First real OpenCode attempt stopped deliberately after631.68s: zero successful
+tools, three client permission denials (directory read, forbidden ls, source read).
+Absolute permission patterns were incorrect for installed client's relative-path
+matching. No production server error was hidden; complete failed attempt retained.
+Scripted/model-free permission rehearsal with corrected workspace-relative edit
+rules completed read/grep/edit/fail-test/read/repair/pass-test, and separately
+denied outside reads, config edits and unauthorized shell. This is permission
+contract evidence, not model success. One hypothesis-bounded real retry follows
+with unchanged model/protocol and corrected client policy; all paths disposable.
+Actual client output5000 and context-overflow errors already return understandable
+HTTP400/non-retryable messages, and SIGINT client cancellation drains admission.
+No expensive checkpoint hash or numerical replay repeated. Original strict gate
+and fixture are intact; lightweight checker tests alone prove no new math result.
+
+## S2-02 completed — actual OpenCode result and boundary
+
+Corrected run genuine model workflow passed:OpenCode1.19.5 selected configured
+local model,8 SSE completions,7 successful read/grep/read/bash/edit/edit/bash tools,
+zero tool errors,final model response and independent2 passing unittests. Client
+ran failing tests before either edit,contrary to prompt's implementation-first
+sequence;explicit deviation retained. Source subtraction changed to addition,
+wrong fixture expectation5 changed to4. These are disposable test fixtures only;
+no repository test expectations or numerical fixture were weakened. First bad
+permission attempt preserved;one corrected retry after model-free policy checks.
+
+Successful command QWENFIELDFARE_SERVER_CHECKPOINT=/Users/tanishq/models/Qwen3.6-35B-A3B-4bit python3 Scripts/test_opencode.py .
+Same M5/32GB/macOS27.2.1/Swift6.4.2,no competitors,normal pressure,133GiB disk.
+Load3.806333s,workflow1696.730207s excluding probes/startup. Initial3410 prompt/
+118 native output,final5233/155,aggregate replayed35055/1079. First visible prose
+167.929377s,first complete tool173.367516s. OpenCode accepts whole-turn-validated
+buffered tool deltas;full prompt replay/first output latency remain substantial.
+No throughput ceiling/cache/prefill optimization claim. HTTP lacks Bench footer,
+so only wire timings/usage/process metrics are reported;no profiling flags used.
+
+Actual client unsupported output5000 and context overflow are non-retryable400
+with actionable errors. Client SIGINT after admission exits-2;active/queued drain
+in0.542347s,and workflow thereafter succeeds. Bench load-only ownership probe
+exits1 before allocating another model. Final server SIGTERM drain/exit0. Metal
+5291294720,loaded physical footprint1157421032,drained5230895984,every2s sampled
+peak RSS5087821824 bytes;these are not equivalent metrics or exact memory peaks.
+Postpressure1/free80%;no model weights staged/copied/hashed again.
+
+Final complete suite136 pass +3 skips (139 reported:26 Server,17 Presentation,
+96 Core incl skips),release35.35s;focused precision/config6 pass plus3lease tests
+and existing4 memory-config tests;checker6 pass. Historical log known-mismatch
+check passes;original small reference fixture SHA preserved. No fresh strict
+parity replay or numerical-equivalence claim. Core tracked diff only2 ownership
+lines per Q4 runner,new resource-only lease and manifest registrations;all math/
+state/sampling/precision,teacher harness,dependency pins and expected tokens
+unchanged. Real run used pre-model release35.31s;post-review bound precision fix
+changes comparisons outside actual OpenCode safe-integer operands,not schema text
+or inference,so final focused/full/release checks suffice without costly replay.
+
+Updated current mission statuses,architecture,recovery,integration/runtime guide
+and evidence,while retaining historical stage/readers/numerical records. Current
+S2-02 stop is explicit;S2-03 UI,Keychain/external-owner controller,and prefix/cache
+work remain proposed. Task changes remain uncommitted for review;no push/merge.
+See evidence/2026-11-17-s202/README.md and validation.json for commands,artifacts,
+failed attempt,security/memory/numerical limitations. Final docs/diff checks follow.
+
+Final S2-02 review: all27 Markdown local-link/anchor checks pass;git diff --check
+passes. Reviewed task source/tests/docs/public synthetic evidence only;no keys,
+weights,model databases or generated binaries. Both runtime key files removed.
+Historical broad S3-02–05 qualification remains in progress despite delivered
+functional implementation;no exhaustive crash/socket/memory-soak claim. Logs
+remain local under existing *.log ignore and require explicit reviewed staging
+for a future checkpoint. No local commit,push or merge;S2-02 boundary reached.

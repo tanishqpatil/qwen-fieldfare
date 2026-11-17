@@ -9,13 +9,16 @@ public final class LocalServer: @unchecked Sendable {
     private var connections=0
     func reserve() -> Bool {connectionLock.withLock {guard connections < 32 else {return false};connections += 1;return true}}
     func release() {connectionLock.withLock {connections -= 1}}
-    let admission = Admission()
+    let admission: Admission
+    let queueCapacity: Int
     let backend: any GenerationBackend
     let key: String
     let model: String
     var listener: Channel?
-    public init(backend: any GenerationBackend,key:String,model:String) throws {
+    public init(backend: any GenerationBackend,key:String,model:String,queueCapacity:Int = 2) throws {
         guard key.utf8.count >= 16, !key.contains("\n"), !model.isEmpty else {throw APIError(400,"Require a bearer secret of at least 16 bytes and model ID")}
+        guard (0...8).contains(queueCapacity) else {throw APIError(400,"Queue capacity must be 0–8")}
+        self.queueCapacity=queueCapacity;self.admission=Admission(capacity:queueCapacity)
         self.backend=backend;self.key=key;self.model=model
         group=MultiThreadedEventLoopGroup(numberOfThreads:2)
     }
@@ -70,7 +73,7 @@ private final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
             guard !rejected, let head else {return};busy=true;deadline?.cancel()
             let channel=context.channel
             if head.method == .GET && head.uri == "/health" {
-                respond(channel,status:200,data:wire(["status":"ready","model":server.model,"tools":true]));return
+                respond(channel,status:200,data:wire(["status":"ready","model":server.model,"tools":true,"active_generations":server.admission.occupancy.active,"queued_requests":server.admission.occupancy.queued,"queue_capacity":server.queueCapacity]));return
             }
             if head.method == .GET && head.uri == "/v1/models" {
                 respond(channel,status:200,data:wire(["object":"list","data":[["id":server.model,"object":"model","created":0,"owned_by":"local"]]]));return
