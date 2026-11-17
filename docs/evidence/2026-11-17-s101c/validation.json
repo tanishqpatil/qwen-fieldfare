@@ -1,0 +1,76 @@
+{
+  "task": "S1-01c",
+  "reader_migrated": "QwenQ4ActiveExpertStreamingRunner only",
+  "remaining_safetensors_readers": [
+    "QwenQ4ChatRunner resident/memory-saver",
+    "QwenQ4ExpertStoreBuilder"
+  ],
+  "focused_model_free_tests_passed": 16,
+  "focused_opt_in_skipped": 1,
+  "full_package_tests_passed": 99,
+  "full_package_opt_in_skipped": 2,
+  "full_package_total_reported": 101,
+  "full_core_total_including_skips": 84,
+  "full_presentation_total": 17,
+  "explicit_checkpoint_integration_passed": 1,
+  "release": "passed; 33.29 seconds",
+  "checker_unit_tests_passed": 6,
+  "real_model_parity_runs": 1,
+  "checkpoint_integrity_verifications": 1,
+  "strict_parity_exit": 1,
+  "strict_parity": "131/132; token 61 expected 14988 actual 10000; unchanged complete mismatch set",
+  "known_issue_checker": "passed separately; token-log stability only, not strict parity or numerical equivalence",
+  "base_commit": "72fb923a3e7a5d43e5baeb43d35bdcf1f96e4966",
+  "candidate_bench_sha256": "38480688e1bebd6feda215e383d3af630237c7dc89d8fbab7a348f983f1e6743",
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "observed_header_bytes": [
+    88906,
+    67237,
+    67875,
+    50269
+  ],
+  "header_cap_bytes": 100000000,
+  "loaded_footprint_gib": 0.996,
+  "loaded_metal_allocation_gib": 4.928,
+  "load_seconds": 0.125,
+  "model_gate_settings": {
+    "context": 8192,
+    "memory_gib": 5,
+    "cache_slots": 2183,
+    "expert_storage": "raw-safetensors",
+    "sampler": "greedy",
+    "seed": 42,
+    "profiling": false,
+    "prompt_tokens": 21,
+    "reference_tokens": 132
+  },
+  "timing_limit": "Teacher mode exits at strict failure before normal timing/cache footer; no throughput or peak-memory claim.",
+  "source_sha256": {
+    "Sources/QwenFieldfareCore/Infrastructure/ModelIO/QwenMappedSafetensorsFile.swift": "ea6fa9a5d3bf40525bc9a1f3610fc93ba32a3326486fc0c7bf2c22df72197803",
+    "Sources/QwenFieldfareCore/Infrastructure/ModelIO/QwenSafetensorsHeader.swift": "6a2b1e65ff80cc815bff34db8415c53046ea9b7b44a1217968ca5efd7bec0e46",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift": "006d05e90f1dc6390fd0eb478bbeb3d807fb9d34f95f2f30d8f9fa0068e01dd9",
+    "Tests/QwenFieldfareCore/QwenMappedSafetensorsTests.swift": "5bf4daa6f47a9fc962d0ca69c0309c24229f0d9c5bcf0a9285313cd6616f9098",
+    "Package.swift": "3bb34fbc7b56371140dfa45e0b63a84c37a5a329259d19c4b8dd2139804cc255"
+  },
+  "unchanged_vs_base_verified": [
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ChatRunner.swift",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenGenerationSupport.swift",
+    "Sources/QwenFieldfareCore/Storage/QwenQ4ExpertStore.swift",
+    "Sources/QwenFieldfareCore/Storage/QwenQ4ExpertStoreBuilder.swift",
+    "Sources/QwenFieldfareCore/Storage/Q4BoundedExpertCache.swift",
+    "Package.resolved",
+    "Scripts/test_teacher_reference.py",
+    "Sources/QwenFieldfareCore/Metal/Attention/attention.metal",
+    "Sources/QwenFieldfareCore/Metal/LinearAttention/deltanet.metal"
+  ],
+  "ownership": "ARC map owner retains validated file; no-copy buffer deallocator retains owner; default command buffers retain buffers through GPU use; no forced close API",
+  "mutation_test_strategy": "Only fixtures mutated, no mapped access after truncation; metadata/pread error and cleanup tested without deliberate SIGBUS. No concurrent-truncation recovery claim.",
+  "remaining_risks": [
+    "immutable trusted checkpoint required; descriptor/stat checks do not lock contents",
+    "ancestor-directory races and coherent multi-shard snapshot not solved",
+    "active index JSON remains unbounded and full contract still follows large allocations",
+    "remaining fallback/pack readers, allocator/encoder fatal paths and complete S1-02 model contract pending",
+    "strict numerical acceptance and production readiness remain blocked"
+  ],
+  "scope": "No second reader migration, inference kernel/sampling/precision change, Stage 2/server, push or merge"
+}

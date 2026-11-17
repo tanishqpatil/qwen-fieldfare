@@ -1,0 +1,4 @@
+Known-issue stability: 131/132; no additional mismatch records.
+Strict parity remains a separate gate; this check does not certify numerical accuracy.
+Numerical sources/dependency pins unchanged; metadata selection validator excluded.
+Log evidence only: no model run or checkpoint hashing performed by this checker.

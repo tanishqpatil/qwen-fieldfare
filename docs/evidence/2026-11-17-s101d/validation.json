@@ -1,0 +1,125 @@
+{
+  "task": "S1-01d",
+  "reader_migrated": "QwenQ4ChatRunner fallback only; resident40/lazy cache strategy preserved",
+  "base_commit": "72fb923a3e7a5d43e5baeb43d35bdcf1f96e4966",
+  "focused_passed": 8,
+  "focused_skipped": 1,
+  "package_passed": 107,
+  "package_skipped": 3,
+  "package_reported": 110,
+  "core_reported": 93,
+  "presentation_reported": 17,
+  "release": "passed;33.45 seconds",
+  "checker_tests_passed": 6,
+  "fallback_checkpoint_integrations": 1,
+  "fallback_integration_exit": 0,
+  "fallback_gate": {
+    "mode": "memorySaver",
+    "context": 8,
+    "layer_cache_capacity": 1,
+    "configured_memory_budget_gib": 5,
+    "configured_hard_limit_gib": 6,
+    "budget_fields_are_process_caps": false,
+    "forwards": 2,
+    "tokens_per_forward": 1,
+    "input_token": 248045,
+    "reset_between_forwards": true,
+    "predictions": [
+      846,
+      846
+    ],
+    "creations": 80,
+    "evictions": 79,
+    "misses": 80,
+    "hits": 0,
+    "duration_seconds": 8.11,
+    "generated_sequence": false
+  },
+  "memory_snapshots_bytes": {
+    "before": {
+      "footprint": 9618224,
+      "metal": 65536
+    },
+    "loaded": {
+      "footprint": 88100152,
+      "metal": 645824512
+    },
+    "after_forwards": {
+      "footprint": 121687376,
+      "metal": 1117323264
+    },
+    "after_unload": {
+      "footprint": 34751352,
+      "metal": 720896
+    }
+  },
+  "memory_limitations": "Snapshots only; no peak series or full-context/default4-layer/fastResident40 qualification, no throughput claim. Whole-shard read-only mapping and no-copy/cache strategy preserved.",
+  "host": {
+    "model": "MacBook Pro Mac17,2",
+    "chip": "Apple M5",
+    "ram_gb": 32,
+    "gpu_cores": 10,
+    "macos": "27.2.1(26B131)",
+    "swift": "6.4.2",
+    "free_disk_gib": 133,
+    "pressure_before": 1,
+    "pressure_after": 1,
+    "free_percent_before": 86,
+    "free_percent_after": 85
+  },
+  "strict_replays_this_task": 0,
+  "checkpoint_full_hashes_this_task": 0,
+  "strict_parity_scope": "Teacher CLI constructs active-streaming only; fallback not on its execution path. Active runner/shared owner/helper, shaders and Bench unchanged from S1-01c. No fresh strict replay required or claimed.",
+  "retained_strict_baseline": {
+    "log": "docs/evidence/2026-11-17-s101c/strict-parity.log",
+    "exit": 1,
+    "matched": 131,
+    "total": 132,
+    "one_based_mismatch": 61,
+    "expected": 14988,
+    "actual": 10000
+  },
+  "known_issue_check": "historical S1-01c log reused; exact mismatch-set stability only, no fallback numerical-equivalence claim",
+  "header_cap_bytes": 100000000,
+  "prior_observed_supported_headers_bytes": [
+    88906,
+    67237,
+    67875,
+    50269
+  ],
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "unchanged_since_s101c": [
+    "Sources/QwenFieldfareCore/Infrastructure/ModelIO/QwenMappedSafetensorsFile.swift",
+    "Sources/QwenFieldfareCore/Infrastructure/ModelIO/QwenSafetensorsHeader.swift",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift",
+    "Tests/QwenFieldfareCore/QwenMappedSafetensorsTests.swift"
+  ],
+  "unchanged_vs_base": [
+    "Sources/QwenFieldfareBench/main.swift",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenGenerationSupport.swift",
+    "Sources/QwenFieldfareCore/Storage/Q4BoundedExpertCache.swift",
+    "Sources/QwenFieldfareCore/Storage/QwenQ4ExpertStoreBuilder.swift",
+    "Sources/QwenFieldfareCore/Metal/Attention/attention.metal",
+    "Sources/QwenFieldfareCore/Metal/LinearAttention/deltanet.metal",
+    "Package.resolved",
+    "Scripts/test_teacher_reference.py"
+  ],
+  "source_sha256": {
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ChatRunner.swift": "104a5d7a3624a0e9034cbac5dd8e3efbdf005a83b016868f73a259457d6cb45f",
+    "Tests/QwenFieldfareCore/QwenFallbackReaderTests.swift": "38345b766522e254dafc9e0e1a73cc0146a9ad43711585a08b1cf2cc98eada75",
+    "Package.swift": "0211878db4285628c6307366532264a09e541cabc67b646d035888787f744fea"
+  },
+  "remaining": "Pack-builder input reader remains independent; immutable-checkpoint/ancestor-race/SIGBUS limits; unbounded runtime index, full pre-allocation model contract, encoder/command failures, lifecycle soak and reviewed numerical acceptance remain open.",
+  "git_plan": [
+    "fix: validate Safetensors readers and retain mapped file ownership (accumulated Stage1 runtime, model IO, package and tests)",
+    "docs: preserve numerical baseline and reader safety validation (Stage0 foundation/policy/checkers, all textual evidence and current status)"
+  ],
+  "scope": "Stopped after S1-01d. No Stage2/server, push or merge; local commits explicitly authorized.",
+  "reader_safety_commit": "8b263e05f9c332ffa56f44be4d13c676042ba3b2",
+  "documentation_commit": "This manifest is included in the following local documentation/evidence commit; see git log.",
+  "verbatim_evidence_whitespace_attributes": [
+    "docs/evidence/2026-11-17-investigation/temporary-diagnostics.patch",
+    "docs/evidence/2026-11-17-isolation/temporary-diagnostics.patch",
+    "docs/evidence/2026-11-17-isolation/installed-api-docstrings.txt"
+  ]
+}

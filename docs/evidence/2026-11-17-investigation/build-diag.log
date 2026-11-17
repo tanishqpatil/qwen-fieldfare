@@ -1,0 +1,14 @@
+Building for production...
+[Computing dependencies]
+[Using on-disk description]
+[2 / 6] QwenFieldfareCore
+[3 / 7] QwenFieldfareCore
+[12 / 19] QwenFieldfareBench-product
+[15 / 22] QwenFieldfarePack-product
+[17 / 22] QwenFieldfarePack-product
+[17 / 22] QwenFieldfareMac-product
+[21 / 22] QwenFieldfareBench-product
+[22 / 22] QwenFieldfareMac-product
+[25 / 25] QwenFieldfareBench-product
+[28 / 28] QwenFieldfarePack-product
+Build complete! (17.27 secs)

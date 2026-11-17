@@ -1,5 +1,20 @@
 # QwenFieldfare: controlled memory, faster requests, and local agents
 
+## Current mission overlay — 2026-11-17
+
+[TODO](../TODO.md) is now the authoritative backlog with mission stage IDs.
+The numbered stages below remain historical optimization/research records;
+they do not set the new execution order. The mission authorizes the Qwen-only
+local server in AGENTS, after reliability and tool-contract qualification.
+3/4/5 GiB controls and the checkpoint-hashed teacher CLI are implemented.
+Source-audit baseline tests passed49/49 and release built; current reader-safety
+gates are recorded in recovery memory. Fresh MLX teacher
+forcing fails **131/132** (position 61). The 131/132 baseline remains a release blocker; revised policy permits
+independent Stage 1 work (now in progress). See [recovery memory](AGENT_MEMORY.md),
+[architecture](ARCHITECTURE.md) and [current evidence](DEVELOPMENT_LOG.md).
+
+## Historical plan and experiment record
+
 Analysis date: 2026-11-05. Source baseline: `5287dc4`. This document is a
 proposal, not an implementation or a new benchmark. No model was loaded for
 this review. August measurements below are historical, not current machine
@@ -22,7 +37,7 @@ itself need to execute shell commands or own the agent's filesystem permissions.
 | Area | Present | Gap relevant to this goal |
 | --- | --- | --- |
 | Products | Native Mac app, Core library, benchmark, optional pack builder | No HTTP server target or general chat CLI in `Package.swift` |
-| Active streaming | Resident dense Q4 weights, 40 layer partitions, segmented LRU, top-8 slot locks | UI capacity is a context-based preset, not a selectable byte budget |
+| Active streaming | Resident dense Q4 weights, 40 layer partitions, segmented LRU, top-8 slot locks; now 3/4/5 GiB controls | Long-context occupied-history qualification remains open |
 | Expert reads | Parallel independent misses; gate/up/down reads also run in parallel | Nine raw ranges per missed expert; reduced syscall count alone previously lost |
 | CPU/GPU overlap | Shared and hit experts run while misses are fetched | Router completion remains a true CPU dependency at each layer |
 | State | 30 DeltaNet/Conv recurrent layers and 10 full-attention FP16 KV layers | Every `generateResult` calls `resetState`; no conversation prefix reuse |
@@ -32,7 +47,7 @@ itself need to execute shell commands or own the agent's filesystem permissions.
 | Context | UI offers 4K–64K active streaming | A 64K allocation/load measurement is not validation of 64K tool use or long-context quality |
 | Lifecycle | Lazy load, stop, idle unload, telemetry | Mutable runners are not a safe concurrent-request interface; allocation/encoder failures include force unwraps and `fatalError` |
 | Model checks | Metadata/index and shard presence, basic shard-name checks | Full tensor/dtype/shape/quantization/offset/symlink validation is incomplete |
-| Validation | Model-free CI, benchmark harness, MLX reference script | Historical 132-position parity harness is absent; sampled/long-agent evaluation is absent |
+| Validation | Model-free CI, checkpoint-hashed teacher CLI, MLX reference generator | Historical named test is absent; current equivalent CLI fails 131/132; long-agent qualification absent |
 
 Primary local evidence:
 
@@ -433,7 +448,11 @@ it does not need to pretend to improve decode tok/s.
   and [server guide](https://github.com/drumih/turbo-fieldfare/blob/main/docs/OPENAI_SERVER.md):
   bounded prefill, one warm server owner, and verified conversational prefix.
 
-## Scope decision
+## Historical scope decision
+
+The 2026-11-17 mission and AGENTS now authorize the narrowly scoped server
+through sequential gates. The paragraph below records the earlier planning
+boundary, not the current authorization.
 
 This proposal extends the prior server deferral only to a model-specific local
 server and client-side tool execution. It proposes no generic model platform

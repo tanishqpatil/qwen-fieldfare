@@ -1,0 +1,60 @@
+Building for debugging...
+[Computing dependencies]
+[Using on-disk description]
+[1 / 3] Hub
+[2 / 4] QwenFieldfareCore
+[4 / 6] QwenFieldfareCore
+[9 / 11] QwenFieldfareBench-product
+[11 / 13] QwenFieldfareBench-product
+[13 / 16] QwenFieldfareCore
+[16 / 16] QwenFieldfareBench-product
+[19 / 21] QwenFieldfareMac-product
+[26 / 28] QwenFieldfareMac-product
+[28 / 28] QwenFieldfareMac-product
+[30 / 32] QwenFieldfarePack-product
+[32 / 34] QwenFieldfarePack-product
+[34 / 34] QwenFieldfarePack-product
+[36 / 41] QwenFieldfareCoreTests-product
+[45 / 50] QwenFieldfareCoreTests-product
+[49 / 55] QwenFieldfareCoreTests-product
+[51 / 55] QwenFieldfareCoreTests-product
+[56 / 56] QwenFieldfareBench-product
+Build complete! (4.16 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenModelDirectoryTests started.
+◇ Test rejectsMetadataDirectory(name:) started.
+◇ Test case passing 1 argument name → "config.json" to rejectsMetadataDirectory(name:) started.
+◇ Test case passing 1 argument name → "model.safetensors.index.json" to rejectsMetadataDirectory(name:) started.
+◇ Test case passing 1 argument name → "tokenizer.json" to rejectsMetadataDirectory(name:) started.
+◇ Test case passing 1 argument name → "tokenizer_config.json" to rejectsMetadataDirectory(name:) started.
+✔ Test rejectsMetadataDirectory(name:) with 4 test cases passed after 0.004 seconds.
+◇ Test rejectsMetadataFIFO(name:) started.
+◇ Test case passing 1 argument name → "config.json" to rejectsMetadataFIFO(name:) started.
+◇ Test case passing 1 argument name → "model.safetensors.index.json" to rejectsMetadataFIFO(name:) started.
+◇ Test case passing 1 argument name → "tokenizer.json" to rejectsMetadataFIFO(name:) started.
+◇ Test case passing 1 argument name → "tokenizer_config.json" to rejectsMetadataFIFO(name:) started.
+✔ Test rejectsMetadataFIFO(name:) with 4 test cases passed after 0.003 seconds.
+◇ Test rejectsEscapingMetadataLink(name:) started.
+◇ Test case passing 1 argument name → "config.json" to rejectsEscapingMetadataLink(name:) started.
+◇ Test case passing 1 argument name → "model.safetensors.index.json" to rejectsEscapingMetadataLink(name:) started.
+◇ Test case passing 1 argument name → "tokenizer.json" to rejectsEscapingMetadataLink(name:) started.
+◇ Test case passing 1 argument name → "tokenizer_config.json" to rejectsEscapingMetadataLink(name:) started.
+✔ Test rejectsEscapingMetadataLink(name:) with 4 test cases passed after 0.004 seconds.
+◇ Test acceptsInternalMetadataLink() started.
+✔ Test acceptsInternalMetadataLink() passed after 0.001 seconds.
+◇ Test rejectsOversizedIndexBeforeReadingPayload() started.
+✔ Test rejectsOversizedIndexBeforeReadingPayload() passed after 0.001 seconds.
+◇ Test malformedIndexReturnsTypedError() started.
+✔ Test malformedIndexReturnsTypedError() passed after 0.001 seconds.
+◇ Test validatesCompleteDirectory() started.
+✔ Test validatesCompleteDirectory() passed after 0.001 seconds.
+◇ Test rejectsMissingReferencedShard() started.
+✔ Test rejectsMissingReferencedShard() passed after 0.001 seconds.
+◇ Test rejectsShardSymlinkOutsideModelDirectory() started.
+✔ Test rejectsShardSymlinkOutsideModelDirectory() passed after 0.001 seconds.
+◇ Test rejectsOversizedHeaderAndOutOfBoundsTensor() started.
+✔ Test rejectsOversizedHeaderAndOutOfBoundsTensor() passed after 0.001 seconds.
+✔ Suite QwenModelDirectoryTests passed after 0.018 seconds.
+✔ Test run with 10 tests in 1 suite passed after 0.018 seconds.

@@ -1,0 +1,32 @@
+[
+  {
+    "case": "restored-original",
+    "exit": 1,
+    "expected_failure_observed": true
+  },
+  {
+    "case": "wrong-target",
+    "exit": 1,
+    "expected_failure_observed": true
+  },
+  {
+    "case": "wrong-prompt",
+    "exit": 1,
+    "expected_failure_observed": true
+  },
+  {
+    "case": "wrong-hash",
+    "exit": 1,
+    "expected_failure_observed": true
+  },
+  {
+    "case": "invalid-token",
+    "exit": 1,
+    "expected_failure_observed": true
+  },
+  {
+    "case": "missing-provenance",
+    "exit": 1,
+    "expected_failure_observed": true
+  }
+]

@@ -1,0 +1,40 @@
+Reference checkpoint SHA-256 verified; versions: ["transformers": "5.22.2", "mlx": "0.32.4", "mlx-lm": "0.32.2"]
+Load: 0.092 s
+Loaded footprint: 0.996 GiB
+Loaded Metal allocation: 4.928 GiB
+Context: 8192
+Active-streaming budget: diagnostic raw cache-slot override
+Expert cache slots: 2183
+Expert storage: raw-safetensors
+GPU profiling: disabled
+Warmup runs: 0
+Measured runs: 1
+Sampler: greedy, seed: 42
+Mismatch at reference token 1: expected 3, got 2
+Mismatch at reference token 2: expected 10215, got 198
+Mismatch at reference token 3: expected 303, got 393
+Mismatch at reference token 5: expected 271, got 369
+Mismatch at reference token 6: expected 550, got 32
+Mismatch at reference token 7: expected 33655, got 220
+Mismatch at reference token 9: expected 63, got 32
+Mismatch at reference token 16: expected 7693, got 279
+Mismatch at reference token 30: expected 1328, got 795
+Mismatch at reference token 35: expected 2972, got 4778
+Mismatch at reference token 39: expected 11, got 93868
+Mismatch at reference token 47: expected 318, got 440
+Mismatch at reference token 49: expected 496, got 393
+Mismatch at reference token 61: expected 14988, got 10000
+Mismatch at reference token 71: expected 25, got 198
+Mismatch at reference token 75: expected 76852, got 3174
+Mismatch at reference token 104: expected 4368, got 7072
+Teacher-forced parity: 115/132 matched
+error: Teacher-forced parity failed
+
+Usage:
+  QwenFieldfareBench [--model <directory>] [--prompt <text>]
+    [--context <tokens>] [--max-new <tokens>] [--memory-gib 3|4|5]
+    [--cache-slots <count>]
+    [--warmup-runs <count>] [--runs <count>]
+    [--load-only] [--metrics-only] [--packed-experts] [--analyze-cache]
+    [--gpu-profile] [--subcomponent-profile] [--teacher-reference <json>]
+    [--sampler greedy|app-seeded] [--seed <integer>]

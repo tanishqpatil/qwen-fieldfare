@@ -1,0 +1,133 @@
+diff --git a/Sources/QwenFieldfareBench/main.swift b/Sources/QwenFieldfareBench/main.swift
+index fa2b351..e43aae7 100644
+--- a/Sources/QwenFieldfareBench/main.swift
++++ b/Sources/QwenFieldfareBench/main.swift
+@@ -1,7 +1,7 @@
+ import Darwin.Mach
+ import Foundation
+ import Metal
+-import QwenFieldfareCore
++@_spi(ParityDiagnostics) import QwenFieldfareCore
+ 
+ private struct TeacherReference: Decodable {
+     let formatVersion: Int
+@@ -648,25 +648,51 @@ private enum QwenBenchMain {
+                     throw NSError(domain: "QwenFieldfareBench", code: 2,
+                         userInfo: [NSLocalizedDescriptionKey: "Invalid teacher reference, prompt-token mismatch, or context too small"])
+                 }
+-                runner.resetState()
+-                var position = 0
+-                for token in actualPrompt.dropLast() {
+-                    _ = try runner.forwardToken(tokenId: Int(token), tokenPos: position)
+-                    position += 1
+-                }
+-                var input = actualPrompt.last!
+-                var failures = 0
+-                for (index, expected) in reference.referenceTokens.enumerated() {
+-                    let actual = try runner.forwardToken(tokenId: Int(input), tokenPos: position)
+-                    if actual != expected {
+-                        failures += 1
+-                        print("Mismatch at reference token \(index + 1): expected \(expected), got \(actual)")
++                let diagnosticPath = ProcessInfo.processInfo.environment["QWEN_PARITY_DIAGNOSTIC"]
++                let passes = diagnosticPath == nil ? 1 : 2
++                var allFailures = 0
++                for pass in 1...passes {
++                    runner.resetState()
++                    var position = 0
++                    for token in actualPrompt.dropLast() {
++                        _ = try runner.forwardToken(tokenId: Int(token), tokenPos: position)
++                        position += 1
++                    }
++                    var input = actualPrompt.last!
++                    var failures = 0
++                    for (index, expected) in reference.referenceTokens.enumerated() {
++                        let actual = try runner.forwardToken(tokenId: Int(input), tokenPos: position)
++                        if let diagnosticPath, index == 60 {
++                            let top = runner.debugTopLogits()
++                            let ids = top.map(\.tokenID) + [14988, 10000]
++                            let values = runner.debugParityValues(tokenIDs: ids)
++                            let output: [String: Any] = [
++                                "quantity": "raw_logits", "dtype": "float32",
++                                "absolute_input_position": position, "input_token": input,
++                                "expected": expected, "actual": actual,
++                                "top5": top.map { ["token": $0.tokenID, "score": $0.logit] },
++                                "candidates": ["14988": values.logits[5], "10000": values.logits[6]],
++                                "top_two_margin": top[0].logit - top[1].logit,
++                                "normalized_hidden": values.hidden,
++                                "layers": runner.debugParityLayers,
++                                "pass": pass, "cache_slots": cacheSlots,
++                                "metal_bytes": device?.currentAllocatedSize ?? 0,
++                                "footprint_bytes": processFootprintBytes()
++                            ]
++                            try JSONSerialization.data(withJSONObject: output, options: [.prettyPrinted, .sortedKeys])
++                                .write(to: URL(fileURLWithPath: diagnosticPath + "-pass-\(pass).json"))
++                        }
++                        if actual != expected {
++                            failures += 1
++                            print("Mismatch at reference token \(index + 1): expected \(expected), got \(actual)")
++                        }
++                        input = expected
++                        position += 1
+                     }
+-                    input = expected
+-                    position += 1
++                    print("Teacher-forced parity: \(reference.referenceTokens.count - failures)/\(reference.referenceTokens.count) matched (pass \(pass))")
++                    allFailures += failures
+                 }
+-                print("Teacher-forced parity: \(reference.referenceTokens.count - failures)/\(reference.referenceTokens.count) matched")
+-                guard failures == 0 else {
++                guard allFailures == 0 else {
+                     throw NSError(domain: "QwenFieldfareBench", code: 3,
+                         userInfo: [NSLocalizedDescriptionKey: "Teacher-forced parity failed"])
+                 }
+diff --git a/Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift b/Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift
+index 641957b..f886600 100644
+--- a/Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift
++++ b/Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift
+@@ -928,6 +928,8 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
+         seenTokenIDs: Set<Int32> = [],
+         samplePosition: Int = 0
+     ) throws -> Int32 {
++        let capturesLayers = tokenPos == 80 && ProcessInfo.processInfo.environment["QWEN_PARITY_LAYERS"] == "1"
++        if capturesLayers { debugParityLayers = [:] }
+         let tStepStart = CFAbsoluteTimeGetCurrent()
+ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
+ 
+@@ -1415,6 +1417,11 @@ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
+             if l == 39 {
+                 cmdMoE.waitUntilCompleted()
+             }
++            if capturesLayers && [0, 3, 19, 39].contains(l) {
++                cmdMoE.waitUntilCompleted()
++                debugParityLayers[String(l)] = Array(UnsafeBufferPointer(
++                    start: curOutBuf.contents().assumingMemoryBound(to: Float.self), count: 2048))
++            }
+             let tWait2End = CFAbsoluteTimeGetCurrent()
+             let cb2Wait = (tWait2End - tWait2Start) * 1000.0
+             totalCbWaitMs += cb2Wait
+@@ -1490,7 +1497,7 @@ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
+         return (end - start) * 1_000.0
+     }
+ 
+-    func debugTopLogits(limit: Int = 5) -> [(tokenID: Int32, logit: Float)] {
++    @_spi(ParityDiagnostics) public func debugTopLogits(limit: Int = 5) -> [(tokenID: Int32, logit: Float)] {
+         guard limit > 0 else { return [] }
+         let logits = logitsOutBuf.contents().assumingMemoryBound(to: Float.self)
+         var candidates: [(tokenID: Int32, logit: Float)] = []
+@@ -1510,6 +1517,16 @@ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
+         return candidates
+     }
+ 
++    @_spi(ParityDiagnostics) public private(set) var debugParityLayers: [String: [Float]] = [:]
++
++    // Temporary read-only diagnostic after forwardToken has completed.
++    @_spi(ParityDiagnostics) public func debugParityValues(tokenIDs: [Int32]) -> (hidden: [Float], logits: [Float]) {
++        let hidden = finalNormOutBuf.contents().assumingMemoryBound(to: Float.self)
++        let logits = logitsOutBuf.contents().assumingMemoryBound(to: Float.self)
++        return (Array(UnsafeBufferPointer(start: hidden, count: 2048)),
++                tokenIDs.map { logits[Int($0)] })
++    }
++
+     public func generate(
+         promptTokens: [Int32],
+         maxNewTokens: Int = 512,

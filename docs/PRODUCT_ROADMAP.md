@@ -1,5 +1,16 @@
 # Product roadmap
 
+## Current execution status — 2026-11-17
+
+[TODO](../TODO.md) now owns mission stages and acceptance; the priorities below
+remain product requirements, not a competing execution queue. AGENTS explicitly
+authorizes the Qwen-only single-owner local server after reliability/tool gates.
+No server, tools or client compatibility is implemented. The known **131/132** teacher-forced result is a release blocker; revised
+policy permits independent Stage 1 reliability work. See
+[architecture](ARCHITECTURE.md) and [development log](DEVELOPMENT_LOG.md).
+
+## Historical planning record
+
 Planning update (2026-11-05): the proposed
 [agent runtime and memory plan](AGENT_RUNTIME_PLAN.md) adds explicit budgets,
 prefill/state reuse, Qwen tool formatting, and a single-owner local server.
@@ -35,7 +46,7 @@ The roadmap preserves these constraints:
 | Model setup | Dynamic directory choice and basic shard/index validation | Architecture, tensor contract, dtype/shape, quantization, and offset bounds are not fully preflighted |
 | Chat | Multi-turn, thinking control, sampling, Markdown/code rendering | No visible context budget, deterministic history policy, or persisted conversations |
 | Diagnostics | Live timing, cache, memory, and finish-reason telemetry | No sanitized support-bundle export or durable benchmark record |
-| Validation | Model-free CI, benchmark harness, historical 132/132 parity record, and an MLX reference generator | The named automated parity test is not present; real-model release qualification must be restored |
+| Validation | Model-free CI, benchmark harness, historical 132/132 parity record, and an MLX reference generator | The old named test is absent; checkpoint-hashed benchmark parity exists but currently fails 131/132; release qualification remains open |
 | Distribution | A source checkout can build a release-mode SwiftPM executable | No published signed/notarized `.app`, ZIP/DMG, checksums, or clean-Mac install validation |
 | Hardware support | Measured on Apple M5 with 32 GiB | Other RAM/chip combinations are unvalidated and should not be advertised as supported |
 
@@ -178,8 +189,8 @@ qualification without uploading weights or prompts.
 
 Acceptance:
 
-1. add or restore a release-mode automated teacher-forced parity harness and
-   require all 132 recorded next-token positions to match MLX;
+1. qualify the existing release-mode teacher-forced benchmark harness and
+   require all 132 checkpoint-identified next-token positions to match MLX;
 2. add a fixed-seed test using the app's temperature, Top-K, Top-P, and penalty
    defaults, plus multi-turn behavior, a 512-token stability run, and a 64K
    allocation load pass;

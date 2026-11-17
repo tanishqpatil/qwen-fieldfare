@@ -1,0 +1,10 @@
+Building for production...
+[Computing dependencies]
+[2 / 3] _AtomicsShims
+[4 / 4] QwenFieldfareBench-product
+[6 / 6] QwenFieldfareMac-product
+[7 / 7] QwenFieldfarePack-product
+[8 / 8] QwenFieldfareMac-product
+[10 / 10] QwenFieldfareBench-product
+[12 / 12] QwenFieldfarePack-product
+Build complete! (2.69 secs)

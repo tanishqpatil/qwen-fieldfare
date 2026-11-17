@@ -1,0 +1,119 @@
+Building for debugging...
+[Computing dependencies]
+[25 / 134]
+[49 / 139] CNIOFreeBSD
+[59 / 139] InternalCollectionsUtilities
+[68 / 138] Crypto
+[81 / 134] OrderedCollections
+[83 / 134] NIOConcurrencyHelpers
+[91 / 125] NIOCore
+[100 / 136] yyjson
+[103 / 136] NIOCore
+[103 / 136]
+[103 / 136] NIOCore
+[103 / 136] CNIOAtomics
+[104 / 135] NIOCore
+[113 / 142] EventSource
+[116 / 145] EventSource
+[128 / 155] HuggingFace
+[132 / 157] Hub
+[140 / 165] Hub
+[143 / 168] Hub
+[153 / 179] Tokenizers
+[155 / 178] Tokenizers
+[158 / 181] Tokenizers
+[160 / 192]
+[171 / 192] QwenFieldfareCore
+[177 / 193] QwenFieldfareCore
+[177 / 193] QwenFieldfareBench-product
+[186 / 208] QwenFieldfareMac-product
+[189 / 208] QwenFieldfarePack-product
+[192 / 208] QwenFieldfareMac-product
+[193 / 208] QwenFieldfareMac-product
+[194 / 208] QwenFieldfareCore
+[200 / 207] QwenFieldfareMac-product
+[209 / 218] QwenFieldfareMac-product
+[214 / 222] QwenFieldfareCoreTests-product
+[219 / 222] QwenFieldfareCoreTests-product
+[219 / 222] QwenFieldfareMac-product
+[219 / 222] QwenFieldfareCoreTests-product
+[221 / 225] QwenFieldfareCoreTests-product
+[228 / 228] QwenFieldfarePack-product
+Build complete! (8.17 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenSafetensorsHeaderTests started.
+◇ Test validQuantizedMetadataAndOwnedDescriptor() started.
+✔ Test validQuantizedMetadataAndOwnedDescriptor() passed after 0.001 seconds.
+◇ Test headerLengthBoundariesAreCheckedBeforeAllocation() started.
+✔ Test headerLengthBoundariesAreCheckedBeforeAllocation() passed after 0.001 seconds.
+◇ Test rejectsTruncatedPrefix(bytes:) started.
+◇ Test case passing 1 argument bytes → 0 to rejectsTruncatedPrefix(bytes:) started.
+◇ Test case passing 1 argument bytes → 1 to rejectsTruncatedPrefix(bytes:) started.
+◇ Test case passing 1 argument bytes → 2 to rejectsTruncatedPrefix(bytes:) started.
+◇ Test case passing 1 argument bytes → 3 to rejectsTruncatedPrefix(bytes:) started.
+◇ Test case passing 1 argument bytes → 4 to rejectsTruncatedPrefix(bytes:) started.
+◇ Test case passing 1 argument bytes → 5 to rejectsTruncatedPrefix(bytes:) started.
+◇ Test case passing 1 argument bytes → 6 to rejectsTruncatedPrefix(bytes:) started.
+◇ Test case passing 1 argument bytes → 7 to rejectsTruncatedPrefix(bytes:) started.
+✔ Test rejectsTruncatedPrefix(bytes:) with 8 test cases passed after 0.002 seconds.
+◇ Test rejectsTruncatedAndOversizedHeaderFiles() started.
+✔ Test rejectsTruncatedAndOversizedHeaderFiles() passed after 0.001 seconds.
+◇ Test rejectsMalformedOrNonObjectJSON(text:) started.
+◇ Test case passing 1 argument text → "{" to rejectsMalformedOrNonObjectJSON(text:) started.
+◇ Test case passing 1 argument text → "[]" to rejectsMalformedOrNonObjectJSON(text:) started.
+◇ Test case passing 1 argument text → "null" to rejectsMalformedOrNonObjectJSON(text:) started.
+◇ Test case passing 1 argument text → "123" to rejectsMalformedOrNonObjectJSON(text:) started.
+◇ Test case passing 1 argument text → ""text"" to rejectsMalformedOrNonObjectJSON(text:) started.
+✔ Test rejectsMalformedOrNonObjectJSON(text:) with 5 test cases passed after 0.001 seconds.
+◇ Test rejectsInvalidUTF8() started.
+✔ Test rejectsInvalidUTF8() passed after 0.001 seconds.
+◇ Test rejectsMissingOrMalformedTensorFields(text:) started.
+◇ Test case passing 1 argument text → "{"t":null}" to rejectsMissingOrMalformedTensorFields(text:) started.
+◇ Test case passing 1 argument text → "{"t":{"dtype":"BF16","shape":[],"data_offsets":[0]}}" to rejectsMissingOrMalformedTensorFields(text:) started.
+◇ Test case passing 1 argument text → "{"t":{"dtype":42,"shape":[1],"data_offsets":[0,2]}}" to rejectsMissingOrMalformedTensorFields(text:) started.
+◇ Test case passing 1 argument text → "{"t":{"dtype":"BF16","shape":"1","data_offsets":[0,2]}}" to rejectsMissingOrMalformedTensorFields(text:) started.
+◇ Test case passing 1 argument text → "{"t":{"dtype":"BF16","shape":[1],"data_offsets":[0,2,4]}}" to rejectsMissingOrMalformedTensorFields(text:) started.
+✔ Test rejectsMissingOrMalformedTensorFields(text:) with 5 test cases passed after 0.001 seconds.
+◇ Test rejectsNonIntegerDimensionsAndOffsets(value:) started.
+◇ Test case passing 1 argument value → "true" to rejectsNonIntegerDimensionsAndOffsets(value:) started.
+◇ Test case passing 1 argument value → "false" to rejectsNonIntegerDimensionsAndOffsets(value:) started.
+◇ Test case passing 1 argument value → "-1" to rejectsNonIntegerDimensionsAndOffsets(value:) started.
+◇ Test case passing 1 argument value → "1.0" to rejectsNonIntegerDimensionsAndOffsets(value:) started.
+◇ Test case passing 1 argument value → "1e0" to rejectsNonIntegerDimensionsAndOffsets(value:) started.
+◇ Test case passing 1 argument value → "1.5" to rejectsNonIntegerDimensionsAndOffsets(value:) started.
+◇ Test case passing 1 argument value → "1e30" to rejectsNonIntegerDimensionsAndOffsets(value:) started.
+◇ Test case passing 1 argument value → "null" to rejectsNonIntegerDimensionsAndOffsets(value:) started.
+◇ Test case passing 1 argument value → ""1"" to rejectsNonIntegerDimensionsAndOffsets(value:) started.
+✔ Test rejectsNonIntegerDimensionsAndOffsets(value:) with 9 test cases passed after 0.001 seconds.
+◇ Test rejectsUnsupportedDtypes(dtype:) started.
+◇ Test case passing 1 argument dtype → "F8_UNKNOWN" to rejectsUnsupportedDtypes(dtype:) started.
+◇ Test case passing 1 argument dtype → "Q4" to rejectsUnsupportedDtypes(dtype:) started.
+◇ Test case passing 1 argument dtype → "" to rejectsUnsupportedDtypes(dtype:) started.
+✔ Test rejectsUnsupportedDtypes(dtype:) with 3 test cases passed after 0.001 seconds.
+◇ Test validatesScalarEmptyAndFixedWidthTypes() started.
+✔ Test validatesScalarEmptyAndFixedWidthTypes() passed after 0.001 seconds.
+◇ Test rejectsShapeAndByteSizeOverflow() started.
+✔ Test rejectsShapeAndByteSizeOverflow() passed after 0.001 seconds.
+◇ Test rejectsInvalidOrMismatchedPayloadRanges(offsets:) started.
+◇ Test case passing 1 argument offsets → "[2,1]" to rejectsInvalidOrMismatchedPayloadRanges(offsets:) started.
+◇ Test case passing 1 argument offsets → "[0,3]" to rejectsInvalidOrMismatchedPayloadRanges(offsets:) started.
+◇ Test case passing 1 argument offsets → "[0,9223372036854775807]" to rejectsInvalidOrMismatchedPayloadRanges(offsets:) started.
+◇ Test case passing 1 argument offsets → "[0,18446744073709551615]" to rejectsInvalidOrMismatchedPayloadRanges(offsets:) started.
+◇ Test case passing 1 argument offsets → "[0,1]" to rejectsInvalidOrMismatchedPayloadRanges(offsets:) started.
+✔ Test rejectsInvalidOrMismatchedPayloadRanges(offsets:) with 5 test cases passed after 0.001 seconds.
+◇ Test validatesPayloadBoundaryAndRejectsOverlap() started.
+✔ Test validatesPayloadBoundaryAndRejectsOverlap() passed after 0.001 seconds.
+◇ Test validatesLargestRepresentableAbsoluteFileBoundary() started.
+✔ Test validatesLargestRepresentableAbsoluteFileBoundary() passed after 0.001 seconds.
+◇ Test rejectsInvalidMetadataAndFileSize() started.
+✔ Test rejectsInvalidMetadataAndFileSize() passed after 0.001 seconds.
+◇ Test rejectsUnsafeFileKindsAndRawLeafLinks() started.
+✔ Test rejectsUnsafeFileKindsAndRawLeafLinks() passed after 0.001 seconds.
+◇ Test detectsInPlaceMutation() started.
+✔ Test detectsInPlaceMutation() passed after 0.001 seconds.
+◇ Test descriptorPinsValidatedObjectAfterPathReplacement() started.
+✔ Test descriptorPinsValidatedObjectAfterPathReplacement() passed after 0.001 seconds.
+✔ Suite QwenSafetensorsHeaderTests passed after 0.008 seconds.
+✔ Test run with 18 tests in 1 suite passed after 0.009 seconds.

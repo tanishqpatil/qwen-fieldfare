@@ -5,9 +5,36 @@ Apple Silicon.
 
 ## Scope
 
-This repository is Qwen 3.6-only. Do not add unrelated model formats, generic
-OpenAI-server behavior, or a second model-owning process without an explicit
-design change. Preserve the bounded-memory active-expert path.
+This repository is Qwen 3.6-only. The 2026-11-17 implementation mission
+explicitly authorizes a narrowly scoped local Qwen Chat Completions server,
+client-side tool calling and exact hybrid-state reuse in gated later stages.
+Do not add unrelated model formats, generic multi-model hosting, server-side
+tool execution or a second model-owning process. Preserve bounded expert streaming.
+
+## Session recovery and stage gates
+
+Read this file, `TODO.md` and `docs/AGENT_MEMORY.md` at session start. The TODO
+owns stable mission task IDs/status; architecture and decisions distinguish
+implemented features from proposals. Read relevant source before editing;
+update recovery memory, task status and append-only DEVELOPMENT_LOG as work
+progresses. Source/tests/verified evidence outrank narrative memory.
+
+Follow the mission stages sequentially, one small testable task per iteration.
+The 2026-11-17 revised policy permits independent Stage 1 reliability work while
+131/132 teacher forcing remains an explicitly unresolved baseline. Strict 132/132
+is a release-quality blocker, not a global development blocker. Preserve its
+fixture/evidence/tests; never suppress failures or claim full parity. New or
+worsened mismatches block affected changes. Production-readiness claims require
+an independently reviewed numerical policy and sufficient evidence.
+
+Current milestone: Stage 1 only; stop/report at its boundary before Stage 2.
+No further broad/layer-3 numerical investigation without a bounded hypothesis
+and decision it informs, or a change directly requiring it. Model-free tests
+first; model-backed checks only for inference-affecting work/integration gates.
+Reuse verified evidence; never skip required integrity checks, but do not hash
+all weights repeatedly without an identity/integrity reason. Preserve unrelated
+work and historical rejections. No push/merge without approval. Project memory
+must contain no secrets, private prompts or sensitive runtime payloads.
 
 ## Products
 
@@ -36,7 +63,7 @@ model-specific invariants.
 
 Before a real-model run, require macOS 26+, Swift 6.2+, adequate disk and
 normal memory pressure, and no process matching
-`QwenFieldfareMac|QwenFieldfareBench|mlx_lm|mlx-lm|ollama|LM Studio`.
+`QwenFieldfareMac|QwenFieldfareBench|QwenFieldfareServer|mlx_lm|mlx-lm|ollama|LM Studio`.
 Run only one model-owning process at a time.
 
 ## Validation

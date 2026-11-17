@@ -1,0 +1,46 @@
+Building for debugging...
+[Computing dependencies]
+[Pre-planning 1 / 1071]
+[Planning deferred tasks]
+[1 / 3]
+[4 / 6] QwenFieldfareCore
+[6 / 8] QwenFieldfareCore
+[12 / 14] QwenFieldfareBench-product
+[14 / 17] QwenFieldfareCore
+[16 / 19] QwenFieldfareCore
+[20 / 20] QwenFieldfareBench-product
+[23 / 23] QwenFieldfareCore-product
+[24 / 26] QwenFieldfareMac-product
+[29 / 31] QwenFieldfareMac-product
+[32 / 32] QwenFieldfareMac-product
+[34 / 36] QwenFieldfarePack-product
+[36 / 36] QwenFieldfarePack-product
+[45 / 56] QwenFieldfareCoreTests-product
+[47 / 58] QwenFieldfareCoreTests-product
+[51 / 57] QwenFieldfareCoreTests-product
+[53 / 57] QwenFieldfareCoreTests-product
+[60 / 60] QwenFieldfarePack-product
+Build complete! (5.33 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenFallbackReaderTests started.
+◇ Test validFallbackSliceUsesDataRegionAndExactEnd() started.
+✔ Test validFallbackSliceUsesDataRegionAndExactEnd() passed after 0.002 seconds.
+◇ Test rejectsMalformedMetadataAndTruncationBeforeMapping() started.
+✔ Test rejectsMalformedMetadataAndTruncationBeforeMapping() passed after 0.002 seconds.
+◇ Test rejectsWrongConsumerDtypeAndByteExtentRecoverably() started.
+✔ Test rejectsWrongConsumerDtypeAndByteExtentRecoverably() passed after 0.001 seconds.
+◇ Test preservesInternalLinksRejectsUnsafePathsAndFileTypes() started.
+✔ Test preservesInternalLinksRejectsUnsafePathsAndFileTypes() passed after 0.001 seconds.
+◇ Test replacementAndMutationNeverRedirectCachedSlice() started.
+✔ Test replacementAndMutationNeverRedirectCachedSlice() passed after 0.001 seconds.
+◇ Test fallbackSliceMetalConsumerOwnsMappingUntilReleased() started.
+✔ Test fallbackSliceMetalConsumerOwnsMappingUntilReleased() passed after 0.024 seconds.
+◇ Test failedFallbackInitializationReleasesDescriptorsAcrossRetries() started.
+✔ Test failedFallbackInitializationReleasesDescriptorsAcrossRetries() passed after 0.007 seconds.
+◇ Test contextAllocationArithmeticRejectsOverflowBeforeAllocation() started.
+✔ Test contextAllocationArithmeticRejectsOverflowBeforeAllocation() passed after 0.001 seconds.
+➜ Test localFallbackCheckpointIntegration() skipped.
+✔ Suite QwenFallbackReaderTests passed after 0.040 seconds.
+✔ Test run with 9 tests in 1 suite passed after 0.040 seconds.

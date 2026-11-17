@@ -1,0 +1,72 @@
+diff --git a/Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift b/Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift
+index 641957b..f6893d1 100644
+--- a/Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift
++++ b/Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift
+@@ -921,6 +921,14 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
+         }
+     }
+ 
++    // Temporary numerical-isolation readback. All outputs are transient activations.
++    private func isolationWrite(_ name: String, _ buffer: MTLBuffer, _ count: Int, _ position: Int) throws {
++        guard let root = ProcessInfo.processInfo.environment["QWEN_ISOLATION"], [0,1,2,20,40,60,80].contains(position) else { return }
++        let folder = URL(fileURLWithPath: root).appendingPathComponent(String(position))
++        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
++        try Data(bytes: buffer.contents(), count: count * 4).write(to: folder.appendingPathComponent(name + ".f32"))
++    }
++
+     public func forwardToken(
+         tokenId: Int,
+         tokenPos: Int,
+@@ -930,6 +938,16 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
+     ) throws -> Int32 {
+         let tStepStart = CFAbsoluteTimeGetCurrent()
+ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
++        if ProcessInfo.processInfo.environment["QWEN_EMBEDDING_BF16"] == "1" {
++            let p = hiddenBuf0.contents().assumingMemoryBound(to: Float.self)
++            for i in 0..<2048 {
++                let u = p[i].bitPattern
++                p[i] = Float(bitPattern: (u &+ 0x7fff &+ ((u >> 16) & 1)) & 0xffff0000)
++            }
++        }
++        try isolationWrite("embedding", hiddenBuf0, 2048, tokenPos)
++        try isolationWrite("prior_conv", convStates[0], 8192 * 4, tokenPos)
++        try isolationWrite("prior_state", ssmStates[0], 32 * 128 * 128, tokenPos)
+ 
+         var dim2048: UInt32 = 2048
+         var eps: Float = 1e-6
+@@ -1206,6 +1224,21 @@ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
+             let tWait1Start = CFAbsoluteTimeGetCurrent()
+             cmdAttnRouter.commit()
+             cmdAttnRouter.waitUntilCompleted()
++            if l == 0 {
++                for (name, buffer, count) in [
++                    ("norm", normInBuf, 2048), ("qkv", qkvOutBuf, 8192),
++                    ("z", zOutBuf, 4096), ("a", aOutBuf, 32), ("b", bOutBuf, 32),
++                    ("conv", convOutBuf, 8192), ("post_conv", convStates[0], 8192 * 4),
++                    ("post_state", ssmStates[0], 32 * 128 * 128),
++                    ("gated", gatedNormBuf, 4096), ("attn_out", attnOutBuf, 2048),
++                    ("residual", attnResBuf, 2048), ("post_norm", normMLPBuf, 2048),
++                    ("router", routerLogitsBuf, 256), ("ids", expertIndicesBuf, 8), ("scores", scoresBuf, 8)
++                ] { try isolationWrite(name, buffer, count, tokenPos) }
++            }
++            if l == 3 {
++                try isolationWrite("layer3_ids", expertIndicesBuf, 8, tokenPos)
++                try isolationWrite("layer3_scores", scoresBuf, 8, tokenPos)
++            }
+             let tWait1End = CFAbsoluteTimeGetCurrent()
+             let cb1Wait = (tWait1End - tWait1Start) * 1000.0
+             totalCbWaitMs += cb1Wait
+@@ -1415,6 +1448,13 @@ dequantizeEmbedding(tokenId: tokenId, outBuf: hiddenBuf0)
+             if l == 39 {
+                 cmdMoE.waitUntilCompleted()
+             }
++            if l == 0 && ProcessInfo.processInfo.environment["QWEN_ISOLATION"] != nil && [0,1,2,20,40,60,80].contains(tokenPos) {
++                cmdMoE.waitUntilCompleted()
++                try isolationWrite("shared", sharedOutBuf, 2048, tokenPos)
++                try isolationWrite("hit", routedHitOutBuf, hitCount > 0 ? 2048 : 0, tokenPos)
++                try isolationWrite("miss", routedMissOutBuf, missCount > 0 ? 2048 : 0, tokenPos)
++                try isolationWrite("output", curOutBuf, 2048, tokenPos)
++            }
+             let tWait2End = CFAbsoluteTimeGetCurrent()
+             let cb2Wait = (tWait2End - tWait2Start) * 1000.0
+             totalCbWaitMs += cb2Wait

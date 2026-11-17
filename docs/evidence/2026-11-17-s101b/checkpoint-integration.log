@@ -1,0 +1,49 @@
+Building for debugging...
+[Computing dependencies]
+[25 / 133]
+[52 / 139] CNIOWASI
+[63 / 147] NIOConcurrencyHelpers
+[76 / 132] NIOConcurrencyHelpers
+[83 / 133] NIOConcurrencyHelpers
+[91 / 124] NIOCore
+[99 / 135] NIOCore
+[100 / 135] yyjson
+[103 / 135] NIOCore
+[103 / 135] CNIOAtomics
+[104 / 134] NIOCore
+[113 / 141] EventSource
+[116 / 144] EventSource
+[128 / 154] HuggingFace
+[132 / 156] Hub
+[140 / 164] Hub
+[143 / 167] Hub
+[153 / 178] Tokenizers
+[155 / 177] Tokenizers
+[158 / 180] Tokenizers
+[171 / 191] QwenFieldfareCore
+[176 / 192] QwenFieldfarePack-product
+[186 / 207] QwenFieldfareMac-product
+[190 / 207] QwenFieldfareMac-product
+[192 / 207] QwenFieldfareMac-product
+[193 / 207] QwenFieldfareCore
+[198 / 205] QwenFieldfareCoreTests-product
+[206 / 216] QwenFieldfareCoreTests-product
+[211 / 220] QwenFieldfareBench-product
+[213 / 218] QwenFieldfareCoreTests-product
+[216 / 219] QwenFieldfareCoreTests-product
+[218 / 222] QwenFieldfareCoreTests-product
+[225 / 225] QwenFieldfarePack-product
+Build complete! (8.13 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenResidentWeightsTests started.
+◇ Test localCheckpointHeadersAndSmallTensorIntegration() started.
+Validated resident shard model-00001-of-00004.safetensors: header 88906 bytes
+Validated resident shard model-00002-of-00004.safetensors: header 67237 bytes
+Validated resident shard model-00003-of-00004.safetensors: header 67875 bytes
+Validated resident shard model-00004-of-00004.safetensors: header 50269 bytes
+Resident integration: all shard headers plus one 2048-element norm; no full-model residency
+✔ Test localCheckpointHeadersAndSmallTensorIntegration() passed after 0.027 seconds.
+✔ Suite QwenResidentWeightsTests passed after 0.027 seconds.
+✔ Test run with 1 test in 1 suite passed after 0.027 seconds.

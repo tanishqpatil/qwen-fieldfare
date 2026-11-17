@@ -1,0 +1,46 @@
+Building for debugging...
+[Computing dependencies]
+[2 / 7] QwenFieldfareCoreTests-product
+[5 / 10] QwenFieldfareCoreTests-product
+[9 / 12] QwenFieldfareCoreTests-product
+[11 / 15] QwenFieldfareCoreTests-product
+Build complete! (1.60 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenMappedSafetensorsTests started.
+◇ Test mappedBytesAndDataRelativeOffsets() started.
+✔ Test mappedBytesAndDataRelativeOffsets() passed after 0.002 seconds.
+◇ Test tensorCrossesPageAndEndsAtFileBoundary() started.
+✔ Test tensorCrossesPageAndEndsAtFileBoundary() passed after 0.001 seconds.
+◇ Test unlinkAndInPlaceMutationAreObservedWithoutReopening() started.
+✔ Test unlinkAndInPlaceMutationAreObservedWithoutReopening() passed after 0.001 seconds.
+◇ Test checkedPageLengthsAndInvalidRanges() started.
+✔ Test checkedPageLengthsAndInvalidRanges() passed after 0.001 seconds.
+◇ Test rejectsMalformedTruncatedOversizedAndOverflowHeaders() started.
+✔ Test rejectsMalformedTruncatedOversizedAndOverflowHeaders() passed after 0.001 seconds.
+◇ Test supportsInternalLinksRejectsEscapesDirectoriesAndFifo() started.
+✔ Test supportsInternalLinksRejectsEscapesDirectoriesAndFifo() passed after 0.001 seconds.
+◇ Test neverReopensReplacedPathBetweenValidationAndMapping() started.
+✔ Test neverReopensReplacedPathBetweenValidationAndMapping() passed after 0.001 seconds.
+◇ Test mappingFailureReleasesDescriptor() started.
+✔ Test mappingFailureReleasesDescriptor() passed after 0.001 seconds.
+◇ Test mutationDuringMappingUnmapsAndThrows() started.
+✔ Test mutationDuringMappingUnmapsAndThrows() passed after 0.001 seconds.
+◇ Test failedPartialShardSetReleasesEarlierOwners() started.
+✔ Test failedPartialShardSetReleasesEarlierOwners() passed after 0.001 seconds.
+◇ Test repeatedLoadUnloadAndNoUsableOwnerAfterCleanup() started.
+✔ Test repeatedLoadUnloadAndNoUsableOwnerAfterCleanup() passed after 0.001 seconds.
+◇ Test observedTruncationFailsBeforeMappedAccess() started.
+✔ Test observedTruncationFailsBeforeMappedAccess() passed after 0.001 seconds.
+◇ Test metalLeaseSurvivesOwnerReleaseUntilCommandCompletion() started.
+✔ Test metalLeaseSurvivesOwnerReleaseUntilCommandCompletion() passed after 0.028 seconds.
+◇ Test failedInitializationAfterMetalBufferReleasesLease() started.
+✔ Test failedInitializationAfterMetalBufferReleasesLease() passed after 0.001 seconds.
+◇ Test expertPreadRejectsInvalidRangesAndShortReadsWithoutMappedFallback() started.
+✔ Test expertPreadRejectsInvalidRangesAndShortReadsWithoutMappedFallback() passed after 0.001 seconds.
+◇ Test rejectsUnsafeFixedConsumerExtents() started.
+✔ Test rejectsUnsafeFixedConsumerExtents() passed after 0.001 seconds.
+➜ Test localCheckpointMappingIntegration() skipped.
+✔ Suite QwenMappedSafetensorsTests passed after 0.039 seconds.
+✔ Test run with 17 tests in 1 suite passed after 0.039 seconds.

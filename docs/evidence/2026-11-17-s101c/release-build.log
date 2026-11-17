@@ -1,0 +1,38 @@
+Building for production...
+[Computing dependencies]
+[Pre-planning 1 / 1013]
+[Planning deferred tasks]
+[31 / 115]
+[55 / 122] CNIODarwin
+[69 / 129]
+[72 / 130]
+[74 / 128] Crypto
+[76 / 124] NIOConcurrencyHelpers
+[84 / 131] ContainersPreview
+[92 / 135] ContainersPreview
+[98 / 137] Atomics
+[100 / 133] OrderedCollections
+[108 / 138] NIOCore
+[110 / 139] yyjson
+[111 / 139] NIOCore
+[116 / 142] EventSource
+[119 / 144] HuggingFace
+[121 / 145] Jinja
+[123 / 141] HuggingFace
+[126 / 143] Hub
+[129 / 145] Hub
+[132 / 147] Tokenizers
+[134 / 148] Tokenizers
+[137 / 145] QwenFieldfareCore
+[140 / 147] QwenFieldfareCore
+[151 / 158] QwenFieldfarePack-product
+[154 / 161] QwenFieldfarePack-product
+[156 / 161] QwenFieldfarePack-product
+[156 / 161] QwenFieldfareBench-product
+[158 / 161] QwenFieldfareBench-product
+[158 / 161] QwenFieldfareMac-product
+[160 / 161] QwenFieldfareMac-product
+[161 / 161] QwenFieldfareMac-product
+[164 / 164] QwenFieldfareBench-product
+[167 / 167] QwenFieldfarePack-product
+Build complete! (33.29 secs)

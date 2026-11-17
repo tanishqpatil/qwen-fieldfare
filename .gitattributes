@@ -1,0 +1,4 @@
+# Preserve verbatim archived diagnostic evidence (including patch context lines).
+docs/evidence/2026-11-17-investigation/temporary-diagnostics.patch -whitespace
+docs/evidence/2026-11-17-isolation/temporary-diagnostics.patch -whitespace
+docs/evidence/2026-11-17-isolation/installed-api-docstrings.txt -whitespace

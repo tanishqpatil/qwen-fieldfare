@@ -1,0 +1,593 @@
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+{
+  "dtypes": {
+    "embedding": "mlx.core.bfloat16",
+    "norm": "mlx.core.bfloat16",
+    "qkv": "mlx.core.bfloat16",
+    "z": "mlx.core.bfloat16",
+    "a": "mlx.core.bfloat16",
+    "b": "mlx.core.bfloat16",
+    "conv": "mlx.core.bfloat16",
+    "q": "mlx.core.bfloat16",
+    "k": "mlx.core.bfloat16",
+    "v": "mlx.core.bfloat16",
+    "core": "mlx.core.bfloat16",
+    "gated": "mlx.core.bfloat16",
+    "attn_out": "mlx.core.bfloat16",
+    "residual": "mlx.core.bfloat16",
+    "post_norm": "mlx.core.bfloat16",
+    "router": "mlx.core.bfloat16",
+    "ids": "mlx.core.uint32",
+    "scores": "mlx.core.bfloat16",
+    "shared": "mlx.core.bfloat16",
+    "routed": "mlx.core.bfloat16",
+    "output": "mlx.core.bfloat16",
+    "prior_conv": "mlx.core.bfloat16",
+    "prior_state": "mlx.core.float32",
+    "post_conv": "mlx.core.bfloat16",
+    "post_state": "mlx.core.float32",
+    "beta": "mlx.core.bfloat16",
+    "decay": "mlx.core.float32",
+    "kv_keys": "mlx.core.bfloat16",
+    "kv_values": "mlx.core.bfloat16",
+    "rope_output": "mlx.core.bfloat16",
+    "attention_logits": "mlx.core.bfloat16"
+  },
+  "native_checks": {
+    "sequential_0_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.04996183814076683
+    },
+    "sequential_0_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.0075537654694278296
+    },
+    "sequential_1_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.033418494572971524
+    },
+    "sequential_1_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.03763034858337197
+    },
+    "sequential_2_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.025037893701668954
+    },
+    "sequential_2_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.05301858022877099
+    },
+    "sequential_20_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.013524828677452952
+    },
+    "sequential_20_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.11665254197714689
+    },
+    "sequential_40_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.015180646075741917
+    },
+    "sequential_40_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.19835507414319545
+    },
+    "sequential_60_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.02379657624225459
+    },
+    "sequential_60_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.2180833464350265
+    },
+    "sequential_80_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.018054807184615485
+    },
+    "sequential_80_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.22428116716003177
+    },
+    "batched_prompt_20_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.01353411095627632
+    },
+    "batched_prompt_20_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.11665475373561054
+    },
+    "batched_prompt_40_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.015180024258045878
+    },
+    "batched_prompt_40_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.19835772095609427
+    },
+    "batched_prompt_60_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.023796364735979923
+    },
+    "batched_prompt_60_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.21808612907228014
+    },
+    "batched_prompt_80_manual_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.01807862444387825
+    },
+    "batched_prompt_80_state_native": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.22428383423412443
+    }
+  },
+  "controls": {
+    "0_same_norm_qkv": {
+      "max_abs": 1.9073486328125e-06,
+      "rms": 2.3813325336875378e-07,
+      "relative_L2": 1.9238729854358706e-07,
+      "reference_rms": 1.2377805352612847
+    },
+    "0_same_embedding_norm": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 1.0239257067394927
+    },
+    "0_matched_state_update": {
+      "max_abs": 3.5762786865234375e-07,
+      "rms": 8.493944967255283e-10,
+      "relative_L2": 1.1218162362082694e-07,
+      "reference_rms": 0.007571601027958692
+    },
+    "0_matched_state_gated": {
+      "max_abs": 4.76837158203125e-07,
+      "rms": 9.13512172778586e-09,
+      "relative_L2": 1.8851210724333325e-07,
+      "reference_rms": 0.04845907173481518
+    },
+    "0_same_postnorm_router": {
+      "max_abs": 9.5367431640625e-07,
+      "rms": 3.3119485930938825e-07,
+      "relative_L2": 5.974452340335737e-08,
+      "reference_rms": 5.5435183083371395
+    },
+    "0_same_postnorm_routed": {
+      "max_abs": 3.841705620288849e-09,
+      "rms": 1.2168051107203122e-09,
+      "relative_L2": 2.958168486446979e-07,
+      "reference_rms": 0.00411337324528733
+    },
+    "0_same_postnorm_shared": {
+      "max_abs": 4.470348358154297e-08,
+      "rms": 2.8825133757427834e-09,
+      "relative_L2": 5.831946931212753e-07,
+      "reference_rms": 0.0049426262099805576
+    },
+    "0_expert_reduction_order": {
+      "max_abs": 1.862645149230957e-09,
+      "rms": 2.852585584935746e-10,
+      "relative_L2": 6.934905727199918e-08,
+      "reference_rms": 0.004113373270161993
+    },
+    "0_prior_history_effect": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 0.007571600573714729
+    },
+    "0_current_input_effect": {
+      "max_abs": 0.014934778213500977,
+      "rms": 5.72482986269357e-05,
+      "relative_L2": 0.00756092428140975,
+      "reference_rms": 0.007571600573714729
+    },
+    "1_same_norm_qkv": {
+      "max_abs": 3.814697265625e-06,
+      "rms": 2.596840250801082e-07,
+      "relative_L2": 1.1097112740691335e-07,
+      "reference_rms": 2.340104414077803
+    },
+    "1_same_embedding_norm": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 1.0288241266381037
+    },
+    "1_matched_state_update": {
+      "max_abs": 4.76837158203125e-07,
+      "rms": 3.6632964586276494e-09,
+      "relative_L2": 9.732374945588943e-08,
+      "reference_rms": 0.03764031368610582
+    },
+    "1_matched_state_gated": {
+      "max_abs": 2.384185791015625e-07,
+      "rms": 4.407924269452839e-09,
+      "relative_L2": 1.297004108908405e-07,
+      "reference_rms": 0.03398543026330635
+    },
+    "1_same_postnorm_router": {
+      "max_abs": 9.5367431640625e-07,
+      "rms": 3.342812400188231e-07,
+      "relative_L2": 5.697553766008085e-08,
+      "reference_rms": 5.867101105972235
+    },
+    "1_same_postnorm_routed": {
+      "max_abs": 2.2351741790771484e-08,
+      "rms": 3.819003835557198e-09,
+      "relative_L2": 2.0157982523236976e-07,
+      "reference_rms": 0.018945367331055413
+    },
+    "1_same_postnorm_shared": {
+      "max_abs": 3.725290298461914e-08,
+      "rms": 4.2369663136822665e-09,
+      "relative_L2": 6.661773328671266e-07,
+      "reference_rms": 0.006360117801437348
+    },
+    "1_expert_reduction_order": {
+      "max_abs": 1.4901161193847656e-08,
+      "rms": 1.4303446405006995e-09,
+      "relative_L2": 7.5498388136554e-08,
+      "reference_rms": 0.018945366593967988
+    },
+    "1_prior_history_effect": {
+      "max_abs": 0.014698624610900879,
+      "rms": 5.080490423624121e-05,
+      "relative_L2": 0.0013497471383344482,
+      "reference_rms": 0.03764031261361518
+    },
+    "1_current_input_effect": {
+      "max_abs": 0.047072649002075195,
+      "rms": 0.00024138700730427605,
+      "relative_L2": 0.006412991565244383,
+      "reference_rms": 0.03764031261361518
+    },
+    "2_same_norm_qkv": {
+      "max_abs": 3.814697265625e-06,
+      "rms": 3.589597770558252e-07,
+      "relative_L2": 1.5794806927163732e-07,
+      "reference_rms": 2.2726442856258675
+    },
+    "2_same_embedding_norm": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 1.2114383553568235
+    },
+    "2_matched_state_update": {
+      "max_abs": 4.76837158203125e-07,
+      "rms": 3.702210682687409e-09,
+      "relative_L2": 6.98360273561057e-08,
+      "reference_rms": 0.05301290498397354
+    },
+    "2_matched_state_gated": {
+      "max_abs": 1.1920928955078125e-07,
+      "rms": 2.251867358100626e-09,
+      "relative_L2": 1.1750745934358705e-07,
+      "reference_rms": 0.019163612001143325
+    },
+    "2_same_postnorm_router": {
+      "max_abs": 9.5367431640625e-07,
+      "rms": 2.961781503304982e-07,
+      "relative_L2": 5.435428728051442e-08,
+      "reference_rms": 5.449030152892386
+    },
+    "2_same_postnorm_routed": {
+      "max_abs": 2.9802322387695312e-08,
+      "rms": 3.006317591633964e-09,
+      "relative_L2": 1.6806984812134478e-07,
+      "reference_rms": 0.017887310693964764
+    },
+    "2_same_postnorm_shared": {
+      "max_abs": 5.587935447692871e-09,
+      "rms": 8.909714373599582e-10,
+      "relative_L2": 4.309813236687336e-07,
+      "reference_rms": 0.0020673086939720572
+    },
+    "2_expert_reduction_order": {
+      "max_abs": 1.4901161193847656e-08,
+      "rms": 1.3220635857505988e-09,
+      "relative_L2": 7.391069472885318e-08,
+      "reference_rms": 0.017887311039365635
+    },
+    "2_prior_history_effect": {
+      "max_abs": 0.04499053955078125,
+      "rms": 0.00018567606462254689,
+      "relative_L2": 0.0035024692230816727,
+      "reference_rms": 0.05301290398183092
+    },
+    "2_current_input_effect": {
+      "max_abs": 0.04636335372924805,
+      "rms": 0.0002285095652018698,
+      "relative_L2": 0.0043104517586923085,
+      "reference_rms": 0.05301290398183092
+    },
+    "20_same_norm_qkv": {
+      "max_abs": 3.814697265625e-06,
+      "rms": 2.4497669074465787e-07,
+      "relative_L2": 1.0557996218727961e-07,
+      "reference_rms": 2.320295306699522
+    },
+    "20_same_embedding_norm": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 1.1784916171607882
+    },
+    "20_matched_state_update": {
+      "max_abs": 1.9073486328125e-06,
+      "rms": 5.529309687527131e-09,
+      "relative_L2": 4.738042324474399e-08,
+      "reference_rms": 0.1167003017040484
+    },
+    "20_matched_state_gated": {
+      "max_abs": 1.1920928955078125e-07,
+      "rms": 2.077369505574721e-09,
+      "relative_L2": 1.0996456141514718e-07,
+      "reference_rms": 0.018891263501993757
+    },
+    "20_same_postnorm_router": {
+      "max_abs": 1.9073486328125e-06,
+      "rms": 3.405331040032637e-07,
+      "relative_L2": 6.093772737667665e-08,
+      "reference_rms": 5.588214701515101
+    },
+    "20_same_postnorm_routed": {
+      "max_abs": 6.28642737865448e-09,
+      "rms": 1.7383145183558708e-09,
+      "relative_L2": 2.8888515260149517e-07,
+      "reference_rms": 0.006017320387364463
+    },
+    "20_same_postnorm_shared": {
+      "max_abs": 1.0244548320770264e-08,
+      "rms": 1.1841986230905736e-09,
+      "relative_L2": 7.471412219733416e-07,
+      "reference_rms": 0.0015849729452256437
+    },
+    "20_expert_reduction_order": {
+      "max_abs": 1.862645149230957e-09,
+      "rms": 4.27309284822122e-10,
+      "relative_L2": 7.101322070894395e-08,
+      "reference_rms": 0.006017320163149612
+    },
+    "20_prior_history_effect": {
+      "max_abs": 0.047654151916503906,
+      "rms": 0.0004797131279528094,
+      "relative_L2": 0.004110641683567142,
+      "reference_rms": 0.11670030250277666
+    },
+    "20_current_input_effect": {
+      "max_abs": 0.027452468872070312,
+      "rms": 0.0002184127299897497,
+      "relative_L2": 0.0018715695272902367,
+      "reference_rms": 0.11670030250277666
+    },
+    "40_same_norm_qkv": {
+      "max_abs": 3.814697265625e-06,
+      "rms": 2.423346447203526e-07,
+      "relative_L2": 1.173768089519889e-07,
+      "reference_rms": 2.0645870924935066
+    },
+    "40_same_embedding_norm": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 1.101883646233479
+    },
+    "40_matched_state_update": {
+      "max_abs": 9.5367431640625e-07,
+      "rms": 5.285374234565189e-09,
+      "relative_L2": 2.6651574883973003e-08,
+      "reference_rms": 0.19831376785705684
+    },
+    "40_matched_state_gated": {
+      "max_abs": 1.862645149230957e-08,
+      "rms": 8.161319987484783e-10,
+      "relative_L2": 3.121978974113826e-08,
+      "reference_rms": 0.026141495683203227
+    },
+    "40_same_postnorm_router": {
+      "max_abs": 9.5367431640625e-07,
+      "rms": 3.3077557206784356e-07,
+      "relative_L2": 5.934689842273558e-08,
+      "reference_rms": 5.573594928444055
+    },
+    "40_same_postnorm_routed": {
+      "max_abs": 3.725290298461914e-09,
+      "rms": 1.0594493158657978e-09,
+      "relative_L2": 2.65544024245014e-07,
+      "reference_rms": 0.003989731340699492
+    },
+    "40_same_postnorm_shared": {
+      "max_abs": 1.4901161193847656e-07,
+      "rms": 5.986798108712882e-09,
+      "relative_L2": 2.2628203297679714e-06,
+      "reference_rms": 0.002645724024110551
+    },
+    "40_expert_reduction_order": {
+      "max_abs": 1.862645149230957e-09,
+      "rms": 3.1356851141162044e-10,
+      "relative_L2": 7.859389080253916e-08,
+      "reference_rms": 0.00398973136728192
+    },
+    "40_prior_history_effect": {
+      "max_abs": 0.07504153251647949,
+      "rms": 0.0007696801022024774,
+      "relative_L2": 0.0038811228770793947,
+      "reference_rms": 0.19831376809735862
+    },
+    "40_current_input_effect": {
+      "max_abs": 0.045061349868774414,
+      "rms": 0.00023057574545821136,
+      "relative_L2": 0.001162681480314639,
+      "reference_rms": 0.19831376809735862
+    },
+    "60_same_norm_qkv": {
+      "max_abs": 3.814697265625e-06,
+      "rms": 2.2646861000725505e-07,
+      "relative_L2": 1.1803507474941161e-07,
+      "reference_rms": 1.9186552004821258
+    },
+    "60_same_embedding_norm": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 1.0259701130169032
+    },
+    "60_matched_state_update": {
+      "max_abs": 1.0728836059570312e-06,
+      "rms": 6.584231602036673e-09,
+      "relative_L2": 3.0193870773853e-08,
+      "reference_rms": 0.2180651712843132
+    },
+    "60_matched_state_gated": {
+      "max_abs": 2.384185791015625e-07,
+      "rms": 4.034088828923484e-09,
+      "relative_L2": 1.2070389775895644e-07,
+      "reference_rms": 0.033421363384465747
+    },
+    "60_same_postnorm_router": {
+      "max_abs": 9.5367431640625e-07,
+      "rms": 3.19594302617419e-07,
+      "relative_L2": 6.270542669009797e-08,
+      "reference_rms": 5.096756684184836
+    },
+    "60_same_postnorm_routed": {
+      "max_abs": 4.6566128730773926e-09,
+      "rms": 1.4381235335761053e-09,
+      "relative_L2": 3.199281729681755e-07,
+      "reference_rms": 0.004495145020314173
+    },
+    "60_same_postnorm_shared": {
+      "max_abs": 7.450580596923828e-08,
+      "rms": 3.971716904022863e-09,
+      "relative_L2": 1.2026729807437578e-06,
+      "reference_rms": 0.0033024080258015533
+    },
+    "60_expert_reduction_order": {
+      "max_abs": 1.862645149230957e-09,
+      "rms": 3.3361975413946837e-10,
+      "relative_L2": 7.42177944764216e-08,
+      "reference_rms": 0.004495145086067692
+    },
+    "60_prior_history_effect": {
+      "max_abs": 0.08434867858886719,
+      "rms": 0.0008394833125597536,
+      "relative_L2": 0.003849690013755032,
+      "reference_rms": 0.2180651713671124
+    },
+    "60_current_input_effect": {
+      "max_abs": 0.04627275466918945,
+      "rms": 0.00023500994209337044,
+      "relative_L2": 0.0010777050760560531,
+      "reference_rms": 0.2180651713671124
+    },
+    "80_same_norm_qkv": {
+      "max_abs": 1.9073486328125e-06,
+      "rms": 2.3486921010847943e-07,
+      "relative_L2": 1.0779879292833031e-07,
+      "reference_rms": 2.178774026390365
+    },
+    "80_same_embedding_norm": {
+      "max_abs": 0.0,
+      "rms": 0.0,
+      "relative_L2": 0.0,
+      "reference_rms": 1.0574952751448314
+    },
+    "80_matched_state_update": {
+      "max_abs": 9.5367431640625e-07,
+      "rms": 7.025650019483958e-09,
+      "relative_L2": 3.13308668880142e-08,
+      "reference_rms": 0.22424052435560474
+    },
+    "80_matched_state_gated": {
+      "max_abs": 4.470348358154297e-08,
+      "rms": 1.0736661701135196e-09,
+      "relative_L2": 3.316148397036051e-08,
+      "reference_rms": 0.03237690361122422
+    },
+    "80_same_postnorm_router": {
+      "max_abs": 1.430511474609375e-06,
+      "rms": 3.2519031826846593e-07,
+      "relative_L2": 6.21974458023038e-08,
+      "reference_rms": 5.228354863672245
+    },
+    "80_same_postnorm_routed": {
+      "max_abs": 1.0244548320770264e-08,
+      "rms": 2.5111800638812033e-09,
+      "relative_L2": 3.127043315655062e-07,
+      "reference_rms": 0.008030525357002142
+    },
+    "80_same_postnorm_shared": {
+      "max_abs": 1.4156103134155273e-07,
+      "rms": 5.307393829784283e-09,
+      "relative_L2": 1.9144504297652673e-06,
+      "reference_rms": 0.00277228062281823
+    },
+    "80_expert_reduction_order": {
+      "max_abs": 5.587935447692871e-09,
+      "rms": 5.846045874670508e-10,
+      "relative_L2": 7.279779137236668e-08,
+      "reference_rms": 0.008030526427330058
+    },
+    "80_prior_history_effect": {
+      "max_abs": 0.07958066463470459,
+      "rms": 0.0008579185146708303,
+      "relative_L2": 0.003825885255776628,
+      "reference_rms": 0.2242405240396259
+    },
+    "80_current_input_effect": {
+      "max_abs": 0.040087223052978516,
+      "rms": 0.000225561730050212,
+      "relative_L2": 0.0010058919145691627,
+      "reference_rms": 0.2242405240396259
+    }
+  },
+  "peak_bytes": 19631363782
+}

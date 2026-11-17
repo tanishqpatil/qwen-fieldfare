@@ -1,0 +1,72 @@
+Building for debugging...
+[Computing dependencies]
+[25 / 132]
+[53 / 138] CNIOFreeBSD
+[63 / 146] InternalCollectionsUtilities
+[74 / 136] ContainersPreview
+[82 / 131] ContainersPreview
+[89 / 130] DequeModule
+[91 / 123] NIOCore
+[100 / 134] yyjson
+[103 / 134] NIOCore
+[103 / 134] CNIOAtomics
+[104 / 133] NIOCore
+[113 / 140] EventSource
+[116 / 143] EventSource
+[128 / 153] HuggingFace
+[132 / 155] Hub
+[140 / 163] Hub
+[143 / 166] Hub
+[143 / 167] Tokenizers
+[153 / 177] Tokenizers
+[155 / 176] Tokenizers
+[158 / 179] Tokenizers
+[160 / 190]
+[171 / 190] QwenFieldfareCore
+[179 / 194] QwenFieldfareCore
+[179 / 194] QwenFieldfarePack-product
+[189 / 209] QwenFieldfareMac-product
+[191 / 209] QwenFieldfarePack-product
+[194 / 209] QwenFieldfareMac-product
+[195 / 209] QwenFieldfareMac-product
+[195 / 209] QwenFieldfareBench-product
+[202 / 209] QwenFieldfareCoreTests-product
+[210 / 220] QwenFieldfareCoreTests-product
+[215 / 222] QwenFieldfareCoreTests-product
+[217 / 222] QwenFieldfareCoreTests-product
+[220 / 223] QwenFieldfareCoreTests-product
+[222 / 226] QwenFieldfareCoreTests-product
+[229 / 229] QwenFieldfarePack-product
+Build complete! (8.08 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenResidentWeightsTests started.
+◇ Test readsCorrectDataRelativeOffsetsAndFloatValues() started.
+✔ Test readsCorrectDataRelativeOffsetsAndFloatValues() passed after 0.002 seconds.
+◇ Test rejectsInvalidRowsShapesAndUnsupportedDecodeTypes() started.
+✔ Test rejectsInvalidRowsShapesAndUnsupportedDecodeTypes() passed after 0.001 seconds.
+◇ Test rejectsEmbeddingRowByteOverflowWithoutAllocation() started.
+✔ Test rejectsEmbeddingRowByteOverflowWithoutAllocation() passed after 0.001 seconds.
+◇ Test supportsInternalLinksAndPinsTargetWhenLinkIsRetargeted() started.
+✔ Test supportsInternalLinksAndPinsTargetWhenLinkIsRetargeted() passed after 0.001 seconds.
+◇ Test rejectsUnsafeShardNames(shard:) started.
+◇ Test case passing 1 argument shard → "" to rejectsUnsafeShardNames(shard:) started.
+◇ Test case passing 1 argument shard → "../escape.safetensors" to rejectsUnsafeShardNames(shard:) started.
+◇ Test case passing 1 argument shard → "/tmp/escape.safetensors" to rejectsUnsafeShardNames(shard:) started.
+◇ Test case passing 1 argument shard → ".." to rejectsUnsafeShardNames(shard:) started.
+◇ Test case passing 1 argument shard → "." to rejectsUnsafeShardNames(shard:) started.
+◇ Test case passing 1 argument shard → "shard.safetensors✔ Test rejectsUnsafeShardNames(shard:) with 6 test cases passed after 0.001 seconds.
+◇ Test rejectsFIFOsDirectoriesAndMissingFiles() started.
+✔ Test rejectsFIFOsDirectoriesAndMissingFiles() passed after 0.001 seconds.
+◇ Test rejectsMalformedHeadersAndCanRetryAfterRepair() started.
+✔ Test rejectsMalformedHeadersAndCanRetryAfterRepair() passed after 0.001 seconds.
+◇ Test mutationInvalidatesAndReleasesDescriptorBeforeExplicitRetry() started.
+✔ Test mutationInvalidatesAndReleasesDescriptorBeforeExplicitRetry() passed after 0.001 seconds.
+◇ Test replacedPathNeverSilentlySuppliesReplacementBytes() started.
+✔ Test replacedPathNeverSilentlySuppliesReplacementBytes() passed after 0.001 seconds.
+◇ Test readerDeinitReleasesOwnedDescriptors() started.
+✔ Test readerDeinitReleasesOwnedDescriptors() passed after 0.001 seconds.
+➜ Test localCheckpointHeadersAndSmallTensorIntegration() skipped.
+✔ Suite QwenResidentWeightsTests passed after 0.009 seconds.
+✔ Test run with 11 tests in 1 suite passed after 0.009 seconds.

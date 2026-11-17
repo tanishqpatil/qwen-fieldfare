@@ -1,0 +1,54 @@
+Building for debugging...
+[Computing dependencies]
+[25 / 132]
+[47 / 135] CNIOWASI
+[64 / 155] InternalCollectionsUtilities
+[72 / 145] NIOConcurrencyHelpers
+[83 / 132] NIOConcurrencyHelpers
+[91 / 123] NIOCore
+[100 / 134] yyjson
+[101 / 134] yyjson
+[103 / 134]
+[103 / 134] NIOCore
+[103 / 134] CNIOAtomics
+[104 / 133] NIOCore
+[113 / 140] EventSource
+[116 / 143] EventSource
+[128 / 153] HuggingFace
+[132 / 155] Hub
+[140 / 163] Hub
+[143 / 166] Hub
+[153 / 177] Tokenizers
+[155 / 176] Tokenizers
+[158 / 179] Tokenizers
+[171 / 190] QwenFieldfareCore
+[176 / 191] QwenFieldfareCore
+[185 / 206] QwenFieldfareMac-product
+[190 / 206] QwenFieldfareMac-product
+[192 / 206] QwenFieldfareMac-product
+[195 / 205] QwenFieldfareCoreTests-product
+[198 / 205] QwenFieldfareMac-product
+[205 / 216] QwenFieldfareCoreTests-product
+[207 / 217] QwenFieldfarePack-product
+[211 / 218] QwenFieldfareCoreTests-product
+[213 / 218] QwenFieldfareCoreTests-product
+[214 / 218] QwenFieldfareCoreTests-product
+[216 / 219] QwenFieldfareMac-product
+[216 / 219] QwenFieldfareCoreTests-product
+[218 / 222] QwenFieldfareCoreTests-product
+[225 / 225] QwenFieldfarePack-product
+Build complete! (8.12 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenFallbackReaderTests started.
+◇ Test localFallbackCheckpointIntegration() started.
+Fallback pre-load footprint=9618224, Metal=65536 bytes
+Fallback loaded footprint=88100152, Metal=645824512 bytes
+Fallback predictions=846,846; forward calls=2, input tokens/call=1; context=8, layer cache=1
+Fallback cache creations=80, evictions=79, hits=0, misses=80
+Fallback after forwards footprint=121687376, Metal=1117323264 bytes
+Fallback after unload footprint=34751352, Metal=720896 bytes
+✔ Test localFallbackCheckpointIntegration() passed after 8.110 seconds.
+✔ Suite QwenFallbackReaderTests passed after 8.110 seconds.
+✔ Test run with 1 test in 1 suite passed after 8.110 seconds.

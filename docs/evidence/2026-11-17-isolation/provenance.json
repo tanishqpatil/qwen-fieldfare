@@ -1,0 +1,14 @@
+{
+  "base_commit": "72fb923a3e7a5d43e5baeb43d35bdcf1f96e4966",
+  "reference_sources_sha256": {
+    "mlx_lm/models/qwen3_5.py": "851449fd9989d6bf4b3c4fed92ddc3be5f1e781eb2246f89c54d7eff2518d9c6",
+    "mlx_lm/models/qwen3_next.py": "67ca08a4d08cb7be124965e95399735e556f1eaeb21a16bc23cb88d1ac035e11",
+    "mlx_lm/models/gated_delta.py": "f69e837ea68641dbb06fdb5dcc024a9a7e1d9353f08ae58c05275253a0c39428",
+    "mlx_lm/models/cache.py": "c96cb169fd5e0ec4584a162dd61dc62ab08ccdca03a9850f8a491ce6809145e6",
+    "mlx_lm/models/activations.py": "6f7d756897deb322af4fe98e040df76e9358a91d76521e51f14d734fdd0fb05f",
+    "mlx/nn/layers/quantized.py": "8ca4574a212f14cbec4c446826474583ef0bf1e2cb1630574fd730c77af03b33"
+  },
+  "original_fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "restored_bench_sha256": "f55a81ce3041544c5cd811a1c9acbc04abcb302f8b40a29fd67d2d0af2854c32",
+  "MLX_GDN_PACKED": "unset; installed source default enables eligible packed kernel"
+}

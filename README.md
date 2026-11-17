@@ -58,7 +58,7 @@ MLX, llama.cpp, Ollama, or another inference engine.
 | Sampling | Temperature, Top-K, Top-P, presence and repetition penalties |
 | Context | 4K, 8K, 16K, 32K, or 64K in Active Expert Streaming mode |
 | Memory | Explicit 3, 4, or 5 GiB active-streaming allocation targets; 5 GiB is the default |
-| Correctness | Checkpoint-identified teacher-forced MLX harness; 132/132 next-token control matched |
+| Correctness | Checkpoint-hashed teacher CLI; historical 132/132, current audit 131/132 (blocked) |
 | Validated hardware | Apple M5, 32 GiB unified memory |
 | Current limitation | Text-only; the checkpoint's vision encoder is not implemented |
 
@@ -381,22 +381,34 @@ python3 Scripts/qwen_mlx_greedy_reference.py \
   --max-tokens 65
 ```
 
-The historical engineering run matched 132/132 teacher-forced positions, but
-the automated parity test that produced that result is not present in the
-current checkout. Restoring a callable real-model parity harness is a release
-prerequisite; the reference command above is not a substitute for that gate.
+The checkpoint-hashed release-mode teacher-forced harness is implemented in
+`QwenFieldfareBench --teacher-reference` and exercised by
+`Scripts/test_teacher_reference.py`. The old named package parity test is absent.
+On 2026-11-17 a fresh reference matched **131/132** predictions (position 61:
+expected 14988, got 10000), so release correctness qualification remains blocked. Independent Stage 1
+reliability work is authorized under the [non-regression policy](docs/NUMERICAL_NON_REGRESSION.md). The cause
+is unresolved. Historical 132/132 results do not establish current parity.
+See [baseline/evidence](docs/PERFORMANCE_BASELINES.md) and
+[development log](docs/DEVELOPMENT_LOG.md).
 
-Recent validation:
+Current source-audit validation at `72fb923`:
 
-- Qwen generation support: 10/10 passed
-- Expert cache/store: 6/6 passed
-- Complete package suite: 43/43 passed
-- Historical MLX teacher-forced parity record: 132/132; current automated
-  harness not checked in
-- Exact-greedy fast path: all 128 generated token IDs matched the frozen
-  control; app-default sampling is unchanged
-- Complete release build: passed
-- `git diff --check`: passed
+- Full serial package suite: 49/49 passed (32 Core, 17 Presentation).
+- Complete release build: passed.
+- Real-model teacher forcing: failed, 131/132.
+- No current performance gain or complete memory qualification claimed.
+
+Latest Stage1 reader-safety checkpoint (S1-01d):107 package tests passed, three
+opt-in tests skipped; release passed. CPU, active-streaming and fallback readers
+use shared bounded Safetensors validation and descriptor ownership. The bounded
+fallback model integration passed; the teacher CLI covers active streaming only.
+Latest strict active replay remains131/132, exit1. No production-readiness or
+full numerical-equivalence claim is made. [Evidence](docs/evidence/2026-11-17-s101d/README.md).
+
+The [authoritative backlog](TODO.md), [architecture](docs/ARCHITECTURE.md) and
+[recovery memory](docs/AGENT_MEMORY.md) track the local coding-agent mission.
+The Qwen-specific local server is authorized for later gated implementation;
+HTTP serving, structured tools, OpenCode and Hermes remain unimplemented.
 
 ## Repository map
 

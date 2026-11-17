@@ -1,0 +1,12 @@
+{
+  "task": "S1-03a",
+  "base_commit": "72fb923a3e7a5d43e5baeb43d35bdcf1f96e4966",
+  "package_tests": 55,
+  "checker_tests": 6,
+  "model_runs_performed": 0,
+  "checkpoint_payloads_hashed": 0,
+  "strict_parity": "known unresolved 131/132; not rerun for selection-only change",
+  "numerical_sources": "unchanged; validator exception documented",
+  "candidate_bench_sha256": "49cf77927f0a747ba395a3918fa74796f9b66aed3763399fe3cafd102065ef26",
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747"
+}

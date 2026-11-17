@@ -1,0 +1,418 @@
+# Authoritative implementation backlog
+
+Mission accepted 2026-11-17; base `72fb923`. Stable IDs below use the mission's
+stage numbers. Existing AGENT_RUNTIME_PLAN optimization stages are historical.
+
+## Working rules
+
+Read AGENTS.md, this file and docs/AGENT_MEMORY.md at session start. Inspect
+related source and baseline before edits. Preserve unrelated work and historical
+logs. Update status whenever work changes; statuses are pending, in progress,
+blocked, completed or rejected. Every stage must pass applicable acceptance
+before the next begins. Stop for review after Stage 1 in this execution. Stop
+at a new applicable hardware/checkpoint/environment/correctness blocker; the
+known 131/132 baseline does not block independent engineering. Never call an
+unverified stage complete. No remote push/merge or destructive Git operation.
+
+Modify only task-related source/tests/docs. Keep app/bench working, checked
+allocations, exact model semantics, one model owner, raw weights external and
+the selected memory budget. No generic hosting, server-side tools, unrelated
+models, silent history truncation, cache-policy replacement without evidence or
+unqualified performance claims. Details: [architecture](docs/ARCHITECTURE.md),
+[decisions](docs/DECISIONS.md), [validation](docs/PERFORMANCE_BASELINES.md).
+
+Core paths below omit `Sources/QwenFieldfareCore/`; Mac paths omit
+`Sources/QwenFieldfareApp/`. Proposed paths are not existing functionality.
+
+## Stage 0 — Repository audit and engineering foundation
+
+### S0-01 — Audit checkout, ownership and runtime/test paths
+
+- Stage/priority/status: 0 / P0 / **completed**.
+- Files: `AGENTS.md; Package.swift; Sources/; Tests/; Scripts/`.
+- Dependencies: none.
+- Acceptance: Source inventory and gaps documented; preserve clean starting work.
+- Required tests: Source review, git status/log.
+- Risks/blockers: Unchecked mmap readers and fatal Metal paths found.
+
+### S0-02 — Establish persistent recovery documents and reconcile stale claims
+
+- Stage/priority/status: 0 / P0 / **completed**.
+- Files: `TODO.md; docs/ARCHITECTURE.md; docs/AGENT_MEMORY.md; docs/DECISIONS.md; docs/DEVELOPMENT_LOG.md; docs/PERFORMANCE_BASELINES.md; docs/AGENT_INTEGRATION.md; README.md`.
+- Dependencies: S0-01.
+- Acceptance: All required docs exist; implemented/proposed separated; stage IDs unambiguous.
+- Required tests: Markdown links; diff check.
+- Risks/blockers: Historical narrative must remain intact.
+
+### S0-03 — Record build/tests, parity inventory and feature branch
+
+- Stage/priority/status: 0 / P0 / **blocked**.
+- Files: `Scripts/test.sh; Scripts/test_teacher_reference.py; Scripts/qwen_mlx_greedy_reference.py; Package.resolved`.
+- Dependencies: S0-01.
+- Acceptance: Record exact checks/missing validation and preserve known failing numerical baseline; independent Stage 1 work is authorized by revised policy. Strict parity remains a release gate.
+- Required tests: Full package tests; release build; reference inspection; checkpoint-hashed 132/132 teacher-forced control.
+- Risks/blockers: Known 131/132 at token 61 remains unresolved and blocks release/full-parity claims, not independent Stage 1. Original fixture and evidence stay intact; no further broad/layer-3 investigation is scheduled. See ADR-008 and docs/NUMERICAL_NON_REGRESSION.md.
+
+
+## Stage 1 — Reliability and correctness hardening
+
+Stage 1 status: **in progress**; 131/132 is a retained release blocker, not
+an independent-task blocker. Completed S1-03a, S1-01a, S1-01b, S1-01c and S1-01d; next proposed task is S1-01e. Parent tasks
+remain open until their full acceptance criteria pass.
+
+### S1-03a — Bound and validate model metadata reads
+
+- Stage/priority/status: 1 / P0 / **completed**.
+- Files: `QwenModelDirectory.swift; Tests/QwenFieldfareCore/QwenModelDirectoryTests.swift`.
+- Dependencies: S0-02; recorded S0-03 baseline. Does not depend on completing the unrelated runner header refactor.
+- Acceptance: Existing compatible metadata accepted; reject escaping/non-regular metadata before index read; capped descriptor-checked index read; malformed input returns typed errors. No inference/sampling/kernel changes.
+- Required tests: Model-free directory/FIFO/symlink/oversized/malformed index fixtures, positive internal links, full suite and release; inference non-regression identity check.
+- Risks/blockers: Selection validation alone does not harden later runner opens; directory mutation/descriptor-relative containment still need lifecycle/IO work. This task does not complete S1-03 or Stage 1.
+
+### S1-01a — Shared bounded Safetensors header reader
+
+- Stage/priority/status: 1 / P0 / **completed**.
+- Files: `Infrastructure/ModelIO/QwenSafetensorsHeader.swift; Tests/QwenFieldfareCore/QwenSafetensorsHeaderTests.swift; Package.swift`.
+- Dependencies: Recorded known baseline and S0-02; reuse existing partial reader checks before creating a shared utility.
+- Acceptance: Shared bounded header/extent validator and descriptor-owner foundation with model-free fault fixtures; active reader integration is a separate task. Delivered 18 focused and 73 full tests, release build. Existing reader/math paths unchanged.
+- Required tests: Truncated/oversized/malformed headers, invalid offset count/order/bounds, overflow; focused/full tests before bounded model-backed integration check. Existing teacher integrity verification must remain enabled for that integration check.
+- Risks/blockers: Now used by CPU resident and both Q4 runtime readers; pack-builder consumer remains pending. Caller must enforce root containment and immutable file ownership; stat checks cannot lock out concurrent writes. Canonical packing/duplicate JSON key/payload-content validation is not claimed. Preserve original known mismatch set; source-inventory shortcut is not relaxed for the added file.
+
+### S1-01b — Migrate one existing reader to validated handle ownership
+
+- Stage/priority/status: 1 / P0 / **completed**.
+- Files: `QwenResidentCoreLoader.swift; QwenSafetensorsHeader.swift; related IO tests` (first consumer); Q4 runners and pack builder remain separate follow-up integrations.
+- Dependencies: S1-01a.
+- Acceptance: Completed for QwenResidentWeights CPU utility only: shared parser/owned FD, data-relative offsets, contained internal links, typed errors, invalidate/revalidate on failure. Focused/full/release and actual checkpoint integration pass; one strict replay retains exact known 131/132 failure. Q4 runtime/pack readers unchanged.
+- Required tests: Valid BF16/F32 reads, corrupt/mutated/replaced files, checked read/row bounds, descriptor cleanup, focused/full/release. Gate affected inference-reader integrations with appropriate bounded model checks and existing integrity verification.
+- Risks/blockers: Files must remain immutable while owned; descriptor identity alone cannot prevent concurrent in-place writes/truncation or mmap SIGBUS. Numerical source inventory baseline cannot be treated as proof after integration.
+
+### S1-01c — Migrate the active-streaming shard reader
+
+- Stage/priority/status: 1 / P0 / **completed**.
+- Files: `QwenQ4ActiveExpertStreamingRunner.swift; QwenMappedSafetensorsFile.swift; QwenSafetensorsHeader.swift (comment); QwenMappedSafetensorsTests.swift; Package.swift`.
+- Dependencies: S1-01a, S1-01b.
+- Acceptance: Delivered shared validated descriptor/header and ARC mmap ownership for active streaming only. Metal no-copy buffers retain owners through GPU use; checked page/range and fixed-consumer extents; safe selected pread errors clear slots after hit work completes. Internal links/containment and bounded streaming retained. No kernel/precision/sampling or second-reader migration. 16 focused pass + 1 opt-in skip; full 99 pass + 2 skip (101 reported); checkpoint integration passes; release/checker/docs/diff checks pass. One strict replay exits 1 with unchanged 131/132, token 61 mismatch. Evidence: `docs/evidence/2026-11-17-s101c/validation.json`.
+- Required tests: Model-free malformed/shard/path/mapping failures and ownership tests; focused/full/release; one bounded checkpoint load/parity check with required integrity verification and known mismatch-set comparison.
+- Risks/blockers: File immutability is still required; descriptor/stat checks cannot prevent concurrent truncation/SIGBUS. Model metadata should validate before unsafe pointer access; allocator/lifecycle hardening remains separate. Stopped after S1-01c; Stage 1 remains open.
+
+### S1-01d — Migrate fallback Q4ChatRunner shard reader
+
+- Stage/priority/status: 1 / P0 / **completed**.
+- Files: `QwenQ4ChatRunner.swift; QwenFallbackReaderTests.swift; Package.swift; shared owner reused without modification`.
+- Dependencies: S1-01c.
+- Acceptance: Delivered shared validated descriptors/header/mmap/Metal ownership in fallback only. Preserved fast-resident/lazy layer-cache/no-copy strategy and layouts; reused existing fixed-Qwen extent guard, checked context/allocation arithmetic, typed initialization errors. Eight focused pass + one skip; package107 pass +3 skips (110 reported), release/checker/docs/diff gates pass. One bounded actual memory-saver integration passes (context8, cache1, two reset forwards846/846,80 creations/79 evictions). Active teacher path unchanged; retained strict131/132 is not fallback validation. Evidence: `docs/evidence/2026-11-17-s101d/validation.json`.
+- Required tests: Model-free IO/ownership faults, focused/full/release, bounded affected-mode model integration with existing integrity and numerical policy.
+- Risks/blockers: Immutable checkpoint still required; full pre-allocation model contract, index/allocator/encoder safety and production numerical acceptance remain open. Stopped after S1-01d. Cumulative review/local Git checkpoint authorized; no push/merge. Stage1 and production qualification remain open.
+
+### S1-01e — Migrate pack-builder Safetensors input reader (proposed next)
+
+- Stage/priority/status: 1 / P0 / **pending**; not started.
+- Files: `QwenQ4ExpertStoreBuilder.swift; shared descriptor/header owner; focused pack fixtures`.
+- Dependencies: S1-01d.
+- Acceptance: Inspect pack builder's input validation/ownership and existing256MiB cap; reuse shared infrastructure with an explicit compatibility decision, not an automatic cap reduction. Preserve packed format/source identity/integrity checks and output semantics. No other storage-format migration bundled.
+- Required tests: Model-free malformed inputs, offsets/overflow, failure cleanup and packed output fixtures; full/release and appropriate integrity/integration checks.
+- Risks/blockers: Input cap policy and output publication/cleanup need review; full model-contract and allocator/lifecycle work remains separate. Requires a subsequent task; stop now.
+
+### S1-01 — Unify bounded Safetensors parsing and safe shard ownership
+
+- Stage/priority/status: 1 / P0 / **in progress**.
+- Files: `Infrastructure/ModelIO/; Runtime/Generation/QwenQ4*Runner.swift; Storage/`.
+- Dependencies: S0-02 and recorded S0-03 baseline; its unresolved strict-release subgate does not block this independent task.
+- Acceptance: All readers reject short/oversized headers, invalid offsets and failed stat/read; close/unmap on all failures; no heap shard copies.
+- Required tests: Model-free corrupt fixtures, read failures, checked arithmetic; valid model parity.
+- Risks/blockers: All runtime readers are migrated; pack-builder Safetensors reader remains independent.
+
+### S1-02 — Preflight exact Qwen model and tensor contract before allocation
+
+- Stage/priority/status: 1 / P0 / **pending**.
+- Files: `Infrastructure/ModelIO/; Runtime/Generation/QwenQ4*Runner.swift`.
+- Dependencies: S1-01.
+- Acceptance: Required tensor names/shapes/dtypes/byte sizes and affine quantization validated; extras permitted; tokenizer/template metadata checked.
+- Required tests: Mutated config/tensors, unsupported formats, valid checkpoint; parity.
+- Risks/blockers: Do not silently change checkpoint identity or numerical behavior.
+
+### S1-03 — Enforce model-root and regular-file policy on every entry point
+
+- Stage/priority/status: 1 / P0 / **in progress**.
+- Files: `QwenModelDirectory.swift; runner loaders; expert stores; Bench/; Pack/`.
+- Dependencies: S1-01.
+- Acceptance: Canonical containment, safe metadata/shards, regular-file checks; define symlink and concurrent modification policy.
+- Required tests: Escaping links/paths, missing files, directory/FIFO fixtures; no hangs.
+- Risks/blockers: Selection-time validation alone does not protect later opens.
+
+### S1-04 — Make Metal allocation and command failures recoverable
+
+- Stage/priority/status: 1 / P0 / **pending**.
+- Files: `Infrastructure/Metal/MetalContext.swift; Kernels/; Runtime/Generation/; Storage/Q4BoundedExpertCache.swift`.
+- Dependencies: S1-01,S1-02.
+- Acceptance: Replace production fatal errors/forced buffers; propagate command completion errors; invalidate partial state.
+- Required tests: Inject buffer/queue/encoder/command failures; retry; parity.
+- Risks/blockers: Every runtime mode must preserve existing behavior and bounds.
+
+### S1-05 — Unify cancellable lifecycle and error recovery
+
+- Stage/priority/status: 1 / P0 / **pending**.
+- Files: `Mac/Generation/ChatService.swift; Core runtime/loading support`.
+- Dependencies: S1-02,S1-03,S1-04.
+- Acceptance: Cancellation during load/prefill/decode releases ownership; idempotent unload; recoverable retry; consistent visible/internal history.
+- Required tests: Fault injection; cancellation boundaries; repeated load/generate/cancel/unload soak.
+- Risks/blockers: Detached tasks and secondary loading path require ownership review.
+
+### S1-06 — Qualify Stage 1 and stop for review
+
+- Stage/priority/status: 1 / P0 / **pending**.
+- Files: `Scripts/; Tests/; docs/DEVELOPMENT_LOG.md; docs/PERFORMANCE_BASELINES.md`.
+- Dependencies: S1-01,S1-02,S1-03,S1-04,S1-05.
+- Acceptance: Independent reliability tests/package/release and numerical non-regression pass; known strict-parity failure explicitly retained; no memory regression; measured unload tolerance; stop before Stage 2. Production readiness remains separately blocked.
+- Required tests: Full serial suite; release; six-case teacher suite; memory and lifecycle soak.
+- Risks/blockers: No stage completion based solely on mocks or compilation.
+
+
+## Stage 2 — Qwen chat and structured tools
+
+### S2-01 — Derive typed role/tool history from actual checkpoint template
+
+- Stage/priority/status: 2 / P0 / **pending**.
+- Files: `QwenGenerationSupport.swift; QwenTokenizer; new bounded protocol types`.
+- Dependencies: S1-06 plus review.
+- Acceptance: System/developer/user/assistant/tool history, IDs and multiple calls round-trip; thinking and special tokens exact.
+- Required tests: Checkpoint template/token fixtures; multi-turn tools; ID matching.
+- Risks/blockers: Official/current template must be inspected before design.
+
+### S2-02 — Implement bounded incremental tool-call parser and tool choice
+
+- Stage/priority/status: 2 / P0 / **pending**.
+- Files: `Core generation protocol/parser; Tests/`.
+- Dependencies: S2-01.
+- Acceptance: Complete validated calls only; defined malformed/unsupported handling and finish reasons; no tool execution.
+- Required tests: Every split point; Unicode/escapes; nested JSON; multiple calls; duplicate/missing IDs; size limits.
+- Risks/blockers: No regex-based structured parsing or partial dispatch.
+
+### S2-03 — Qualify tool conversations and streaming contract
+
+- Stage/priority/status: 2 / P0 / **pending**.
+- Files: `Core protocol; Tests/; docs/AGENT_INTEGRATION.md`.
+- Dependencies: S2-02.
+- Acceptance: Full serialize/generate/parse/result-history exchange representable and tested.
+- Required tests: Golden fixtures; malformed output; streamed and nonstreamed equivalence.
+- Risks/blockers: Model-backed behavior remains separate from parser mocks.
+
+
+## Stage 3 — QwenFieldfareServer
+
+### S3-01 — Select maintained minimal HTTP dependency and define API
+
+- Stage/priority/status: 3 / P0 / **pending**.
+- Files: `Package.swift; Package.resolved; proposed Sources/QwenFieldfareServer/`.
+- Dependencies: S2-03.
+- Acceptance: Verify necessity/license/maintenance/Swift/macOS; define exact fields/errors/model ID.
+- Required tests: Dependency/API review; request decoding tests.
+- Risks/blockers: Existing transitive SwiftNIO is not an existing server.
+
+### S3-02 — Implement exclusive owner, worker, bounded queue and shutdown
+
+- Stage/priority/status: 3 / P0 / **pending**.
+- Files: `Core lifecycle; app/bench/server ownership support`.
+- Dependencies: S3-01.
+- Acceptance: One active model owner across processes; networking independent from blocking inference; deterministic queue limits.
+- Required tests: Concurrent requests/processes; overload; shutdown; crash/stale ownership recovery.
+- Risks/blockers: Never silently instantiate a second complete model.
+
+### S3-03 — Implement loopback endpoints and authentication
+
+- Stage/priority/status: 3 / P0 / **pending**.
+- Files: `Server health/models/chat handlers; configuration`.
+- Dependencies: S3-02.
+- Acceptance: Health/models/nonstream chat; local auth; limits; context/usage/finish errors; sensitive payloads never logged.
+- Required tests: HTTP auth, malformed/oversized requests, context overflow, queue limits.
+- Risks/blockers: No remote exposure default or unrelated endpoints.
+
+### S3-04 — Implement bounded SSE and disconnect cancellation
+
+- Stage/priority/status: 3 / P0 / **pending**.
+- Files: `Server streaming transport and inference adapter`.
+- Dependencies: S3-03.
+- Acceptance: Text/tool streams with backpressure; finite buffers; disconnect releases queued/active work.
+- Required tests: Slow/disconnected clients; fragmented SSE; cancellation; tool exchange.
+- Risks/blockers: No uncontrolled simultaneous Metal mutations.
+
+### S3-05 — Qualify server lifecycle/protocol
+
+- Stage/priority/status: 3 / P0 / **pending**.
+- Files: `Server tests; docs/AGENT_INTEGRATION.md`.
+- Dependencies: S3-04.
+- Acceptance: Real HTTP clients generate text and simulated structured exchange; all failure gates pass.
+- Required tests: Complete server suite and real-model smoke; memory soak.
+- Risks/blockers: HTTP success alone does not qualify agent compatibility.
+
+
+## Stage 4 — OpenCode integration
+
+### S4-01 — Inspect and pin OpenCode provider configuration
+
+- Stage/priority/status: 4 / P0 / **pending**.
+- Files: `docs/AGENT_INTEGRATION.md; disposable integration fixtures`.
+- Dependencies: S3-05.
+- Acceptance: Publish configuration only for an installed tested version.
+- Required tests: Provider schema and connectivity checks.
+- Risks/blockers: Do not reuse stale configuration from historical research.
+
+### S4-02 — Run real coding-agent read/edit/test/retry loop
+
+- Stage/priority/status: 4 / P0 / **pending**.
+- Files: `Disposable repository; integration report`.
+- Dependencies: S4-01.
+- Acceptance: Actual backend completes read/search, edit, test, deliberately failing test repair and final answer.
+- Required tests: End-to-end task; record retries/tool validity/context/latency/memory.
+- Risks/blockers: Runtime/server must never execute shell or filesystem tools.
+
+
+## Stage 5 — Exact conversation-state reuse
+
+### S5-01 — Define exact retained-state and invalidation contract
+
+- Stage/priority/status: 5 / P0 / **pending**.
+- Files: `Core generation; docs/ARCHITECTURE.md`.
+- Dependencies: S4-02.
+- Acceptance: One session; exact tokens/positions/KV/Conv/DeltaNet/pending token; no truncation.
+- Required tests: State-boundary design review and deterministic fixtures.
+- Risks/blockers: Thinking stripping and unconsumed final token affect exact prefix proof.
+
+### S5-02 — Implement opt-in exact-prefix continuation and safe replay
+
+- Stage/priority/status: 5 / P0 / **pending**.
+- Files: `Active runner; generation session owner`.
+- Dependencies: S5-01.
+- Acceptance: Reuse only proven continuation; reset on divergence/cancel/error/overflow/tools/template changes.
+- Required tests: Multi-turn, identical prefix, tools, changed history/system, new chat, disabled cache, all cancellations/boundaries.
+- Risks/blockers: Do not snapshot or multiply memory without accounting.
+
+### S5-03 — Qualify equivalence and measured repeated-turn benefit
+
+- Stage/priority/status: 5 / P0 / **pending**.
+- Files: `Bench; Tests/; docs/PERFORMANCE_BASELINES.md`.
+- Dependencies: S5-02.
+- Acceptance: Cached/full replay token IDs and relevant state agree; report actual reused tokens; predeclared 20% gate.
+- Required tests: Deterministic parity and repeated-turn A/B, memory/pressure/swap.
+- Risks/blockers: Record unmet target honestly; no manufactured gain.
+
+
+## Stage 6 — Memory and cache controls
+
+### S6-01 — Expose conversation reuse controls and truthful diagnostics
+
+- Stage/priority/status: 6 / P1 / **pending**.
+- Files: `Core session policy; Mac diagnostics; Server configuration`.
+- Dependencies: S5-03.
+- Acceptance: Disabled/exact prefix, idle expiry, retained-token cap, clear action; report actual occupancy.
+- Required tests: Expiry/reset/limits/on-off tests; overflow replay.
+- Risks/blockers: KV, conversation state and expert caching are distinct.
+
+### S6-02 — Qualify memory/context settings and unload/reload transitions
+
+- Stage/priority/status: 6 / P0 / **pending**.
+- Files: `QwenActiveStreamingMemoryConfiguration.swift; UI/server settings`.
+- Dependencies: S6-01.
+- Acceptance: Preserve 3/4/5 GiB plans; checked supported context/cache controls; report estimates vs measured use.
+- Required tests: All plans/bounds; changed settings; allocation failure; measured footprint.
+- Risks/blockers: No live expert-arena resizing or implicit memory increase.
+
+### S6-03 — Investigate optional bounded lazy KV allocation
+
+- Stage/priority/status: 6 / P1 / **pending**.
+- Files: `Attention KV ownership; memory planner`.
+- Dependencies: S6-02.
+- Acceptance: Implement only if worthwhile; budget replacement peaks; exact positions/history; otherwise document rejection.
+- Required tests: 4K/8K initial capacity; growth/failure/context limits; replay parity; peak memory.
+- Risks/blockers: No sliding-window eviction; full-window memory unchanged.
+
+
+## Stage 7 — Measured performance research
+
+### S7-01 — Establish representative successful-task throughput baseline
+
+- Stage/priority/status: 7 / P1 / **pending**.
+- Files: `Bench/integration workloads; docs/PERFORMANCE_BASELINES.md`.
+- Dependencies: S6-02.
+- Acceptance: Predeclare tasks and complete timing/cache/memory/correctness metadata.
+- Required tests: Reproducible controls; no diagnostic headline runs.
+- Risks/blockers: Successful tasks per wall time is primary, not synthetic decode.
+
+### S7-02 — Research bounded batched/chunked prefill
+
+- Stage/priority/status: 7 / P1 / **pending**.
+- Files: `Active runner; attention/DeltaNet/MoE kernels`.
+- Dependencies: S7-01.
+- Acceptance: New hypothesis after rejected head experiment; exact causal/recurrent order; finite scratch and expert pins.
+- Required tests: Chunks 16/32/64; cancellation/state parity; >=20% latency promotion.
+- Risks/blockers: Architecture-specific; no incompatible upstream attention transplant.
+
+### S7-03 — Measure and optimize production sampling if material
+
+- Stage/priority/status: 7 / P1 / **pending**.
+- Files: `QwenGenerationSupport.swift; Bench sampler`.
+- Dependencies: S7-01.
+- Acceptance: Preserve fixed-seed draws/ties/penalties; retain only measured win.
+- Required tests: Fixed-seed equality; paired end-to-end >=5% and positive CI.
+- Risks/blockers: Greedy fast-path success does not apply to default sampling.
+
+### S7-04 — Profile GPU/expert IO and 3/4/5 GiB task trade-offs
+
+- Stage/priority/status: 7 / P1 / **pending**.
+- Files: `Core kernels/cache; Bench; integration workloads`.
+- Dependencies: S7-01.
+- Acceptance: Only measured bottlenecks justify changes; preserve SLRU absent new causal evidence.
+- Required tests: Controlled A/B; all memory profiles; >=5% decode and positive CI.
+- Risks/blockers: Preserve rejected packed/prefetch/cache-policy evidence.
+
+### S7-05 — Evaluate speculative decoding prerequisites only
+
+- Stage/priority/status: 7 / P2 / **pending**.
+- Files: `Research decisions; no implementation yet`.
+- Dependencies: S7-01.
+- Acceptance: Compatible artifact, exact verification/rollback, bounded memory and demonstrated win required before implementation.
+- Required tests: Artifact/protocol/state-budget feasibility review.
+- Risks/blockers: Speculative implementation unauthorized until these gates and explicit design review.
+
+
+## Stage 8 — Hermes qualification
+
+### S8-01 — Inspect current Hermes protocol/context and pin version
+
+- Stage/priority/status: 8 / P1 / **pending**.
+- Files: `docs/AGENT_INTEGRATION.md; integration fixtures`.
+- Dependencies: S4-02,S7-01.
+- Acceptance: Document actual installed requirements and auxiliary/session requests.
+- Required tests: Provider schema; occupied-context workload design.
+- Risks/blockers: Allocated 65,536 context does not prove required quality/performance.
+
+### S8-02 — Qualify actual long-history tools and memory
+
+- Stage/priority/status: 8 / P1 / **pending**.
+- Files: `Integration workloads; baseline report`.
+- Dependencies: S8-01.
+- Acceptance: Real backend behavior, single retained-prefix contention and full memory measured; limitations explicit.
+- Required tests: Long-history inference/tool loop; total memory and cancellation.
+- Risks/blockers: No compatibility claim without completion evidence.
+
+
+## Stage 9 — Final reliability and release readiness
+
+### S9-01 — Run complete correctness, lifecycle and memory qualification
+
+- Stage/priority/status: 9 / P0 / **pending**.
+- Files: `Tests/; Scripts/; integration workloads`.
+- Dependencies: S8-02,S7-02,S7-03,S7-04.
+- Acceptance: All applicable tests and supported-context gates pass; unresolved exclusions explicit.
+- Required tests: Full tests/release/parity/parser/HTTP/OpenCode; load/unload/cancel/fault/memory/long-context soak.
+- Risks/blockers: Rejected optional experiments need documented disposition, not forced implementation.
+
+### S9-02 — Review security, dependencies/licenses and verified usage docs
+
+- Stage/priority/status: 9 / P0 / **pending**.
+- Files: `SECURITY.md; THIRD_PARTY_NOTICES.md; README.md; docs/`.
+- Dependencies: S9-01.
+- Acceptance: Reproducible install/use; supported features only; no secrets/weights; documented limits.
+- Required tests: Security and license review; Markdown links; diff check.
+- Risks/blockers: Production-ready wording requires actual qualification evidence.

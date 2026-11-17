@@ -1,5 +1,13 @@
 # Qwen 3.6 35B-A3B Q4 Active Expert Streaming Engineering Log
 
+Current audit note (2026-11-17): this file preserves historical experiments.
+The current teacher-forced check is **131/132**, not a passing 132/132 gate;
+see [current evidence](PERFORMANCE_BASELINES.md). The historical description
+of the ten full-attention layers as “sliding-window” below is inaccurate for
+this Qwen runtime: `splitAttention.encodeFull` attends the occupied prefix.
+Do not use that wording to justify KV eviction. Current architecture and
+mission status are in [ARCHITECTURE](ARCHITECTURE.md) and [TODO](../TODO.md).
+
 This engineering log tracks the research, architecture, implementation milestones, and performance results of the **Active Expert Streaming Q4** runtime for `Qwen3.6-35B-A3B-4bit` on Apple Silicon Metal.
 
 ---

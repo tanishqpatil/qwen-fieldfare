@@ -1,0 +1,51 @@
+Building for debugging...
+[Computing dependencies]
+[25 / 132]
+[50 / 139] CNIODarwin
+[63 / 145] NIOConcurrencyHelpers
+[74 / 136] ContainersPreview
+[83 / 132] NIOConcurrencyHelpers
+[91 / 124] Jinja
+[91 / 123] NIOCore
+[100 / 134] yyjson
+[101 / 134] yyjson
+[103 / 134] NIOCore
+[103 / 134] CNIOAtomics
+[104 / 133] NIOCore
+[113 / 140] EventSource
+[116 / 143] EventSource
+[128 / 153] HuggingFace
+[132 / 155] Hub
+[140 / 163] Hub
+[143 / 166] Hub
+[153 / 177] Tokenizers
+[155 / 176] Tokenizers
+[158 / 179] QwenFieldfareCore
+[171 / 190] QwenFieldfareCore
+[176 / 192] QwenFieldfareCore
+[176 / 192] QwenFieldfarePack-product
+[186 / 207] QwenFieldfareMac-product
+[191 / 207] QwenFieldfareMac-product
+[193 / 207] QwenFieldfareCore
+[195 / 205] QwenFieldfareCoreTests-product
+[196 / 205] QwenFieldfareCore-product
+[198 / 205] QwenFieldfarePack-product
+[207 / 217] QwenFieldfareCoreTests-product
+[211 / 218] QwenFieldfareCoreTests-product
+[213 / 218] QwenFieldfareCoreTests-product
+[216 / 219] QwenFieldfareCoreTests-product
+[218 / 222] QwenFieldfareCoreTests-product
+[225 / 225] QwenFieldfarePack-product
+Build complete! (8.42 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenMappedSafetensorsTests started.
+◇ Test localCheckpointMappingIntegration() started.
+S1-01c mapped model-00001-of-00004.safetensors: header=88906 bytes, file=5288196018 bytes
+S1-01c mapped model-00002-of-00004.safetensors: header=67237 bytes, file=5368472749 bytes
+S1-01c mapped model-00003-of-00004.safetensors: header=67875 bytes, file=5368324139 bytes
+S1-01c mapped model-00004-of-00004.safetensors: header=50269 bytes, file=4377211365 bytes
+✔ Test localCheckpointMappingIntegration() passed after 0.067 seconds.
+✔ Suite QwenMappedSafetensorsTests passed after 0.067 seconds.
+✔ Test run with 1 test in 1 suite passed after 0.067 seconds.

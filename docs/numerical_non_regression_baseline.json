@@ -1,0 +1,37 @@
+{
+  "status": "unresolved; strict release parity still fails",
+  "base_commit": "72fb923a3e7a5d43e5baeb43d35bdcf1f96e4966",
+  "fixture": "docs/evidence/2026-11-17-parity/reference.json",
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "reference_count": 132,
+  "known_mismatches": [
+    [
+      61,
+      14988,
+      10000
+    ]
+  ],
+  "evidence_log": "docs/evidence/2026-11-17-isolation/restored-parity.log",
+  "numerical_sources_sha256": {
+    "Package.resolved": "b8411551d7a805e4a51f9c92fd2d857f20660d8f8a1c70d1d96b1ba2b61c978b",
+    "Package.swift": "af7fb88a7b9184216fca6a5a1c0d077cf8007e225240255d56e5b6fa0e7a783e",
+    "Sources/QwenFieldfareBench/main.swift": "12b8fe2d082c27032a40e7e48849dda1f8a72c07bf77bedb0fde2a480b85a60a",
+    "Sources/QwenFieldfareCore/Infrastructure/Metal/MetalContext.swift": "1615b8cb66d8ca8cc3db939a96501c14799abadedc5a2d71bc024ae873af6267",
+    "Sources/QwenFieldfareCore/Infrastructure/ModelIO/QwenResidentCoreLoader.swift": "c2cd13c90fa30450bab6d54c13112674cc1a1cd7bd72c5af23baf95c0f5d6a56",
+    "Sources/QwenFieldfareCore/Infrastructure/ModelIO/Sha256Verifier.swift": "91fb6e9b44b63d0323e29c068d93c6ed8e0068fbe323845475b81cf527853b76",
+    "Sources/QwenFieldfareCore/Kernels/Attention/Attention.swift": "5e3aa2c6ffc3fa49cc2ba043fedb4a4e334d034400482aeaaa927e11d24ca26a",
+    "Sources/QwenFieldfareCore/Kernels/LinearAttention/QwenDeltaNetKernel.swift": "3534990d96f87c6a0b058ffaf7d2bbeae53f9bd1d9da0c39d41aad142a480f72",
+    "Sources/QwenFieldfareCore/Metal/Attention/attention.metal": "02f8e0cb3e649d2de962c398106000ca7739492ecbc627a360342db9525073a4",
+    "Sources/QwenFieldfareCore/Metal/LinearAttention/deltanet.metal": "e831b6ea7b6df93c86b083aa29e8e6b9ec1a924ef1d237c0bccb906a96ac75ce",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenActiveStreamingMemoryConfiguration.swift": "adb215347c65cf7069f50ec30ae73bd0d19d10652e9c0d20b9f501519b6ac006",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenGenerationSupport.swift": "26bbb2a658ccd71f696bb67188ec5fbd1efc59a0fdb87355cfe1bb4819c1890b",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift": "23016a433e3f2f08ddf5d4943f562fd5be7174d3f55ea45189316fc78fb1af0b",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ChatRunner.swift": "4493cd37d0e2a9ce2b6870c7ab0a52de7729a5bbb8dde79480663e7377e00e7f",
+    "Sources/QwenFieldfareCore/Runtime/Inference/QwenForwardRunner.swift": "31b35db8d706b7d4322a1f5f0e9f16add47616f691911211f6b8ce55501e9a79",
+    "Sources/QwenFieldfareCore/Runtime/Telemetry/QwenRuntimeTelemetry.swift": "8865aa535a4954ecda9bf9c048c08c3dcdecd18c44ca48852189821d97a75928",
+    "Sources/QwenFieldfareCore/Storage/Q4BoundedExpertCache.swift": "a2258d9fc75b603250326b5b6f63b975bac1c1cec20a21a64a0d9777f124d188",
+    "Sources/QwenFieldfareCore/Storage/Q4ExpertPackedStore.swift": "93d7225ead447d93741a6bc136bf6407eed14a0187386cac75d8b6cb16da0b46",
+    "Sources/QwenFieldfareCore/Storage/QwenQ4ExpertStore.swift": "a36f0f438dec34c175435806f48d99a6aa36abbf0422414f1d3bcd98e7f8f8db",
+    "Sources/QwenFieldfareCore/Storage/QwenQ4ExpertStoreBuilder.swift": "6e628418c79d6e03634662562fc32e339b74126c1eaec0720c50f57cd5e2949a"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "input_token": 332,
+  "mlx_dtype": "mlx.core.bfloat16",
+  "swift_formula_dtype": "float32",
+  "element_count": 2048,
+  "different_elements": 262,
+  "max_abs": 6.103515625e-05,
+  "rms": 7.593921808544629e-06,
+  "relative_L2": 0.0010337240257009932,
+  "bf16_rounded_swift_matches_mlx": true
+}

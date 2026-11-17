@@ -1,0 +1,18 @@
+{
+  "task": "S1-01a",
+  "focused_tests": 18,
+  "package_tests": 73,
+  "core_tests": 56,
+  "presentation_tests": 17,
+  "checker_tests": 6,
+  "release": "passed; 32.34 seconds",
+  "existing_numerical_sources_except_manifest": "unchanged vs recorded baseline",
+  "manifest_diff": "only registers new validator and test source",
+  "new_validator_runtime_references": [],
+  "model_replay_performed": false,
+  "checkpoint_payload_hashes_performed": false,
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "benchmark_sha256": "7d29160cd8eef52cdba886ccfb658a10a73bfdfc59e660a13de9dd242df1e449",
+  "strict_parity": "known unresolved 131/132; not remeasured; original evidence/expected tokens unchanged",
+  "non_regression_guard": "inventory fast path not used: new unused Core file/manifest registration; checker/baseline unchanged; log-only check not numerical equivalence"
+}

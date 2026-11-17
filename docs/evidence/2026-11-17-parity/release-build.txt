@@ -1,0 +1,67 @@
+Building for production...
+[Computing dependencies]
+[Pre-planning 1 / 1013]
+[Planning deferred tasks]
+[28 / 107]
+[44 / 123]
+[54 / 152]
+[71 / 194]
+[91 / 194]
+[113 / 216]
+[137 / 269]
+[149 / 269]
+[157 / 269]
+[159 / 269] InternalCollectionsUtilities
+[170 / 279]
+[173 / 279]
+[179 / 276] ContainersPreview
+[186 / 282] DequeModule
+[192 / 282]
+[200 / 280] _NIOBase64
+[212 / 282]
+[215 / 282]
+[219 / 282]
+[221 / 282]
+[233 / 282]
+[236 / 278]
+[241 / 274] OrderedCollections
+[244 / 280]
+[249 / 278] Jinja
+[253 / 281]
+[254 / 281]
+[255 / 281] yyjson
+[256 / 281] QwenFieldfarePresentation
+[257 / 280] NIOCore
+[260 / 282] EventSource
+[262 / 283] EventSource
+[267 / 281] HuggingFace
+[270 / 283] HuggingFace
+[273 / 285] Hub
+[286 / 342]
+[288 / 342]
+[295 / 342]
+[300 / 342]
+[305 / 342]
+[310 / 342]
+[311 / 342]
+[324 / 342]
+[325 / 342]
+[329 / 342]
+[331 / 342] Hub
+[334 / 344] Tokenizers
+[336 / 345] Tokenizers
+[339 / 347] QwenFieldfareCore
+[345 / 353]
+[346 / 353] QwenFieldfareCore
+[355 / 362] QwenFieldfarePack-product
+[360 / 369]
+[362 / 369] QwenFieldfarePack-product
+[364 / 369] QwenFieldfarePack-product
+[364 / 369] QwenFieldfareBench-product
+[366 / 369] QwenFieldfareBench-product
+[366 / 369] QwenFieldfareMac-product
+[368 / 369] QwenFieldfareMac-product
+[369 / 369] QwenFieldfareMac-product
+[372 / 372] QwenFieldfareBench-product
+[375 / 375] QwenFieldfarePack-product
+Build complete! (41.68 secs)

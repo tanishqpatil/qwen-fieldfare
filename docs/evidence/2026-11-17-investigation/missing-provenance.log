@@ -1,0 +1,10 @@
+error: Invalid reference provenance
+
+Usage:
+  QwenFieldfareBench [--model <directory>] [--prompt <text>]
+    [--context <tokens>] [--max-new <tokens>] [--memory-gib 3|4|5]
+    [--cache-slots <count>]
+    [--warmup-runs <count>] [--runs <count>]
+    [--load-only] [--metrics-only] [--packed-experts] [--analyze-cache]
+    [--gpu-profile] [--subcomponent-profile] [--teacher-reference <json>]
+    [--sampler greedy|app-seeded] [--seed <integer>]

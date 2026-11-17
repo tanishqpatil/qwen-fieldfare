@@ -1,0 +1,186 @@
+Building for debugging...
+[Computing dependencies]
+[Pre-planning 1 / 1071]
+[Planning deferred tasks]
+[29 / 137]
+[49 / 142] CNIOFreeBSD
+[58 / 142] _NIOBase64
+[65 / 150] InternalCollectionsUtilities
+[73 / 154] ContainersPreview
+[80 / 154] NIOConcurrencyHelpers
+[85 / 144] NIOConcurrencyHelpers
+[89 / 139] CNIODarwin
+[98 / 131] QwenFieldfarePresentationTests-product
+[101 / 133] NIOCore
+[110 / 144] NIOCore
+[112 / 144] NIOCore
+[112 / 144] CNIOAtomics
+[113 / 143] NIOCore
+[117 / 145] EventSource
+[122 / 150] EventSource
+[126 / 152] HuggingFace
+[137 / 163] HuggingFace
+[141 / 165] Hub
+[149 / 173] Hub
+[152 / 176] Hub
+[164 / 186] Tokenizers
+[167 / 189] Tokenizers
+[168 / 188] QwenFieldfareCore
+[180 / 200] QwenFieldfareCore
+[185 / 204] QwenFieldfareCore
+[195 / 219] QwenFieldfareBench-product
+[197 / 219] QwenFieldfareMac-product
+[200 / 219] QwenFieldfareCore
+[205 / 218] QwenFieldfareCore-product
+[209 / 224] QwenFieldfareMac-product
+[217 / 234] QwenFieldfareCoreTests-product
+[219 / 234] QwenFieldfareCoreTests-product
+[230 / 236] QwenFieldfareCoreTests-product
+[232 / 236] QwenFieldfarePack-product
+[234 / 236] QwenFieldfareCoreTests-product
+[234 / 235] QwenFieldfareMac-product
+Build complete! (11.47 secs)
+Test Suite 'All tests' started at 2026-11-17 11:20:50.851.
+Test Suite 'All tests' passed at 2026-11-17 11:20:50.852.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'All tests' started at 2026-11-17 11:20:51.269.
+Test Suite 'All tests' passed at 2026-11-17 11:20:51.269.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite AboutPanelPresentationTests started.
+◇ Test packagedBundleVersionWins() started.
+✔ Test packagedBundleVersionWins() passed after 0.001 seconds.
+◇ Test cloneBuildFallsBackToTheCompiledVersion() started.
+✔ Test cloneBuildFallsBackToTheCompiledVersion() passed after 0.001 seconds.
+◇ Test blankBundleVersionFallsBack(value:) started.
+◇ Test case passing 1 argument value → "" to blankBundleVersionFallsBack(value:) started.
+◇ Test case passing 1 argument value → "   " to blankBundleVersionFallsBack(value:) started.
+◇ Test case passing 1 argument value → "
+" to blankBundleVersionFallsBack(value:) started.
+✔ Test blankBundleVersionFallsBack(value:) with 3 test cases passed after 0.001 seconds.
+◇ Test nonStringBundleVersionFallsBack() started.
+✔ Test nonStringBundleVersionFallsBack() passed after 0.001 seconds.
+◇ Test bundleVersionIsTrimmed() started.
+✔ Test bundleVersionIsTrimmed() passed after 0.001 seconds.
+◇ Test optionsCarryNameVersionAndIconWhenAvailable() started.
+✔ Test optionsCarryNameVersionAndIconWhenAvailable() passed after 0.031 seconds.
+◇ Test creditsLinkToTheLicenseAndTheRepository() started.
+✔ Test creditsLinkToTheLicenseAndTheRepository() passed after 0.001 seconds.
+✔ Suite AboutPanelPresentationTests passed after 0.031 seconds.
+◇ Suite FastMarkdownParserTests started.
+◇ Test partialStreamingHeadingAlwaysAdvances() started.
+✔ Test partialStreamingHeadingAlwaysAdvances() passed after 0.001 seconds.
+◇ Test malformedHeadingIsRenderedAsProse(_:) started.
+◇ Test case passing 1 argument source → "#NoSpace" to malformedHeadingIsRenderedAsProse(_:) started.
+◇ Test case passing 1 argument source → "##NoSpace" to malformedHeadingIsRenderedAsProse(_:) started.
+◇ Test case passing 1 argument source → "####" to malformedHeadingIsRenderedAsProse(_:) started.
+◇ Test case passing 1 argument source → "##### heading" to malformedHeadingIsRenderedAsProse(_:) started.
+✔ Test malformedHeadingIsRenderedAsProse(_:) with 4 test cases passed after 0.001 seconds.
+◇ Test validHeadingStillParses() started.
+✔ Test validHeadingStillParses() passed after 0.001 seconds.
+◇ Test incompleteCodeFenceConsumesTheStreamingTail() started.
+✔ Test incompleteCodeFenceConsumesTheStreamingTail() passed after 0.001 seconds.
+✔ Suite FastMarkdownParserTests passed after 0.001 seconds.
+◇ Suite ModelRevealPolicyTests started.
+◇ Test installedModelDirectoryIsSelected() started.
+✔ Test installedModelDirectoryIsSelected() passed after 0.001 seconds.
+◇ Test missingModelFallsBackToItsContainer() started.
+✔ Test missingModelFallsBackToItsContainer() passed after 0.001 seconds.
+◇ Test missingContainerIsUnavailable() started.
+✔ Test missingContainerIsUnavailable() passed after 0.001 seconds.
+◇ Test blankPathIsUnavailable(path:) started.
+◇ Test case passing 1 argument path → "" to blankPathIsUnavailable(path:) started.
+◇ Test case passing 1 argument path → "   " to blankPathIsUnavailable(path:) started.
+✔ Test blankPathIsUnavailable(path:) with 2 test cases passed after 0.001 seconds.
+◇ Test pathIsStandardizedBeforeReveal() started.
+✔ Test pathIsStandardizedBeforeReveal() passed after 0.001 seconds.
+◇ Test rootPathDoesNotLoopIntoItself() started.
+✔ Test rootPathDoesNotLoopIntoItself() passed after 0.001 seconds.
+✔ Suite ModelRevealPolicyTests passed after 0.001 seconds.
+✔ Test run with 17 tests in 3 suites passed after 0.032 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite Q4BoundedExpertCacheTests started.
+◇ Test layerPartitionsPreventCrossLayerEviction() started.
+✔ Test layerPartitionsPreventCrossLayerEviction() passed after 0.032 seconds.
+◇ Test parallelMissFetchWritesAssignedSlots() started.
+✔ Test parallelMissFetchWritesAssignedSlots() passed after 0.001 seconds.
+◇ Test parallelPlanningReportsOnlyMissPositionsBeforeFetch() started.
+✔ Test parallelPlanningReportsOnlyMissPositionsBeforeFetch() passed after 0.001 seconds.
+✔ Suite Q4BoundedExpertCacheTests passed after 0.033 seconds.
+◇ Suite QwenActiveStreamingMemoryConfigurationTests started.
+◇ Test eightKProfilesRetainExpectedSlotBudgets() started.
+✔ Test eightKProfilesRetainExpectedSlotBudgets() passed after 0.001 seconds.
+◇ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() started.
+✔ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() passed after 0.001 seconds.
+◇ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() started.
+✔ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() passed after 0.001 seconds.
+◇ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() started.
+✔ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() passed after 0.001 seconds.
+✔ Suite QwenActiveStreamingMemoryConfigurationTests passed after 0.001 seconds.
+◇ Suite QwenDeltaNetMathTests started.
+◇ Test matrixVectorMultiplyUsesRowMajorWeights() started.
+✔ Test matrixVectorMultiplyUsesRowMajorWeights() passed after 0.001 seconds.
+◇ Test rmsNormProducesFiniteScaledValues() started.
+✔ Test rmsNormProducesFiniteScaledValues() passed after 0.001 seconds.
+◇ Test zeroInputRemainsZero() started.
+✔ Test zeroInputRemainsZero() passed after 0.001 seconds.
+✔ Suite QwenDeltaNetMathTests passed after 0.001 seconds.
+◇ Suite QwenFP16AttentionBridgeTests started.
+◇ Test kvWriterUsesTokenMajorFP16Layout() started.
+✔ Test kvWriterUsesTokenMajorFP16Layout() passed after 0.006 seconds.
+◇ Test halfAttentionBridgeAppliesGateInFP32() started.
+✔ Test halfAttentionBridgeAppliesGateInFP32() passed after 0.001 seconds.
+✔ Suite QwenFP16AttentionBridgeTests passed after 0.008 seconds.
+◇ Suite QwenGenerationSupportTests started.
+◇ Test denseArenaEndsAtFinalSharedExpertTensor() started.
+✔ Test denseArenaEndsAtFinalSharedExpertTensor() passed after 0.001 seconds.
+◇ Test disabledThinkingTemplateMatchesCheckpointContract() started.
+✔ Test disabledThinkingTemplateMatchesCheckpointContract() passed after 0.001 seconds.
+◇ Test retainedAssistantThinkingIsNotReplayed() started.
+✔ Test retainedAssistantThinkingIsNotReplayed() passed after 0.001 seconds.
+◇ Test unfinishedThinkingIsNotStoredAsAssistantContent() started.
+✔ Test unfinishedThinkingIsNotStoredAsAssistantContent() passed after 0.001 seconds.
+◇ Test longGenerationDoesNotHaveAnImplicit512TokenLimit() started.
+✔ Test longGenerationDoesNotHaveAnImplicit512TokenLimit() passed after 0.001 seconds.
+◇ Test contextLimitHasASeparateFinishReason() started.
+✔ Test contextLimitHasASeparateFinishReason() passed after 0.001 seconds.
+◇ Test checkpointStopTokensEndWithoutBeingEmitted() started.
+✔ Test checkpointStopTokensEndWithoutBeingEmitted() passed after 0.001 seconds.
+◇ Test presencePenaltyChangesGreedySelection() started.
+✔ Test presencePenaltyChangesGreedySelection() passed after 0.001 seconds.
+◇ Test exactGreedySelectionPreservesArgmaxEdgeCases() started.
+✔ Test exactGreedySelectionPreservesArgmaxEdgeCases() passed after 0.001 seconds.
+◇ Test seededSamplingIsDeterministicAndBoundedByTopK() started.
+✔ Test seededSamplingIsDeterministicAndBoundedByTopK() passed after 0.001 seconds.
+✔ Suite QwenGenerationSupportTests passed after 0.001 seconds.
+◇ Suite QwenModelDirectoryTests started.
+◇ Test validatesCompleteDirectory() started.
+✔ Test validatesCompleteDirectory() passed after 0.001 seconds.
+◇ Test rejectsMissingReferencedShard() started.
+✔ Test rejectsMissingReferencedShard() passed after 0.001 seconds.
+◇ Test rejectsShardSymlinkOutsideModelDirectory() started.
+✔ Test rejectsShardSymlinkOutsideModelDirectory() passed after 0.001 seconds.
+◇ Test rejectsOversizedHeaderAndOutOfBoundsTensor() started.
+✔ Test rejectsOversizedHeaderAndOutOfBoundsTensor() passed after 0.001 seconds.
+✔ Suite QwenModelDirectoryTests passed after 0.003 seconds.
+◇ Suite QwenQ4ExpertStoreTests started.
+◇ Test layerHeaderRoundTripsWithoutNativeAlignmentAssumptions() started.
+✔ Test layerHeaderRoundTripsWithoutNativeAlignmentAssumptions() passed after 0.001 seconds.
+◇ Test layerHeaderRejectsCorruptMagicAndDigest() started.
+✔ Test layerHeaderRejectsCorruptMagicAndDigest() passed after 0.001 seconds.
+◇ Test manifestRequiresEveryCanonicalLayerExactlyOnce() started.
+✔ Test manifestRequiresEveryCanonicalLayerExactlyOnce() passed after 0.001 seconds.
+✔ Suite QwenQ4ExpertStoreTests passed after 0.001 seconds.
+◇ Suite QwenRuntimeTelemetryTests started.
+◇ Test nearestRankPercentilesAndMean() started.
+✔ Test nearestRankPercentilesAndMean() passed after 0.001 seconds.
+◇ Test boundedAccumulatorDropsOldestSamplesAndResets() started.
+✔ Test boundedAccumulatorDropsOldestSamplesAndResets() passed after 0.001 seconds.
+◇ Test cacheDerivedMetricsUseDemandRequestsOnly() started.
+✔ Test cacheDerivedMetricsUseDemandRequestsOnly() passed after 0.001 seconds.
+✔ Suite QwenRuntimeTelemetryTests passed after 0.001 seconds.
+✔ Test run with 32 tests in 8 suites passed after 0.049 seconds.

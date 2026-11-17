@@ -1,0 +1,3 @@
+checked 23 Markdown files; all local links and anchors resolve
+git diff --check and new-source/new-test whitespace checks passed.
+Candidate source hashes and preserved strict exit verified.

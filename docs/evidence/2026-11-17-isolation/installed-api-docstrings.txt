@@ -1,0 +1,74 @@
+RMSNORM
+rms_norm(x: array, weight: array | None, eps: float, *, stream: StreamOrDevice = None) -> array
+
+        Root Mean Square normalization (RMS norm).
+
+        The normalization is with respect to the last axis of the input ``x``.
+
+        Args:
+            x (array): Input array.
+            weight (array, optional): A multiplicative weight to scale the result by.
+              The ``weight`` should be one-dimensional with the same size
+              as the last axis of ``x``. If set to ``None`` then no scaling happens.
+            eps (float): A small additive constant for numerical stability.
+
+        Returns:
+            array: The output array.
+      
+QMM
+quantized_matmul(x: array, w: array, /, scales: array, biases: array | None = None, transpose: bool = True, group_size: int | None = None, bits: int | None = None, mode: str = 'affine', *, stream: StreamOrDevice = None) -> array
+
+        Perform the matrix multiplication with the quantized matrix ``w``. The
+        quantization uses one floating point scale and bias per ``group_size`` of
+        elements. Each element in ``w`` takes ``bits`` bits and is packed in an
+        unsigned 32 bit integer.
+
+        Args:
+          x (array): Input array
+          w (array): Quantized matrix packed in unsigned integers
+          scales (array): The scales to use per ``group_size`` elements of ``w``
+          biases (array, optional): The biases to use per ``group_size``
+            elements of ``w``. Default: ``None``.
+          transpose (bool, optional): Defines whether to multiply with the
+            transposed ``w`` or not, namely whether we are performing
+            ``x @ w.T`` or ``x @ w``. Default: ``True``.
+          group_size (int, optional): The size of the group in ``w`` that shares a
+            scale and bias. See supported values and defaults in the
+            :ref:`table of quantization modes <quantize-modes>`. Default: ``None``.
+          bits (int, optional): The number of bits occupied by each element of
+            ``w`` in the quantized array. See supported values and defaults in the
+            :ref:`table of quantization modes <quantize-modes>`. Default: ``None``.
+          mode (str, optional): The quantization mode. Default: ``"affine"``.
+
+        Returns:
+          array: The result of the multiplication of ``x`` with ``w``.
+      
+ROPE
+rope(a: array, dims: int, *, traditional: bool, base: float | None, scale: float, offset: int | array, freqs: array | None = None, stream: StreamOrDevice = None) -> array
+
+        Apply rotary positional encoding to the input.
+
+        The input is expected to be at least 3D with shape ``(B, *, T, D)`` where:
+          * ``B`` is the batch size.
+          * ``T`` is the sequence length.
+          * ``D`` is the feature dimension.
+
+        Args:
+            a (array): The input array.
+            dims (int): The feature dimensions to be rotated. If the input feature
+              is larger than dims then the rest is left unchanged.
+            traditional (bool): If set to ``True`` choose the traditional
+              implementation which rotates consecutive dimensions.
+            base (float, optional): The base used to compute angular frequency for
+              each dimension in the positional encodings. Exactly one of ``base`` and
+              ``freqs`` must be ``None``.
+            scale (float): The scale used to scale the positions.
+            offset (int or array): The position offset to start at. If an
+              :obj:`array` is given it can be a scalar or vector of ``B``
+              offsets for each example in the batch.
+            freqs (array, optional): Optional frequencies to use with RoPE.
+              If set, the ``base`` parameter must be ``None``. Default: ``None``.
+
+        Returns:
+            array: The output array.
+      

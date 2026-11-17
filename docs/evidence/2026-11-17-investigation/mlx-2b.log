@@ -1,0 +1,23 @@
+MLX_DTYPES={"embedding": "mlx.core.bfloat16", "input_rmsnorm": "mlx.core.bfloat16", "qkv_projection": "mlx.core.bfloat16", "z_projection": "mlx.core.bfloat16"}
+TOKEN_65_TOP_LOGPROBS=[[5255, -0.125], [279, -3.0], [10379, -3.375], [18971, -4.5], [1141, -4.625]]
+TOKEN_65_CANDIDATES={"12": -21.5, "16": -18.5}
+=== MLX GREEDY REFERENCE ===
+Prompt tokens: 21
+Generated tokens: 132
+Finish reason: length
+Generation: 4467.33 ms (29.55 tok/s)
+Peak memory: 19.645 GB
+TOKEN_IDS_JSON=[2, 10215, 303, 7693, 271, 550, 33655, 271, 63, 17945, 63, 369, 264, 919, 314, 7693, 579, 10778, 23010, 421, 5004, 279, 1510, 2155, 63, 3622, 13, 1049, 10220, 1328, 18509, 13139, 321, 5954, 2972, 9071, 1353, 8339, 11, 5479, 880, 11, 321, 18686, 880, 332, 318, 16694, 496, 7, 16, 8, 854, 22373, 553, 1049, 1503, 2972, 1856, 332, 14988, 866, 1906, 314, 5255, 13, 271, 13962, 5141, 81088, 25, 198, 12, 2972, 76852, 799, 1510, 2827, 63, 1328, 332, 321, 5081, 1510, 2827, 63, 2663, 13, 198, 12, 2972, 2536, 4368, 53269, 332, 318, 784, 1510, 1073, 3127, 17945, 63, 364, 4368, 6925, 553, 198, 12, 2972, 20810, 524, 10000, 34736, 1906, 332, 318, 784, 1510, 21390, 17945, 63, 413, 1906, 12482, 553, 198, 12, 19592, 383, 2972, 8038, 286]
+--- OUTPUT ---
+# HashMap in Java
+
+## Overview
+
+`HashMap` is a part of Java's Collection Framework that implements the `Map` interface. It stores key-value pairs and allows **fast lookups, insertions, and deletions** (average O(1) time complexity). It does **not** guarantee any order of elements.
+
+### Key Characteristics:
+- **Allows one `null` key** and multiple `null` values.
+- **Not thread-safe** (use `ConcurrentHashMap` for thread safety).
+- **Does not maintain insertion order** (use `LinkedHashMap` if order matters).
+- Based on **hashing
+--- END OUTPUT ---

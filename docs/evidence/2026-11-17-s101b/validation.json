@@ -1,0 +1,37 @@
+{
+  "task": "S1-01b",
+  "reader_migrated": "QwenResidentWeights CPU BF16/F32 selected-tensor/row reader",
+  "other_readers_migrated": false,
+  "focused_model_free_tests_passed": 10,
+  "focused_opt_in_skipped": 1,
+  "full_package_tests_passed": 83,
+  "full_package_opt_in_skipped": 1,
+  "full_package_total_reported": 84,
+  "explicit_checkpoint_integration_passed": 1,
+  "release": "passed; 32.32 seconds",
+  "real_model_parity_runs": 1,
+  "checkpoint_integrity_verifications": 1,
+  "strict_parity_exit": 1,
+  "strict_parity": "131/132; reference token 61 (one-based) expected 14988 actual 10000; unchanged known mismatch set",
+  "known_issue_checker": "passed separately; not a strict-parity pass or numerical-equivalence proof",
+  "header_cap_bytes": 100000000,
+  "observed_header_bytes": [
+    88906,
+    67237,
+    67875,
+    50269
+  ],
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "candidate_bench_sha256": "ab7529e64e5a987aff9ef124aed117ed289697a7f949a3f52c6d96c326200169",
+  "base_commit": "72fb923a3e7a5d43e5baeb43d35bdcf1f96e4966",
+  "unchanged_source_paths_verified": [
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ChatRunner.swift",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenGenerationSupport.swift",
+    "Sources/QwenFieldfareCore/Storage/QwenQ4ExpertStoreBuilder.swift",
+    "Sources/QwenFieldfareCore/Storage/QwenQ4ExpertStore.swift",
+    "Package.resolved",
+    "Scripts/test_teacher_reference.py"
+  ],
+  "security": "descriptor pinning and metadata checks; no immutability/ancestor-race guarantee; explicit retry on invalidation"
+}
