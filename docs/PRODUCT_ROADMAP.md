@@ -1,5 +1,14 @@
 # Product roadmap
 
+## S2-01 current outcome
+
+Structured function tools, native prompt/parser and OpenAI JSON/SSE tool-result
+continuations are implemented and verified against the real checkpoint. Next
+priority is real OpenCode client qualification, not an in-repository coding agent.
+No tools run in the inference server; Stage1 remainder stays deferred. Strict
+131/132 remains unresolved. See integration guide and S2-01 evidence.
+
+
 ## Active priority override — S2-00 (2026-11-17)
 
 Explicit user decision supersedes earlier Stage1-only/order/stop directives.
@@ -15,7 +24,7 @@ No push/merge. Current implementation/validation status is in DEVELOPMENT_LOG.
 [TODO](../TODO.md) now owns mission stages and acceptance; the priorities below
 remain product requirements, not a competing execution queue. AGENTS explicitly
 authorizes the Qwen-only single-owner local server after reliability/tool gates.
-S2-00 now implements minimal local text HTTP; tools/client qualification remain
+S2-00 now implements minimal local text HTTP; the function-tool subset is now implemented; broad client qualification remains
 unimplemented. The known **131/132** teacher-forced result is a release blocker; revised
 policy permits independent Stage 1 reliability work. See
 [architecture](ARCHITECTURE.md) and [development log](DEVELOPMENT_LOG.md).

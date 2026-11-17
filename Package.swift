@@ -13,12 +13,13 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", exact: "2.101.3"),
+        .package(url: "https://github.com/huggingface/swift-jinja.git", exact: "2.3.6"),
         .package(url: "https://github.com/huggingface/swift-transformers", from: "1.3.0"),
     ],
     targets: [
-        .target(name: "QwenFieldfareServerSupport", dependencies: ["QwenFieldfareCore", .product(name: "NIOCore", package: "swift-nio"), .product(name: "NIOHTTP1", package: "swift-nio"), .product(name: "NIOPosix", package: "swift-nio")]),
+        .target(name: "QwenFieldfareServerSupport", dependencies: ["QwenFieldfareCore", .product(name: "Jinja", package: "swift-jinja"), .product(name: "NIOCore", package: "swift-nio"), .product(name: "NIOHTTP1", package: "swift-nio"), .product(name: "NIOPosix", package: "swift-nio")]),
         .executableTarget(name: "QwenFieldfareServer", dependencies: ["QwenFieldfareServerSupport", "QwenFieldfareCore"]),
-        .testTarget(name: "QwenFieldfareServerTests", dependencies: ["QwenFieldfareServerSupport"]),
+        .testTarget(name: "QwenFieldfareServerTests", dependencies: ["QwenFieldfareServerSupport"], resources: [.copy("Fixtures")]),
         .target(
             name: "QwenFieldfareCore",
             dependencies: [.product(name: "Tokenizers", package: "swift-transformers")],

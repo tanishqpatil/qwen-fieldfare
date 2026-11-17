@@ -1,0 +1,101 @@
+Building for debugging...
+[Computing dependencies]
+[32 / 170]
+[61 / 175] CNIOFreeBSD
+[75 / 173] InternalCollectionsUtilities
+[90 / 172] NIOConcurrencyHelpers
+[95 / 162] OrderedCollections
+[101 / 168] NIOConcurrencyHelpers
+[108 / 159] NIOCore
+[116 / 170] NIOCore
+[117 / 170] yyjson
+[120 / 170] NIOCore
+[120 / 170] yyjson
+[120 / 170] NIOCore
+[120 / 170] CNIOAtomics
+[121 / 169] NIOCore
+[132 / 190] NIOEmbedded
+[139 / 197] NIOPosix
+[152 / 212] NIOEmbedded
+[156 / 219] HuggingFace
+[157 / 219] NIOPosix
+[162 / 219] HuggingFace
+[163 / 219] HuggingFace
+[166 / 219] HuggingFace
+[167 / 219] NIOPosix
+[172 / 220] NIOEmbedded
+[177 / 225] NIO
+[179 / 237]
+[185 / 237] NIOHTTP1
+[190 / 237] NIOHTTP1
+[196 / 235] NIOHTTP1
+[197 / 243] NIOHTTP1
+[205 / 243] Hub
+[208 / 246] Hub
+[208 / 247] Tokenizers
+[217 / 257] Tokenizers
+[220 / 256] Tokenizers
+[223 / 259] Tokenizers
+[225 / 270]
+[235 / 270] QwenFieldfareCore
+[236 / 270] QwenFieldfareCore
+[237 / 270] NIOPosix
+[237 / 267] QwenFieldfareCore
+[243 / 274] QwenFieldfareCore
+[243 / 274] QwenFieldfarePack-product
+[253 / 303]
+[261 / 303] QwenFieldfareServerSupport
+[262 / 303] QwenFieldfareServerSupport
+[268 / 301] QwenFieldfareServerSupport
+[273 / 300] QwenFieldfareMac-product
+[282 / 301] QwenFieldfareBench-product
+[289 / 302] QwenFieldfareServerSupport
+[290 / 302] QwenFieldfareServer-product
+[293 / 315] QwenFieldfareServer-product
+[297 / 323] QwenFieldfareMac-product
+[302 / 323] QwenFieldfareServerTests-product
+[307 / 323] QwenFieldfareServerTests-product
+[312 / 324] QwenFieldfareServerTests-product
+[316 / 326] QwenFieldfareCoreTests-product
+[320 / 328] QwenFieldfarePack-product
+[325 / 332] QwenFieldfareCoreTests-product
+[327 / 333] QwenFieldfareCoreTests-product
+[331 / 334] QwenFieldfareCoreTests-product
+[333 / 337] QwenFieldfareCoreTests-product
+Build complete! (10.17 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ToolContractTests started.
+◇ Test goldenCheckpointPromptsMatchPythonAndOfficial() started.
+✔ Test goldenCheckpointPromptsMatchPythonAndOfficial() passed after 0.015 seconds.
+◇ Test everyPossibleDelimiterFragmentBoundary() started.
+✔ Test everyPossibleDelimiterFragmentBoundary() passed after 0.010 seconds.
+◇ Test multipleCallsAndStableCallIDs() started.
+✔ Test multipleCallsAndStableCallIDs() passed after 0.001 seconds.
+◇ Test nestedValuesUnicodeAndMultilineStrings() started.
+✔ Test nestedValuesUnicodeAndMultilineStrings() passed after 0.001 seconds.
+◇ Test malformedUnknownIncompleteAndLimitedTurnsNeverCommit() started.
+✔ Test malformedUnknownIncompleteAndLimitedTurnsNeverCommit() passed after 0.002 seconds.
+◇ Test literalProseAndPartialDelimiterIsWithheld() started.
+✔ Test literalProseAndPartialDelimiterIsWithheld() passed after 0.001 seconds.
+◇ Test strictJSONSchemasAndToolChoice() started.
+✔ Test strictJSONSchemasAndToolChoice() passed after 0.001 seconds.
+◇ Test numericEnumSemanticsAndMissingDefinitions() started.
+✔ Test numericEnumSemanticsAndMissingDefinitions() passed after 0.001 seconds.
+◇ Test resultAssociationAndInjectionValidation() started.
+✔ Test resultAssociationAndInjectionValidation() passed after 0.001 seconds.
+✔ Suite ToolContractTests passed after 0.031 seconds.
+◇ Suite ToolHTTPTests started.
+◇ Test jsonAndSSEToolObjectsRoundTrip() started.
+✔ Test jsonAndSSEToolObjectsRoundTrip() passed after 0.023 seconds.
+◇ Test invalidOutputAndDisabledCallsFailWithoutExecutableDeltas() started.
+✔ Test invalidOutputAndDisabledCallsFailWithoutExecutableDeltas() passed after 0.003 seconds.
+◇ Test cancellationDoesNotCommitPartialCallAndContextBounds() started.
+✔ Test cancellationDoesNotCommitPartialCallAndContextBounds() passed after 0.001 seconds.
+◇ Test disconnectWhileNativeDelimiterPendingCancelsGeneration() started.
+✔ Test disconnectWhileNativeDelimiterPendingCancelsGeneration() passed after 0.120 seconds.
+◇ Test toolsDisabledCanStillReturnNormalText() started.
+✔ Test toolsDisabledCanStillReturnNormalText() passed after 0.003 seconds.
+✔ Suite ToolHTTPTests passed after 0.151 seconds.
+✔ Test run with 14 tests in 2 suites passed after 0.183 seconds.

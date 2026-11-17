@@ -70,7 +70,7 @@ private final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
             guard !rejected, let head else {return};busy=true;deadline?.cancel()
             let channel=context.channel
             if head.method == .GET && head.uri == "/health" {
-                respond(channel,status:200,data:wire(["status":"ready","model":server.model,"tools":false]));return
+                respond(channel,status:200,data:wire(["status":"ready","model":server.model,"tools":true]));return
             }
             if head.method == .GET && head.uri == "/v1/models" {
                 respond(channel,status:200,data:wire(["object":"list","data":[["id":server.model,"object":"model","created":0,"owned_by":"local"]]]));return
@@ -81,12 +81,12 @@ private final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
                 let request=try ChatRequest(data:body,model:server.model)
                 body=Data()
                 try server.admission.submit(cancellation) { [server,cancellation] in
-                    let output=Output(channel:channel,model:server.model,stream:request.stream,includeUsage:request.includeUsage,cancellation:cancellation)
+                    let output=Output(channel:channel,model:server.model,stream:request.stream,includeUsage:request.includeUsage,tools:request.toolConversation.map { $0.allowsCalls ? $0.tools : [] },cancellation:cancellation)
                     do {
                         let result=try await server.backend.generate(request) { output.delta($0) }
                         if !cancellation.isCancelled {try output.complete(result,usage:request.includeUsage)}
                     } catch {
-                        if !cancellation.isCancelled {output.fail(error as? APIError ?? APIError(500,"Generation failed"))}
+                        if !cancellation.isCancelled {output.fail(error as? APIError ?? APIError(error is NativeToolError ? 502 : 500,error is NativeToolError ? "Invalid native tool output: \(error)" : "Generation failed"))}
                     }
                     _ = try? await channel.close().get()
                 }
@@ -106,7 +106,12 @@ private final class Output: @unchecked Sendable {
     let channel:Channel;let model:String;let stream:Bool;let includeUsage:Bool;let cancellation:Cancellation
     let id="chatcmpl-"+UUID().uuidString;let created=Int(Date().timeIntervalSince1970)
     var started=false
-    init(channel:Channel,model:String,stream:Bool,includeUsage:Bool,cancellation:Cancellation) {self.channel=channel;self.model=model;self.stream=stream;self.includeUsage=includeUsage;self.cancellation=cancellation}
+    var parser: NativeToolParser?
+    var parserFailed=false
+    init(channel:Channel,model:String,stream:Bool,includeUsage:Bool,tools:[FunctionTool]?,cancellation:Cancellation) {
+        self.channel=channel;self.model=model;self.stream=stream;self.includeUsage=includeUsage;self.cancellation=cancellation
+        if let tools {parser=NativeToolParser(tools:tools,emit:{ [weak self] text in self?.proseDelta(text) })}
+    }
     func write(_ part:HTTPServerResponsePart) throws {
         guard !cancellation.isCancelled,channel.isActive,channel.isWritable else {cancellation.cancel();throw CancellationError()}
         let channel=self.channel
@@ -127,18 +132,41 @@ private final class Output: @unchecked Sendable {
     }
     func send(_ json:[String:Any]) throws {try write(.body(.byteBuffer(channel.allocator.buffer(bytes:sse(json)))))}
     func delta(_ text:String) {
+        guard !parserFailed else {return}
+        do {
+            if let parser {try parser.append(text)} else {proseDelta(text)}
+        } catch {
+            parserFailed=true
+            fail(APIError(502,"Invalid native tool output: \(error)"))
+            channel.close(promise:nil)
+        }
+    }
+    func proseDelta(_ text:String) {
         guard stream else {return}
         do {try begin();try send(chunk(delta:["content":text]))} catch {cancellation.cancel()}
     }
     func complete(_ value:Completion,usage:Bool) throws {
+        guard !parserFailed else {throw NativeToolError.closed}
+        let parsed = try parser?.finish(endedNormally:value.reason == "stop")
+        let calls = parsed?.calls ?? []
+        let content = parsed?.content ?? value.text
+        let reason = calls.isEmpty ? value.reason : "tool_calls"
         try begin()
         let counts:[String:Any]=["prompt_tokens":value.prompt,"completion_tokens":value.count,"total_tokens":value.prompt+value.count]
         if stream {
-            try send(chunk(delta:[:],reason:value.reason))
+            for (index,call) in calls.enumerated() {
+                try send(chunk(delta:["tool_calls":[["index":index,"id":call.id,"type":"function","function":["name":call.name,"arguments":""]]]]))
+                for fragment in argumentFragments(call.arguments.encoded) {
+                    try send(chunk(delta:["tool_calls":[["index":index,"function":["arguments":fragment]]]]))
+                }
+            }
+            try send(chunk(delta:[:],reason:reason))
             if usage {try send(["id":id,"object":"chat.completion.chunk","created":created,"model":model,"choices":[],"usage":counts])}
             try write(.body(.byteBuffer(channel.allocator.buffer(string:"data: [DONE]\n\n"))))
         } else {
-            let data=wire(["id":id,"object":"chat.completion","created":created,"model":model,"choices":[["index":0,"message":["role":"assistant","content":value.text],"finish_reason":value.reason]],"usage":counts])
+            var message:[String:Any] = ["role":"assistant","content":content]
+            if !calls.isEmpty {message["tool_calls"]=calls.map(\.wire);if content.isEmpty {message["content"]=NSNull()}}
+            let data=wire(["id":id,"object":"chat.completion","created":created,"model":model,"choices":[["index":0,"message":message,"finish_reason":reason]],"usage":counts])
             try write(.body(.byteBuffer(channel.allocator.buffer(bytes:data))))
         }
         try write(.end(nil))

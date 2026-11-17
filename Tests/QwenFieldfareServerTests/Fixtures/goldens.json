@@ -1,0 +1,210 @@
+[
+  {
+    "name": "tool-prefix",
+    "request": {
+      "model": "qwen",
+      "messages": [
+        {
+          "role": "system",
+          "content": " Be brief. "
+        },
+        {
+          "role": "user",
+          "content": "Look up fieldfare."
+        }
+      ],
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_project_status",
+            "description": "Look up the current project status.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "project": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "empty": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "project"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "expected": "<|im_start|>system\n# Tools\n\nYou have access to the following functions:\n\n<tools>\n{\"type\": \"function\", \"function\": {\"name\": \"get_project_status\", \"description\": \"Look up the current project status.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"project\": {\"type\": \"string\"}, \"details\": {\"type\": \"object\", \"properties\": {\"ok\": {\"type\": \"boolean\"}}, \"required\": [\"ok\"], \"additionalProperties\": false}, \"values\": {\"type\": \"array\", \"items\": {\"type\": \"number\"}}, \"empty\": {\"type\": \"null\"}}, \"required\": [\"project\"], \"additionalProperties\": false}}}\n</tools>\n\nIf you choose to call a function ONLY reply in the following format with NO suffix:\n\n<tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>\nvalue_1\n</parameter>\n<parameter=example_parameter_2>\nThis is the value for the second parameter\nthat can span\nmultiple lines\n</parameter>\n</function>\n</tool_call>\n\n<IMPORTANT>\nReminder:\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\n- Required parameters MUST be specified\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\n</IMPORTANT>\n\nBe brief.<|im_end|>\n<|im_start|>user\nLook up fieldfare.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+  },
+  {
+    "name": "continuation",
+    "request": {
+      "model": "qwen",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Look up fieldfare."
+        },
+        {
+          "role": "assistant",
+          "content": "Checking.",
+          "tool_calls": [
+            {
+              "id": "call_first",
+              "type": "function",
+              "function": {
+                "name": "get_project_status",
+                "arguments": "{\"project\": \"fieldfare \\\"雪\\\"\\nnext line\", \"details\": {\"ok\": true}, \"values\": [1, 2.5], \"empty\": null}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_first",
+          "content": "{\"project\":\"fieldfare\",\"status\":\"building-local-agent\"}"
+        }
+      ],
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_project_status",
+            "description": "Look up the current project status.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "project": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "empty": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "project"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "expected": "<|im_start|>system\n# Tools\n\nYou have access to the following functions:\n\n<tools>\n{\"type\": \"function\", \"function\": {\"name\": \"get_project_status\", \"description\": \"Look up the current project status.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"project\": {\"type\": \"string\"}, \"details\": {\"type\": \"object\", \"properties\": {\"ok\": {\"type\": \"boolean\"}}, \"required\": [\"ok\"], \"additionalProperties\": false}, \"values\": {\"type\": \"array\", \"items\": {\"type\": \"number\"}}, \"empty\": {\"type\": \"null\"}}, \"required\": [\"project\"], \"additionalProperties\": false}}}\n</tools>\n\nIf you choose to call a function ONLY reply in the following format with NO suffix:\n\n<tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>\nvalue_1\n</parameter>\n<parameter=example_parameter_2>\nThis is the value for the second parameter\nthat can span\nmultiple lines\n</parameter>\n</function>\n</tool_call>\n\n<IMPORTANT>\nReminder:\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\n- Required parameters MUST be specified\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\n</IMPORTANT><|im_end|>\n<|im_start|>user\nLook up fieldfare.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\nChecking.\n\n<tool_call>\n<function=get_project_status>\n<parameter=project>\nfieldfare \"雪\"\nnext line\n</parameter>\n<parameter=details>\n{\"ok\": true}\n</parameter>\n<parameter=values>\n[1, 2.5]\n</parameter>\n<parameter=empty>\nnull\n</parameter>\n</function>\n</tool_call><|im_end|>\n<|im_start|>user\n<tool_response>\n{\"project\":\"fieldfare\",\"status\":\"building-local-agent\"}\n</tool_response><|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+  },
+  {
+    "name": "disabled",
+    "request": {
+      "model": "qwen",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Look up fieldfare."
+        },
+        {
+          "role": "assistant",
+          "content": "Checking.",
+          "tool_calls": [
+            {
+              "id": "call_first",
+              "type": "function",
+              "function": {
+                "name": "get_project_status",
+                "arguments": "{\"project\": \"fieldfare \\\"雪\\\"\\nnext line\", \"details\": {\"ok\": true}, \"values\": [1, 2.5], \"empty\": null}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_first",
+          "content": "{\"project\":\"fieldfare\",\"status\":\"building-local-agent\"}"
+        }
+      ],
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_project_status",
+            "description": "Look up the current project status.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "project": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "empty": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "project"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "tool_choice": "none"
+    },
+    "expected": "<|im_start|>user\nLook up fieldfare.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\nChecking.\n\n<tool_call>\n<function=get_project_status>\n<parameter=project>\nfieldfare \"雪\"\nnext line\n</parameter>\n<parameter=details>\n{\"ok\": true}\n</parameter>\n<parameter=values>\n[1, 2.5]\n</parameter>\n<parameter=empty>\nnull\n</parameter>\n</function>\n</tool_call><|im_end|>\n<|im_start|>user\n<tool_response>\n{\"project\":\"fieldfare\",\"status\":\"building-local-agent\"}\n</tool_response><|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+  }
+]

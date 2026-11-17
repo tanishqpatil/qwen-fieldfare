@@ -1,5 +1,13 @@
 # QwenFieldfare
 
+## Current milestone — S2-01 structured tool contract
+
+Explicit user authorization supersedes the prior S2-00 stop. Preserve its server
+checkpoint and all reader/numerical evidence. Implement native Qwen tools, JSON
+and SSE translation, matched tool results and one real continuation. Never execute
+tools in the server. Stop after S2-01; no prefix reuse/readers/Hermes/push/merge.
+
+
 ## Active priority override — S2-00 (2026-11-17)
 
 Explicit user decision supersedes earlier Stage1-only/order/stop directives.

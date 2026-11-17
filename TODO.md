@@ -1,5 +1,13 @@
 # Authoritative implementation backlog
 
+## Current milestone — S2-01 structured tool contract
+
+Explicit user authorization supersedes the prior S2-00 stop. Preserve its server
+checkpoint and all reader/numerical evidence. Implement native Qwen tools, JSON
+and SSE translation, matched tool results and one real continuation. Never execute
+tools in the server. Stop after S2-01; no prefix reuse/readers/Hermes/push/merge.
+
+
 ## Active priority override — S2-00 (2026-11-17)
 
 Explicit user decision supersedes earlier Stage1-only/order/stop directives.
@@ -193,18 +201,24 @@ remain open until their full acceptance criteria pass.
 
 ## Stage 2 — Qwen chat and structured tools
 
-### S2-01 — Derive typed role/tool history from actual checkpoint template
+### S2-01 — Native Qwen structured tool contract
 
-- Stage/priority/status: 2 / P0 / **pending**.
-- Files: `QwenGenerationSupport.swift; QwenTokenizer; new bounded protocol types`.
-- Dependencies: S2-00 functional server milestone plus explicit next-task review; earlier S1-06 ordering is superseded.
-- Acceptance: System/developer/user/assistant/tool history, IDs and multiple calls round-trip; thinking and special tokens exact.
-- Required tests: Checkpoint template/token fixtures; multi-turn tools; ID matching.
-- Risks/blockers: Official/current template must be inspected before design.
+- Stage/priority/status:2/P0/**completed** under the current explicit mission.
+- Files: ServerSupport ToolJSON/Tools/ToolPrompt/NativeTools,Protocol/Service/HTTP,
+  parser/golden/HTTP tests and real client tool-cycle script.
+- Acceptance: typed function schemas/history/ID associations, exact checkpoint
+  Jinja prompt, bounded incremental parser and validated JSON/SSE tool deltas;
+  genuine JSON and SSE call/result/final-answer cycles both pass. Server executes
+  no tools. No-tool behavior/auth/loopback/queue/cancellation preserved.
+- Validation:127 package passes +3 skips;14 focused tool tests;release/checkers,
+  exact Python Jinja golden comparison; real outputs preserved in S2-01 evidence.
+- Limitations:developer/named-required/strict/ref-schema modes unsupported; delayed
+  tool deltas; delimiter-bearing tool data rejected; no full OpenCode qualification.
+- Stop here; next task is OpenCode provider/configuration and real client cycle.
 
-### S2-02 — Implement bounded incremental tool-call parser and tool choice
+### S2-02 — Historical decomposition: parser delivered within S2-01
 
-- Stage/priority/status: 2 / P0 / **pending**.
+- Stage/priority/status: 2 / P0 / **completed within S2-01**.
 - Files: `Core generation protocol/parser; Tests/`.
 - Dependencies: S2-01.
 - Acceptance: Complete validated calls only; defined malformed/unsupported handling and finish reasons; no tool execution.
@@ -213,7 +227,7 @@ remain open until their full acceptance criteria pass.
 
 ### S2-03 — Qualify tool conversations and streaming contract
 
-- Stage/priority/status: 2 / P0 / **pending**.
+- Stage/priority/status: 2 / P0 / **completed within S2-01**.
 - Files: `Core protocol; Tests/; docs/AGENT_INTEGRATION.md`.
 - Dependencies: S2-02.
 - Acceptance: Full serialize/generate/parse/result-history exchange representable and tested.

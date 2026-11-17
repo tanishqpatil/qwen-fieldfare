@@ -1,0 +1,969 @@
+[
+  {
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use the provided function to retrieve actual project status. Do not invent a status. After receiving the result, answer briefly using its exact status value."
+        },
+        {
+          "role": "user",
+          "content": "Get the actual current status of project fieldfare using get_project_status, then tell me its status."
+        }
+      ],
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_project_status",
+            "description": "Retrieve the actual current status of a named project. Use this for project status queries.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "project": {
+                  "type": "string",
+                  "description": "Exact project name."
+                }
+              },
+              "required": [
+                "project"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "tool_choice": "auto",
+      "temperature": 0,
+      "max_tokens": 512,
+      "stream": false
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "content": null,
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "function": {
+                  "arguments": "{\"project\":\"fieldfare\"}",
+                  "name": "get_project_status"
+                },
+                "id": "call_19403A178A014B4686220BBA0D319CA4",
+                "type": "function"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1794914406,
+      "id": "chatcmpl-45AF51B5-C986-46DC-AAED-D610AA63C394",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 27,
+        "prompt_tokens": 344,
+        "total_tokens": 371
+      }
+    }
+  },
+  {
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use the provided function to retrieve actual project status. Do not invent a status. After receiving the result, answer briefly using its exact status value."
+        },
+        {
+          "role": "user",
+          "content": "Get the actual current status of project fieldfare using get_project_status, then tell me its status."
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"project\":\"fieldfare\"}",
+                "name": "get_project_status"
+              },
+              "id": "call_19403A178A014B4686220BBA0D319CA4",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_19403A178A014B4686220BBA0D319CA4",
+          "content": "{\"project\": \"fieldfare\", \"status\": \"building-local-agent\"}"
+        }
+      ],
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_project_status",
+            "description": "Retrieve the actual current status of a named project. Use this for project status queries.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "project": {
+                  "type": "string",
+                  "description": "Exact project name."
+                }
+              },
+              "required": [
+                "project"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "tool_choice": "auto",
+      "temperature": 0,
+      "max_tokens": 512,
+      "stream": false
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "The current status of project fieldfare is \"building-local-agent\".",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794914423,
+      "id": "chatcmpl-D7F6D747-F5AF-4DC0-915A-7FF6F41EB68D",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 13,
+        "prompt_tokens": 404,
+        "total_tokens": 417
+      }
+    }
+  },
+  {
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use the provided function to retrieve actual project status. Do not invent a status. After receiving the result, answer briefly using its exact status value."
+        },
+        {
+          "role": "user",
+          "content": "Get the actual current status of project fieldfare using get_project_status, then tell me its status."
+        }
+      ],
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_project_status",
+            "description": "Retrieve the actual current status of a named project. Use this for project status queries.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "project": {
+                  "type": "string",
+                  "description": "Exact project name."
+                }
+              },
+              "required": [
+                "project"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "tool_choice": "auto",
+      "temperature": 0,
+      "max_tokens": 512,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "chunks": [
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "",
+              "role": "assistant"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914440,
+        "id": "chatcmpl-3ADE3DDD-FD37-4992-96F2-1835B9DD7697",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "",
+                    "name": "get_project_status"
+                  },
+                  "id": "call_1A428F72084047E08C1D81066DD74622",
+                  "index": 0,
+                  "type": "function"
+                }
+              ]
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914440,
+        "id": "chatcmpl-3ADE3DDD-FD37-4992-96F2-1835B9DD7697",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"project\":\"fieldfare\"}"
+                  },
+                  "index": 0
+                }
+              ]
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914440,
+        "id": "chatcmpl-3ADE3DDD-FD37-4992-96F2-1835B9DD7697",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {},
+            "finish_reason": "tool_calls",
+            "index": 0
+          }
+        ],
+        "created": 1794914440,
+        "id": "chatcmpl-3ADE3DDD-FD37-4992-96F2-1835B9DD7697",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [],
+        "created": 1794914440,
+        "id": "chatcmpl-3ADE3DDD-FD37-4992-96F2-1835B9DD7697",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": {
+          "completion_tokens": 27,
+          "prompt_tokens": 344,
+          "total_tokens": 371
+        }
+      }
+    ],
+    "assembled_message": {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_1A428F72084047E08C1D81066DD74622",
+          "type": "function",
+          "function": {
+            "name": "get_project_status",
+            "arguments": "{\"project\":\"fieldfare\"}"
+          }
+        }
+      ]
+    },
+    "finish_reason": "tool_calls",
+    "done": true
+  },
+  {
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use the provided function to retrieve actual project status. Do not invent a status. After receiving the result, answer briefly using its exact status value."
+        },
+        {
+          "role": "user",
+          "content": "Get the actual current status of project fieldfare using get_project_status, then tell me its status."
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call_1A428F72084047E08C1D81066DD74622",
+              "type": "function",
+              "function": {
+                "name": "get_project_status",
+                "arguments": "{\"project\":\"fieldfare\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_1A428F72084047E08C1D81066DD74622",
+          "content": "{\"project\": \"fieldfare\", \"status\": \"building-local-agent\"}"
+        }
+      ],
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_project_status",
+            "description": "Retrieve the actual current status of a named project. Use this for project status queries.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "project": {
+                  "type": "string",
+                  "description": "Exact project name."
+                }
+              },
+              "required": [
+                "project"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "tool_choice": "auto",
+      "temperature": 0,
+      "max_tokens": 512,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "chunks": [
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "",
+              "role": "assistant"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "The"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " current"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " status"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " of"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " project"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " field"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "fare"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " is"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " \""
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "building"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "-local"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "-agent"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "\"."
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {},
+            "finish_reason": "stop",
+            "index": 0
+          }
+        ],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [],
+        "created": 1794914455,
+        "id": "chatcmpl-0FBC8C6B-B75B-4C1B-B75E-99C466EC910F",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": {
+          "completion_tokens": 13,
+          "prompt_tokens": 404,
+          "total_tokens": 417
+        }
+      }
+    ],
+    "assembled_message": {
+      "role": "assistant",
+      "content": "The current status of project fieldfare is \"building-local-agent\"."
+    },
+    "finish_reason": "stop",
+    "done": true
+  },
+  {
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Say hello."
+        }
+      ],
+      "temperature": 0,
+      "max_tokens": 32,
+      "stream": false
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "Hello! How can I help you today?",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794914472,
+      "id": "chatcmpl-604A6E73-B1B8-4263-8CC3-6A53938F6C6F",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 9,
+        "prompt_tokens": 15,
+        "total_tokens": 24
+      }
+    }
+  },
+  {
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Say hello."
+        }
+      ],
+      "temperature": 0,
+      "max_tokens": 32,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "chunks": [
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "",
+              "role": "assistant"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "Hello"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "!"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " How"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " can"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " I"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " help"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " you"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": " today"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {
+              "content": "?"
+            },
+            "finish_reason": null,
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [
+          {
+            "delta": {},
+            "finish_reason": "stop",
+            "index": 0
+          }
+        ],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": null
+      },
+      {
+        "choices": [],
+        "created": 1794914473,
+        "id": "chatcmpl-459704B8-D962-4AFD-AEBA-1401CA110563",
+        "model": "qwen-fieldfare",
+        "object": "chat.completion.chunk",
+        "usage": {
+          "completion_tokens": 9,
+          "prompt_tokens": 15,
+          "total_tokens": 24
+        }
+      }
+    ],
+    "assembled_message": {
+      "role": "assistant",
+      "content": "Hello! How can I help you today?"
+    },
+    "finish_reason": "stop",
+    "done": true
+  },
+  {
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Say hello."
+        }
+      ],
+      "temperature": 0,
+      "max_tokens": 32,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "get_project_status",
+            "description": "Retrieve the actual current status of a named project. Use this for project status queries.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "project": {
+                  "type": "string",
+                  "description": "Exact project name."
+                }
+              },
+              "required": [
+                "project"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ],
+      "tool_choice": "none"
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "Hello! How can I help you today?",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794914474,
+      "id": "chatcmpl-FB84C1E0-A99A-46F8-8EDE-034D6FD6034F",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 9,
+        "prompt_tokens": 15,
+        "total_tokens": 24
+      }
+    }
+  },
+  {
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Say hello."
+        }
+      ],
+      "temperature": 0,
+      "max_tokens": 32
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "Hello! How can I help you today?",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794914475,
+      "id": "chatcmpl-BEFF3399-970D-4425-80D4-3347F78C3A7F",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 9,
+        "prompt_tokens": 15,
+        "total_tokens": 24
+      }
+    }
+  }
+]

@@ -11,22 +11,34 @@ public func wire(_ value: [String:Any]) -> Data { (try? JSONSerialization.data(w
 public func sse(_ value: [String:Any]) -> Data { Data("data: ".utf8) + wire(value) + Data("\n\n".utf8) }
 public struct ChatRequest: Sendable {
     public let messages: [QwenChatTemplate.Message]
+    public let toolConversation: ToolConversation?
     public let stream: Bool
     public let includeUsage: Bool
     public let configuration: QwenGenerationConfiguration
     public init(data: Data, model: String) throws {
         guard data.count <= 1_048_576,
               let json = try? JSONSerialization.jsonObject(with: data) as? [String:Any] else { throw APIError(400,"Invalid JSON body") }
-        let allowed: Set<String> = ["model","messages","stream","stream_options","temperature","top_p","top_k","max_tokens","max_completion_tokens","presence_penalty","repetition_penalty","seed","n"]
+        guard let text = String(data:data,encoding:.utf8) else { throw APIError(400,"Invalid UTF-8") }
+        let root = try ToolJSON.parse(text)
+        let advanced = root["tools"] != nil || root["tool_choice"] != nil || root["messages"]?.array?.contains(where: { $0["role"]?.string == "tool" || $0["tool_calls"] != nil }) == true
+        toolConversation = advanced ? try ToolConversation(root) : nil
+        let allowed: Set<String> = ["model","messages","stream","stream_options","temperature","top_p","top_k","max_tokens","max_completion_tokens","presence_penalty","repetition_penalty","seed","n","tools","tool_choice"]
         guard Set(json.keys).isSubset(of: allowed) else { throw APIError(400,"Unsupported request parameter") }
         guard json["model"] as? String == model else { throw APIError(404,"Unknown model") }
         guard let list = json["messages"] as? [[String:Any]], !list.isEmpty, list.count <= 128 else { throw APIError(400,"Expected 1–128 messages") }
-        messages = try list.map { item in
-            guard Set(item.keys) == ["role","content"], let role = item["role"] as? String,
-                  let r = QwenChatTemplate.Message.Role(rawValue: role), let content = item["content"] as? String else { throw APIError(400,"Only system/user/assistant text messages are supported") }
-            return .init(role:r,content:content)
+        if let conversation = toolConversation {
+            messages = conversation.messages.compactMap { message in
+                guard let role = QwenChatTemplate.Message.Role(rawValue:message.role) else { return nil }
+                return .init(role:role,content:message.content)
+            }
+        } else {
+            messages = try list.map { item in
+                guard Set(item.keys) == ["role","content"], let role = item["role"] as? String,
+                      let r = QwenChatTemplate.Message.Role(rawValue:role), let content = item["content"] as? String else { throw APIError(400,"Only checkpoint-supported text messages are accepted") }
+                return .init(role:r,content:content)
+            }
+            guard messages.last?.role == .user else { throw APIError(400,"Final message must be user") }
         }
-        guard messages.last?.role == .user else { throw APIError(400,"Final message must be user") }
         func number(_ key: String, _ fallback: Double) throws -> Double {
             guard let v = json[key] else { return fallback }
             guard let n = v as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID(), n.doubleValue.isFinite else { throw APIError(400,"Invalid numeric parameter") }

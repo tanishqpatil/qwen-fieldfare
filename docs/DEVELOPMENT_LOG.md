@@ -881,3 +881,90 @@ Evidence docs/evidence/2026-11-17-s200 retains initial/final logs,aggregate metr
 pre/postflight and source manifest; no conversations/keys/model artifacts. Work
 uncommitted on cf0d144, no push/merge. Stop after S2-00. Next S2-01 validates
 structured Qwen tool contracts, then OpenCode; none implemented in this milestone.
+
+## S2-01 started
+
+Read required recovery/plans/non-regression docs, server/backend/tests, Core
+template/generation and local exact Jinja/tokenizer metadata. Created scoped
+S2-00 checkpoint c001a78 (no push). Saved local/official template and diff. The
+official generation annotations change training boundaries only; rendered tool
+text and roles match. Earlier commentary suggesting a semantic reasoning-prefix
+difference was corrected after byte comparison. Developer unsupported.
+Design recorded before editing: exact Jinja tool formatter, bounded ordered JSON
+schema/history validation, safe incremental prose + commit-on-EOS tool parser,
+OpenAI JSON/SSE translation; retain no-tool Core path and unchanged math.
+
+## S2-01 completed — structured native tools and real continuation
+
+Scoped source changes: ToolJSON ordered/duplicate-key/depth-bounded decoder,
+ToolSchema/FunctionTool/FunctionCall/ToolConversation typed contracts, ToolPrompt
+Jinja renderer with HF-compatible ordered Unicode JSON filter, NativeToolParser
+incremental safe prose/partial-prefix state and buffered structured validation.
+Protocol accepts tools/auto/none/assistant calls/matched tool results; Service
+renders exact checkpoint template for advanced turns and checks encoded context
+reservation. HTTP translates committed native calls into JSON/SSE indexed deltas
+with stable IDs, argument fragments, tool_calls finish and model-token usage.
+No server-side tool execution. Schemas/modes/native delimiter restrictions are
+explicit in integration guide; developer unsupported by template and rejected.
+Existing no-tool path and auth/loopback/admission/model ownership preserved.
+
+Local template SHAe84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259;
+official1b8361565cc35d47551d342214cff341c0f1a9685ce529c7ce31de0ed3616248.
+Saved exact template metadata and diff, not weights. Official only adds training
+annotations/equivalent prefix relocation. Python Jinja3.1.6 goldens for prefix,
+all-value-type history continuation and tool_choice:none match both templates
+and Swift rendering exactly. Regeneration script uses existing local Python
+Jinja environment, never imports/loads MLX. Existing Swift Jinja2.3.6 made direct,
+no dependency pin upgrade. Tokenizer im_end248046 remains EOS; tool-call tags are
+not EOS. Thinking disabled with exact existing assistant prefix.
+
+Final tests:14 focused tool tests pass (every byte delimiter split,Unicode/multiline,
+multiple calls,nested JSON,unknown/missing/duplicate inputs,malformed/truncated/
+limited output,buffer/depth overflow,IDs/results/injection,JSON/SSE reassembly,
+context,disabled tools and cancellation while partial delimiter pending). Existing
+six server auth/loopback/admission/disconnect/init/shutdown tests unchanged/pass.
+Full suite127 pass +3 skips (130 reported:20 Server,17 Presentation,93 Core incl
+skips);release34.36s. Checker unit6 pass and historical mismatch-set check pass;
+original strict harness and expected fixture untouched. No new numerical replay
+or expensive checkpoint hash. All20 tracked Core files byte-identical to c001a78.
+Post-real-test review fixed enum numeric comparison outside Decimal exponent
+range and rejects JSON numbers that Jinja would silently round; focused/full/release rerun. Real function schema has no enum, so its
+exercised code path is unchanged and no expensive replay was repeated.
+
+Real command: QWENFIELDFARE_SERVER_CHECKPOINT=/Users/tanishq/models/Qwen3.6-35B-A3B-4bit python3 Scripts/test_server_tools.py .
+One server127.0.0.1:18090,context8192,budget5GiB,greedy512 output allowance. Genuine
+JSON and SSE calls both select get_project_status with {project:fieldfare} and
+normal EOS; HTTP finish tool_calls. CLIENT supplies fixed public mock result
+{project:fieldfare,status:building-local-agent}; both continuations return:
+The current status of project fieldfare is "building-local-agent".
+This is real model output, not a mock backend. Parser/transport fixtures are
+separate. Each call344 prompt/27 output tokens;continuation404/13,finish stop.
+JSON call16.195933s/continuation16.985182s;SSE15.313213/17.073172s. Existing text
+JSON/SSE,none,context overflow from schema text,disconnect recovery also pass.
+Server loads once0.775344s;ready1.310015s;SIGTERM shutdown0.088268s,exit0. No
+actual filesystem/network tool invoked; only client-supplied constant test data.
+
+Preflight Mac17,2 M5/32GB/10GPU,macOS27.2.1(26B131),Swift6.4.2,132GiB disk,
+pressure1/free85% and no other model owner. Postpressure1/free79%. Metal
+5291294720 bytes (4.928GiB),loaded footprint1167267816,drained5166064424 bytes;
+retained runner releases with process exit. Snapshots not peaks or optimization.
+No long-agent/full-context or actual OpenCode/Hermes qualification. Tool SSE waits
+for whole-turn/EOS validation; declared unknown parameters/native delimiter data
+restrictions and unsupported strict/ref/required/developer modes remain explicit.
+Result text remains semantically untrusted, clients must authorize/sandbox tools.
+
+Evidence docs/evidence/2026-11-17-s201 includes public synthetic HTTP exchanges
+and metrics,source/template identities,logs and pre/postflight. Server emits no
+conversation/tool arguments/secret logs; only the explicit public test client
+persists its test exchanges. Original131/132 evidence is untouched and remains
+a release blocker, not a fresh parity pass. Updated required recovery/docs;
+remaining Stage1 deferred. Stop after S2-01; next OpenCode client qualification.
+No prefix reuse,filesystem agent,Hermes,new reader migration,remote push or merge.
+
+S2-01 final review: numeric JSON validation now rejects values whose Jinja Double
+rendering would change their decimal meaning (rather than silently round), and
+caps numeric literal length128 bytes. Added precision/enum tests, reran focused14,
+full127+3skip and release34.36s. Real test's string schema and integer settings
+are unaffected, so its genuine cycle evidence is reused without expensive replay.
+All source changes remain outside Core. Scoped final commit includes only this
+contract, tests, documentation and synthetic evidence; no remote push/merge.

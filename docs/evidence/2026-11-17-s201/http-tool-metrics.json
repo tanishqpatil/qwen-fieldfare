@@ -1,0 +1,55 @@
+{
+  "cycles": [
+    {
+      "stream": false,
+      "call_id": "call_19403A178A014B4686220BBA0D319CA4",
+      "arguments": {
+        "project": "fieldfare"
+      },
+      "finish_reason": "tool_calls",
+      "call_usage": {
+        "completion_tokens": 27,
+        "prompt_tokens": 344,
+        "total_tokens": 371
+      },
+      "call_seconds": 16.195932791000814,
+      "continuation_usage": {
+        "completion_tokens": 13,
+        "prompt_tokens": 404,
+        "total_tokens": 417
+      },
+      "continuation_seconds": 16.98518183300257,
+      "final_finish_reason": "stop",
+      "result_used": true
+    },
+    {
+      "stream": true,
+      "call_id": "call_1A428F72084047E08C1D81066DD74622",
+      "arguments": {
+        "project": "fieldfare"
+      },
+      "finish_reason": "tool_calls",
+      "call_usage": {
+        "completion_tokens": 27,
+        "prompt_tokens": 344,
+        "total_tokens": 371
+      },
+      "call_seconds": 15.313213125002221,
+      "continuation_usage": {
+        "completion_tokens": 13,
+        "prompt_tokens": 404,
+        "total_tokens": 417
+      },
+      "continuation_seconds": 17.073171916999854,
+      "final_finish_reason": "stop",
+      "result_used": true
+    }
+  ],
+  "startup_seconds": 1.310014582999429,
+  "plain_json_and_sse": true,
+  "tool_choice_none": true,
+  "schema_context_overflow_rejected": true,
+  "disconnect_recovery": true,
+  "shutdown_seconds": 0.08826833300190629,
+  "exit": 0
+}

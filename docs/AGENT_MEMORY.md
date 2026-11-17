@@ -1,5 +1,61 @@
 # Agent recovery memory
 
+## Current milestone — S2-01 structured tool contract
+
+Explicit user authorization supersedes the prior S2-00 stop. Preserve its server
+checkpoint and all reader/numerical evidence. Implement native Qwen tools, JSON
+and SSE translation, matched tool results and one real continuation. Never execute
+tools in the server. Stop after S2-01; no prefix reuse/readers/Hermes/push/merge.
+
+
+## S2-01 completed — recovery handoff
+
+S2-00 was checkpointed locally as c001a78 before tool work. S2-01 now implements
+native function-tool schemas/history/ID validation, exact checkpoint Jinja tool
+formatting, bounded parser and OpenAI JSON/SSE calls/results. Stop after this
+milestone. Next is OpenCode provider/client tool-cycle qualification, not a new
+filesystem agent, prefix reuse or reader migration. Remaining Stage1 stays deferred.
+
+New files ServerSupport ToolJSON/Tools/ToolPrompt/NativeTools plus parser/golden/
+HTTP tests and test_server_tools.py. Existing resolved Jinja2.3.6 made direct;
+no dependency pin upgraded. Core math/precision/state/cache and original fixture
+unchanged. Ordinary no-tool requests retain old Core formatter. Jinja local vs
+current official templates differ only in training-generation annotations; three
+Python3/Jinja3.1.6 goldens prove identical text rendering for tested tool cases.
+Local template SHA e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259.
+Developer unsupported by actual template; reject. Advanced history must finish
+with user or complete matching tool results. Client results must be in call order
+because native template has no call IDs; duplicate/unmatched/pending IDs reject.
+
+Safe prose streams incrementally; partial delimiter held. Structured tail <=256KiB,
+<=8 calls commits only on real EOS and whole-turn/schema validity. Output limit/
+cancellation/malformed blocks never publish calls; errors502 (SSE error then close
+if already begun), no successful DONE. Stable IDs, zero-based indices, Unicode-safe
+argument fragments after commit. Delayed tool deltas intentional. Server executes
+nothing. Only auto/none,strict:false supported. Schema subset and structural-
+delimiter-bearing tool text rejection are documented in AGENT_INTEGRATION; results
+remain semantically untrusted. No generic schema/vision/developer/required-choice.
+
+Final focused14 pass; full127 pass +3 opt-ins skipped (130 reported:20 Server,
+17 Presentation,93 Core including skips),release34.36s,checker6 pass. Real single
+server test passed both JSON and SSE tool cycles: project fieldfare,model requests
+get_project_status; CLIENT supplies status building-local-agent; model final answer
+uses it. Calls344 prompt/27 completion tokens, continuations404/13,stop. JSON times
+16.196s call/16.985s continuation;SSE15.313/17.073s. Actual public test exchanges
+and aggregate metrics preserved in evidence/2026-11-17-s201; server logs no content.
+No-tool JSON/SSE,none,schema context overflow,disconnect recovery,shutdown pass.
+Load0.775s,ready1.310s,shutdown0.088s. Metal5291294720 bytes,loaded footprint1167267816,
+drained5166064424 (runner retained through drain),normal pressure1/free79% after.
+Snapshots not peaks/RAM cap or optimization. Host M5 Mac17,2/32GB/10GPU,macOS27.2.1,
+Swift6.4.2. No extra model runs or full weight hashing. Enum-number comparison/precision-preservation guards tightened after the enum-free real test, then focused/full/release revalidated;
+real test's exercised branch and Core unchanged, no unnecessary replay.
+
+Original strict131/132/token61 release blocker remains unresolved; log checker
+reuses S1-01c evidence only, no fresh parity/equivalence claim. Existing fatal
+Metal paths, immutable-checkpoint/race limitations and broad client/long-context
+qualification remain. Local final commit authorized; no remote push/merge.
+Historical sections below are superseded by this current completed handoff.
+
 ## Active priority override — S2-00 (2026-11-17)
 
 Explicit user decision supersedes earlier Stage1-only/order/stop directives.

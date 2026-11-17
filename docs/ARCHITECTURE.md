@@ -398,3 +398,50 @@ flock excludes other servers only, not the existing app/Bench/MLX processes.
 Real HTTP JSON/SSE/reuse/recovery/shutdown passed; see S2-00 evidence. These tests
 do not qualify tool calling, full-context/long-agent quality, exhaustive socket
 soak or legacy fatal Core allocation/encoder paths. Strict131/132 remains open.
+
+## S2-01 contract design before implementation
+
+Use the already-resolved Swift Jinja engine to render the checkpoint's exact text
+template for tool/history requests; keep the existing Core formatter for ordinary
+no-tool requests. Local and official templates differ only in training-generation
+annotations/equivalent prefix placement, not rendered text semantics. Developer
+role is unsupported by checkpoint and rejected. Thinking disabled; assistant
+generation prefix and im_end stop remain unchanged. Native tool syntax is not JSON.
+
+Typed ordered JSON/schema/function/call/history values, strict JSON duplicate/depth
+validation; explicit supported schema subset. Validate ID associations and pending
+call/result sequence before serialization; reject reserved structural delimiters
+in untrusted tool-result text rather than permit role-boundary injection. Tool
+results remain untrusted instructions even without delimiter injection.
+
+Incremental parser releases only safe prose, holds delimiter prefixes across
+fragments and buffers structured tail <=256KiB. Calls commit only after full
+turn validation, known names/schema and genuine EOS; output-limit/cancel never
+creates an executable call. Complete calls receive stable IDs and indexed SSE
+argument fragments after commit. Conservative delayed tool deltas intentionally
+trade tool latency for no partial executable/native-syntax leakage. All existing
+HTTP ownership/auth/queue/cancellation bounds remain. No tools are executed here.
+
+## S2-01 implemented outcome
+
+ServerSupport now owns ordered strict JSON/schema/function/history types, exact
+checkpoint Jinja rendering and NativeToolParser. Core numerical sources are
+unchanged. Existing Swift Jinja2.3.6 is explicitly depended on, with no pin upgrade;
+HF-compatible ordered Unicode JSON filter is scoped per render. No-tool Core
+formatter remains the original path. Bounded file descriptor reading of the
+trusted local template caps metadata at256KiB and preserves root containment.
+
+HTTP Output owns per-request parser state. Safe prose streams incrementally;
+structured tail is buffered until complete EOS validation, then translated to
+stable IDs and indexed argument fragments. Backend emits raw decoded tokens only
+internally. Usage counts all native model-output tokens, not just JSON argument
+characters. Client tools are never invoked. Result IDs/order/schema are validated
+before the native no-ID representation groups tool responses into a user frame.
+Context reservation runs after schemas/history serialization and tokenization.
+
+Real JSON and SSE cycles produce get_project_status(project=fieldfare), accept
+client mock status=building-local-agent and produce final model text using it.
+Unit tests and Python/official-template goldens separate parsing/transport from
+model choice. See integration guide for strict schema/delimiter restrictions,
+trust boundaries and delayed tool-SSE tradeoff. Stage1 remainder stays deferred;
+no prefix state reuse or filesystem agent has been introduced.

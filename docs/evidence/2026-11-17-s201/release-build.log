@@ -1,0 +1,45 @@
+Building for production...
+[Computing dependencies]
+[Provisioning 5 / 57]
+[32 / 127]
+[55 / 133] InternalCollectionsUtilities
+[75 / 145] CNIODarwin
+[79 / 145] Crypto
+[87 / 140] NIOConcurrencyHelpers
+[99 / 149] ContainersPreview
+[105 / 152] CNIOAtomics
+[109 / 153] Atomics
+[111 / 149] OrderedCollections
+[119 / 154] NIOCore
+[121 / 155] yyjson
+[122 / 155] NIOCore
+[136 / 176]
+[137 / 176] EventSource
+[140 / 178] HuggingFace
+[142 / 179] Jinja
+[144 / 175] NIOEmbedded
+[146 / 171] NIOPosix
+[151 / 174] NIO
+[160 / 180] Hub
+[163 / 182] Hub
+[167 / 185] Tokenizers
+[168 / 185] NIOHTTP1
+[170 / 181] Tokenizers
+[173 / 183] QwenFieldfareCore
+[176 / 185] QwenFieldfareCore
+[184 / 197] QwenFieldfareBench-product
+[195 / 207] QwenFieldfarePack-product
+[197 / 207] QwenFieldfarePack-product
+[197 / 207] QwenFieldfareBench-product
+[199 / 207] QwenFieldfareBench-product
+[199 / 207] QwenFieldfareMac-product
+[202 / 208] QwenFieldfareMac-product
+[202 / 208] QwenFieldfareServerSupport
+[207 / 210] QwenFieldfareServer-product
+[208 / 211] QwenFieldfareServer-product
+[210 / 211] QwenFieldfareServer-product
+[211 / 211] QwenFieldfareServer-product
+[214 / 214] QwenFieldfareMac-product
+[217 / 217] QwenFieldfareBench-product
+[220 / 220] QwenFieldfarePack-product
+Build complete! (34.36 secs)

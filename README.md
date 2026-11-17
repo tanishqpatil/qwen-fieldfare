@@ -2,7 +2,8 @@
 
 Local HTTP server S2-00 is implemented. Build/run commands and the exact
 supported request subset are in [the server guide](docs/AGENT_INTEGRATION.md).
-Tool calling and OpenCode/Hermes qualification remain unimplemented; strict
+The bounded Qwen function-tool contract is implemented; OpenCode/Hermes client
+qualification remains unimplemented. Strict
 MLX131/132 remains an unresolved release blocker.
   <img src="Sources/QwenFieldfareApp/Mac/Resources/qwenfieldfare-app-icon.png"
        width="128" alt="QwenFieldfare app icon">
@@ -413,8 +414,8 @@ full numerical-equivalence claim is made. [Evidence](docs/evidence/2026-11-17-s1
 The [authoritative backlog](TODO.md), [architecture](docs/ARCHITECTURE.md) and
 [recovery memory](docs/AGENT_MEMORY.md) track the local coding-agent mission.
 The Qwen-specific local server is authorized for later gated implementation;
-S2-00 implements the minimal local text HTTP server; structured tools and
-OpenCode/Hermes qualification remain unimplemented.
+S2-00 implements the minimal local text HTTP server; structured function tools are implemented in S2-01. OpenCode/Hermes client
+qualification remains unimplemented.
 
 ## Repository map
 

@@ -1,0 +1,28 @@
+--- checkpoint
++++ official-current
+@@ -97,10 +97,12 @@
+             {%- endif %}
+         {%- endif %}
+         {%- set reasoning_content = reasoning_content|trim %}
++        {{- '<|im_start|>' + message.role + '\n' }}
++        {%- generation %}
+         {%- if (preserve_thinking is defined and preserve_thinking is true) or (loop.index0 > ns.last_query_index) %}
+-            {{- '<|im_start|>' + message.role + '\n<think>\n' + reasoning_content + '\n</think>\n\n' + content }}
++            {{- '<think>\n' + reasoning_content + '\n</think>\n\n' + content }}
+         {%- else %}
+-            {{- '<|im_start|>' + message.role + '\n' + content }}
++            {{- content }}
+         {%- endif %}
+         {%- if message.tool_calls and message.tool_calls is iterable and message.tool_calls is not mapping %}
+             {%- for tool_call in message.tool_calls %}
+@@ -127,7 +129,9 @@
+                 {{- '</function>\n</tool_call>' }}
+             {%- endfor %}
+         {%- endif %}
+-        {{- '<|im_end|>\n' }}
++        {{- '<|im_end|>' }}
++        {%- endgeneration %}
++        {{- '\n' }}
+     {%- elif message.role == "tool" %}
+         {%- if loop.previtem and loop.previtem.role != "tool" %}
+             {{- '<|im_start|>user' }}

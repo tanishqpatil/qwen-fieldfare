@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import QwenFieldfareCore
 
 public final class Cancellation: @unchecked Sendable {
@@ -53,18 +54,32 @@ public final class CoreBackend: GenerationBackend, @unchecked Sendable {
     private let runner: QwenQ4ActiveExpertStreamingRunner
     private let tokenizer: QwenTokenizer
     private let context: Int
+    private let toolPrompt: ToolPrompt
     public init(path: String, context: Int, budget: QwenActiveStreamingMemoryBudget) async throws {
         let path = try QwenModelDirectory.validate(path:path)
         let plan = try QwenActiveStreamingMemoryConfiguration.make(budget:budget,contextLength:context)
         self.context = context
+        let root = URL(fileURLWithPath:path).resolvingSymlinksInPath()
+        let url = root.appendingPathComponent("chat_template.jinja").resolvingSymlinksInPath()
+        guard url.deletingLastPathComponent().path == root.path else {throw APIError(400,"Template resolves outside model root")}
+        let fd = open(url.path,O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC)
+        guard fd >= 0 else {throw APIError(400,"Cannot open checkpoint template")}
+        let handle = FileHandle(fileDescriptor:fd,closeOnDealloc:true)
+        defer {try? handle.close()}
+        var metadata = stat()
+        guard fstat(fd,&metadata) == 0, metadata.st_mode & S_IFMT == S_IFREG,
+              metadata.st_size <= 262_144, let bytes = try handle.read(upToCount:262_145), bytes.count <= 262_144,
+              let source = String(data:bytes,encoding:.utf8) else {throw APIError(400,"Invalid checkpoint template")}
+        toolPrompt = try ToolPrompt(source:source)
         tokenizer = try await QwenTokenizer.load(from:URL(fileURLWithPath:path))
         runner = try QwenQ4ActiveExpertStreamingRunner(modelPath:path,maxSeqLen:context,expertCacheCapacity:plan.expertCacheSlots,usePersistentExpertCache:true,keepDenseWeightsResident:true)
     }
     public func generate(_ request: ChatRequest, emit: @escaping @Sendable (String) -> Void) async throws -> Completion {
         let last = request.messages.last!
-        let prompt = QwenChatTemplate.format(messages:Array(request.messages.dropLast()),appendingUser:last.content,enableThinking:false)
+        let prompt = try request.toolConversation.map {try toolPrompt.render($0)}
+            ?? QwenChatTemplate.format(messages:Array(request.messages.dropLast()),appendingUser:last.content,enableThinking:false)
         let tokens = tokenizer.encode(prompt)
-        guard tokens.count < context, request.configuration.maxNewTokens <= context-tokens.count else { throw APIError(400,"Prompt plus output reservation exceeds context") }
+        try validateContextReservation(promptTokens:tokens.count,outputTokens:request.configuration.maxNewTokens,context:context)
         let decoder = Decoder(tokenizer:tokenizer,emit:emit)
         let result = try await runner.generateResult(promptTokens:tokens,configuration:request.configuration,onToken:{ decoder.append($0) })
         try decoder.flush()
@@ -79,4 +94,9 @@ public final class CoreBackend: GenerationBackend, @unchecked Sendable {
         func append(_ token:Int32) {tokens.append(token); let text=tokenizer.decode(tokens); if !text.hasSuffix("\u{FFFD}"),text.utf8.starts(with:sent.utf8) {let delta=String(decoding:text.utf8.dropFirst(sent.utf8.count),as:UTF8.self);sent=text;if !delta.isEmpty {emit(delta)}} }
         func flush() throws {let text=tokenizer.decode(tokens); guard text.utf8.starts(with:sent.utf8) else {throw APIError(500,"Incremental decoding failed")};let tail=String(decoding:text.utf8.dropFirst(sent.utf8.count),as:UTF8.self);if !tail.isEmpty {emit(tail)} }
     }
+}
+
+public func validateContextReservation(promptTokens: Int, outputTokens: Int, context: Int) throws {
+    guard promptTokens >= 0, outputTokens > 0, context > 0, promptTokens < context,
+          outputTokens <= context - promptTokens else {throw APIError(400,"Prompt plus output reservation exceeds context")}
 }

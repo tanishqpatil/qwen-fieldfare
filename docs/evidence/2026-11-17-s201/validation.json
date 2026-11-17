@@ -1,0 +1,188 @@
+{
+  "milestone": "S2-01 completed",
+  "base_commit": "c001a78c0c9c997fd8ce10bb1c7135fe78258487",
+  "s200_checkpoint": "c001a78",
+  "focused_tool_passed": 14,
+  "package_passed": 127,
+  "package_skipped": 3,
+  "reported_total": 130,
+  "server_reported": 20,
+  "core_reported_including_skips": 93,
+  "presentation_reported": 17,
+  "release_seconds": 34.36,
+  "checker_tests_passed": 6,
+  "golden_cases": 3,
+  "python_jinja_version": "3.1.6",
+  "swift_jinja_version": "2.3.6 existing pin",
+  "core_unchanged_count": 20,
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "strict_replays": 0,
+  "strict_baseline": "Retained131/132 exit1 token61 expected14988 actual10000; historical-log evidence only",
+  "real_model": {
+    "cycles": [
+      {
+        "stream": false,
+        "call_id": "call_19403A178A014B4686220BBA0D319CA4",
+        "arguments": {
+          "project": "fieldfare"
+        },
+        "finish_reason": "tool_calls",
+        "call_usage": {
+          "completion_tokens": 27,
+          "prompt_tokens": 344,
+          "total_tokens": 371
+        },
+        "call_seconds": 16.195932791000814,
+        "continuation_usage": {
+          "completion_tokens": 13,
+          "prompt_tokens": 404,
+          "total_tokens": 417
+        },
+        "continuation_seconds": 16.98518183300257,
+        "final_finish_reason": "stop",
+        "result_used": true
+      },
+      {
+        "stream": true,
+        "call_id": "call_1A428F72084047E08C1D81066DD74622",
+        "arguments": {
+          "project": "fieldfare"
+        },
+        "finish_reason": "tool_calls",
+        "call_usage": {
+          "completion_tokens": 27,
+          "prompt_tokens": 344,
+          "total_tokens": 371
+        },
+        "call_seconds": 15.313213125002221,
+        "continuation_usage": {
+          "completion_tokens": 13,
+          "prompt_tokens": 404,
+          "total_tokens": 417
+        },
+        "continuation_seconds": 17.073171916999854,
+        "final_finish_reason": "stop",
+        "result_used": true
+      }
+    ],
+    "startup_seconds": 1.310014582999429,
+    "plain_json_and_sse": true,
+    "tool_choice_none": true,
+    "schema_context_overflow_rejected": true,
+    "disconnect_recovery": true,
+    "shutdown_seconds": 0.08826833300190629,
+    "exit": 0
+  },
+  "template_provenance": {
+    "local_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+    "official_sha256": "1b8361565cc35d47551d342214cff341c0f1a9685ce529c7ce31de0ed3616248",
+    "official_url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/raw/main/chat_template.jinja",
+    "embedded_chat_template_type": "NoneType",
+    "eos_token": "<|im_end|>",
+    "model_max_length": 262144,
+    "special_tokens": [
+      {
+        "id": 248045,
+        "content": "<|im_start|>",
+        "single_word": false,
+        "lstrip": false,
+        "rstrip": false,
+        "normalized": false,
+        "special": true
+      },
+      {
+        "id": 248046,
+        "content": "<|im_end|>",
+        "single_word": false,
+        "lstrip": false,
+        "rstrip": false,
+        "normalized": false,
+        "special": true
+      },
+      {
+        "id": 248058,
+        "content": "<tool_call>",
+        "single_word": false,
+        "lstrip": false,
+        "rstrip": false,
+        "normalized": false,
+        "special": false
+      },
+      {
+        "id": 248059,
+        "content": "</tool_call>",
+        "single_word": false,
+        "lstrip": false,
+        "rstrip": false,
+        "normalized": false,
+        "special": false
+      },
+      {
+        "id": 248066,
+        "content": "<tool_response>",
+        "single_word": false,
+        "lstrip": false,
+        "rstrip": false,
+        "normalized": false,
+        "special": false
+      },
+      {
+        "id": 248067,
+        "content": "</tool_response>",
+        "single_word": false,
+        "lstrip": false,
+        "rstrip": false,
+        "normalized": false,
+        "special": false
+      },
+      {
+        "id": 248068,
+        "content": "<think>",
+        "single_word": false,
+        "lstrip": false,
+        "rstrip": false,
+        "normalized": false,
+        "special": false
+      },
+      {
+        "id": 248069,
+        "content": "</think>",
+        "single_word": false,
+        "lstrip": false,
+        "rstrip": false,
+        "normalized": false,
+        "special": false
+      }
+    ]
+  },
+  "memory_bytes": {
+    "metal": 5291294720,
+    "loaded_footprint": 1167267816,
+    "drained_footprint": 5166064424
+  },
+  "timing_memory_qualification": "Smoke snapshots only; no optimization,peak,RAM-cap or full-context/agent claim",
+  "source_sha256": {
+    "Sources/QwenFieldfareServerSupport/Protocol.swift": "08449150932d111ddae1f8e9c02c4b64eefec9bc523933d128a2e8c740e3ba34",
+    "Sources/QwenFieldfareServerSupport/Service.swift": "c04720df118b025179c84467d37bc5788c704fb8c1963be2726bc767caa5ef2b",
+    "Sources/QwenFieldfareServerSupport/ToolJSON.swift": "2b0092d7f0f75d0b2e5e65cc465ffadc24b5e5f987207211f5c89d9cb6c7019a",
+    "Sources/QwenFieldfareServerSupport/ToolPrompt.swift": "5d569591f791f11bd4857f0c21f0c04d74305afa544c301127ab3d3e8f2dc12c",
+    "Sources/QwenFieldfareServerSupport/HTTP.swift": "5d42c2c200b8115ffc18bf0a365366e20ca3f9541657b7de96b001839c3cbc1d",
+    "Sources/QwenFieldfareServerSupport/NativeTools.swift": "67ef6dd4fa54ec09522d530777171fb9979021b0a6b0a6625a51921c59299828",
+    "Sources/QwenFieldfareServerSupport/Tools.swift": "3371c30e627efb4173314bd38ed10cae4a432ce752505192c44f9b86794e664d",
+    "Tests/QwenFieldfareServerTests/ToolContractTests.swift": "788793cac9aa46ab5f52fe8117920f5095accbc45457f803e72652e58cf32958",
+    "Tests/QwenFieldfareServerTests/ToolHTTPTests.swift": "e8370002d1b212a03e17b3f72c72a52a103ce756c23095b21d89ddd5fe2988dd",
+    "Tests/QwenFieldfareServerTests/ServerTests.swift": "83266db80bb033d1405567ee3afb9d082e6d2d1126f5d51494b0f884a0a922d2",
+    "Package.swift": "215155eaa434bc2a21ebefe04a9d28106aac9e37d9c4b356e9d0ead8988bcc40",
+    "Scripts/test_server_tools.py": "5d82e21f9776310913ad11b5a2bdbace7f9e9cddad4ba850cf099c0000cbc380",
+    "Scripts/generate_tool_goldens.py": "6d35eea1ed0de2c413b383f0bad294f22028d956421b2938143a12c600c348d7"
+  },
+  "post_model_fix": "Enum comparison outside Decimal range and precision-preserving numeric validation tightened; focused/full/release rerun. Enum-free real test has only exactly representable integer configuration values; its semantic path/Core/prompt unchanged, no repeated model run.",
+  "limitations": [
+    "Tool deltas delayed until full normal EOS validation",
+    "Developer/vision/strict/ref/combinator/required-named modes unsupported",
+    "Native structural delimiters in tool data rejected; results remain semantically untrusted",
+    "Client must return matching result IDs in call order; no server execution",
+    "Actual OpenCode/Hermes client qualification and production numerical acceptance pending",
+    "Core fatal Metal paths and immutable-checkpoint/ancestor races remain"
+  ]
+}
