@@ -1,6 +1,17 @@
-# QwenFieldfare
+# FlintFieldfare & QwenFieldfare
 
-## Current milestone — S3-00c reduction decision
+> **Branch Notice (`feature/recursive-flint-40b-a2p5b`)**:
+> This branch hosts the native Apple Silicon inference runtime for **Recursive Flint 40B-A2.5B** (`FlintFieldfareCore`).
+> The authoritative project backlog, architecture, recovery memory, and decision records are maintained in `docs/flint/`.
+> Qwen 3.6 reference targets and historical documents remain preserved and undisturbed.
+
+## Current milestone — Flint F0 Audit & Initialization Complete / F1 In Progress
+
+Flint F0 audit, architecture verification, and durable documentation are complete.
+The current active milestone is **F1** (Flint metadata & weight-loading infrastructure).
+See `docs/flint/TODO.md` and `docs/flint/AGENT_MEMORY.md` for current task status.
+
+## Historical Qwen milestone — S3-00c reduction decision
 
 S3-00c selects the original fixed router-order expert reduction as the
 production full-replay baseline. The grouped-tail experiment is closed.
