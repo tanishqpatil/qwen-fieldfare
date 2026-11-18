@@ -6,49 +6,43 @@
 
 <h1 align="center">QwenFieldfare</h1>
 
-Authenticated local Chat Completions, SSE and validated Qwen function calls are
-implemented. OpenCode1.19.5 completed a real disposable coding workflow. The native
-app can manage an exclusive server mode or observe an independent CLI server.
-See [usage and limits](docs/AGENT_INTEGRATION.md). Strict MLX131/132 remains an
-unresolved release blocker; this is not production-qualified inference.
+Native Swift + Metal inference runtime with bounded expert streaming for
+**Recursive Flint 40B-A2.5B** on Apple Silicon.
 
-**Local Qwen 3.6 35B-A3B Q4 mixture-of-experts inference near 5 GiB of Metal
-allocation.**
+> [!IMPORTANT]
+> This is an experimental, model-specific research runtime. Active development
+> targets milestone F1 (Flint metadata & weight-loading infrastructure). The
+> runtime is not yet production-qualified for inference.
+
+**Bounded expert streaming: ~3.2 GiB unified memory for a 39.8B-parameter
+mixture-of-experts model.**
 
 QwenFieldfare is a native Swift + Metal runtime and macOS chat app for Apple
-Silicon. It reads MLX Q4 Safetensors and streams only the routed MoE experts
+Silicon. It reads MLX Safetensors and streams only the routed MoE experts
 selected for each token from SSD into a bounded cache instead of keeping the
 complete checkpoint resident.
 
 [Quick start](#quick-start) · [Benchmarks](#measured-results) ·
 [How it works](#how-active-expert-streaming-works) ·
-[Community benchmarks](docs/COMMUNITY_BENCHMARKS.md) ·
 [Contributing](CONTRIBUTING.md)
 
-[![Model: Qwen 3.6 35B-A3B](https://img.shields.io/badge/Model-Qwen%203.6%2035B--A3B-6f42c1)](https://huggingface.co/Qwen/Qwen3.6-35B-A3B)
-[![Swift 6.2](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
+[![Model: Recursive Flint 40B-A2.5B](https://img.shields.io/badge/Model-Flint%2040B--A2.5B-6f42c1)](https://huggingface.co/RecursiveSI/flint)
+[![Swift 6.2+](https://img.shields.io/badge/Swift-6.2+-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
 [![Metal 4](https://img.shields.io/badge/Metal-4-5E5CE6)](https://developer.apple.com/metal/)
-[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)](https://www.apple.com/macos/)
-[![CI](https://github.com/tanishqpatil/qwen-fieldfare/actions/workflows/ci.yml/badge.svg)](https://github.com/tanishqpatil/qwen-fieldfare/actions/workflows/ci.yml)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)](https://apple.com/macos/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-2ea44f)](LICENSE)
-
-> [!IMPORTANT]
-> This is an experimental, model-specific research runtime. The release
-> benchmark includes a checkpoint-identified, teacher-forced MLX parity mode;
-> broader long-context and sampled-generation qualification is still in
-> progress. Measured decode performance does not yet match the full-resident
-> MLX reference.
 
 ## What this project does
 
-Qwen 3.6 35B-A3B is a mixture-of-experts model with 35 billion total
-parameters and approximately 3 billion activated parameters per token. Loading
-the complete Q4 checkpoint normally consumes roughly 20 GiB of unified memory.
+Recursive Flint 40B-A2.5B is a mixture-of-experts model with 39.8 billion total
+parameters and approximately 2.5 billion activated parameters per token. Loading
+the complete quantized checkpoint normally consumes 17–24 GB of unified memory.
 
-QwenFieldfare keeps dense Q4 weights and recurrent/KV state resident,
-while routed MoE experts are fetched into a bounded Metal-visible cache only
-when selected by the router. The default 8K configuration uses 2,183 expert
-slots and measured 4.928 GiB of Metal allocation during a 512-token run.
+QwenFieldfare keeps dense weights, attention projections, norms, routers, and
+shared experts resident, while routed MoE experts (256 per layer, top-6
+selected) are fetched into a bounded Metal-visible cache only when selected by
+the router. The default 1,024-slot configuration uses ~1.31 GiB of Metal
+allocation during a decoded token.
 
 The runtime is written directly in Swift and Metal. It is not a wrapper around
 MLX, llama.cpp, Ollama, or another inference engine.
@@ -57,74 +51,71 @@ MLX, llama.cpp, Ollama, or another inference engine.
 
 | Capability | Current status |
 | --- | --- |
-| Model | `mlx-community/Qwen3.6-35B-A3B-4bit` |
-| Architecture | 40 layers; 30 Gated DeltaNet + 10 full-attention layers |
-| MoE routing | 256 routed experts; top 8 selected per layer/token + 1 shared expert |
-| Quantization | MLX affine Q4, group size 64; Q8 routers/shared gates |
-| Chat | Multi-turn, thinking on/off, checkpoint-compatible template |
-| Sampling | Temperature, Top-K, Top-P, presence and repetition penalties |
-| Context | 4K, 8K, 16K, 32K, or 64K in Active Expert Streaming mode |
-| Memory | Explicit 3, 4, or 5 GiB active-streaming allocation targets; 5 GiB is the default |
-| Correctness | Checkpoint-hashed teacher CLI; historical 132/132, current audit 131/132 (blocked) |
+| Model | `RecursiveSI/flint` / `mlx-community/flint-mixed-3-4bit` |
+| Architecture | 49 layers; 2 dense MLP + 47 MoE (256 routed, top-6) + 1 shared |
+| Quantization | INT8 embeddings, INT4 projections/shared, 3-bit routed experts |
+| Attention | 14 full (no RoPE) + 35 sliding (window 513, RoPE) + learned sinks |
+| Context | Configurable (planned) |
+| Memory | ~3.2 GiB total working set (resident + bounded cache + KV) |
+| Milestone | **F1 — Metadata & Weight-Loading** (IN PROGRESS) |
 | Validated hardware | Apple M5, 32 GiB unified memory |
-| Current limitation | Text-only; the checkpoint's vision encoder is not implemented |
+| Current limitation | Research runtime; inference not yet implemented |
 
 ## Requirements
 
 - Apple Silicon Mac
 - macOS 26 or newer
 - Xcode 26 and Swift 6.2 or newer
-- Approximately 20 GiB free storage for the raw Q4 model
-- Approximately 37 GiB total model storage if the optional packed-expert
-  artifact is also created
-- Enough currently available unified memory for the selected runtime mode
+- Approximately 18 GB free storage for the raw Q4 (or mixed 3/4-bit) model
+- 32 GB unified memory (validated; lower-memory Macs not yet assessed)
+- The model checkpoint installed locally (not shipped in this repository)
 
-The validated machine has 32 GiB unified memory. Lower-memory Macs have not yet
-been validated for this Qwen port and should not be advertised as supported
-until measured.
+The validated machine has 32 GiB unified memory.
 
 ## Quick start
 
 ### 1. Download the model
 
-This runtime expects the MLX Q4 checkpoint as an ordinary local safetensors
-directory. Install the current Hugging Face CLI if necessary:
+Install the Hugging Face CLI if necessary:
 
 ```bash
 curl -LsSf https://hf.co/cli/install.sh | bash -s
 ```
 
-Download the model to the default location:
+Download the model (example — use whichever checkpoint you have):
 
 ```bash
 mkdir -p "$HOME/models"
 
-hf download mlx-community/Qwen3.6-35B-A3B-4bit \
-  --local-dir "$HOME/models/Qwen3.6-35B-A3B-4bit"
+# Official INT4 checkpoint (22.6 GB on disk):
+hf download RecursiveSI/flint-int4 \
+  --local-dir "$HOME/models/flint-int4"
+
+# Or the community 3-bit mixed checkpoint (17.84 GB):
+hf download mlx-community/flint-mixed-3-4bit \
+  --local-dir "$HOME/models/flint-mixed-3-4bit"
 ```
 
-The expected directory is:
+The expected directory contains:
 
 ```text
-~/models/Qwen3.6-35B-A3B-4bit/
+~/models/flint-mixed-3-4bit/
 ├── config.json
-├── generation_config.json
 ├── model.safetensors.index.json
 ├── model-00001-of-00004.safetensors
 ├── model-00002-of-00004.safetensors
 ├── model-00003-of-00004.safetensors
 ├── model-00004-of-00004.safetensors
 ├── tokenizer.json
-├── tokenizer_config.json
-└── ...
+└── tokenizer_config.json
 ```
 
 Model weights are not stored in this source repository. They remain governed
 by the model repository's license and terms.
 
-### 2. Build the app
+### 2. Build the project
 
-Clone the repository and build all release products:
+Clone the repository and build:
 
 ```bash
 git clone https://github.com/tanishqpatil/qwen-fieldfare.git
@@ -132,383 +123,141 @@ cd qwen-fieldfare
 swift build -c release
 ```
 
-### 3. Run the app
+### 3. Run
+
+In development, build and run the FlintFieldfareMac target (when F3 completes):
 
 ```bash
-.build/release/QwenFieldfareMac
+swift run -c release FlintFieldfareMac \
+  --model "$HOME/models/flint-mixed-3-4bit"
 ```
 
-The app loads the model lazily when the first prompt is sent. Open the
-diagnostics drawer to inspect context, cache occupancy, memory, prompt prefill,
-token latency, and generation rate.
+## Repository structure (Flint targets)
 
-## Choose the model directory
-
-Use **Model → Choose Model Directory…** (`⇧⌘O`) or open the inspector and use
-**Model Management → Choose Model Directory…**. QwenFieldfare validates the
-model index and every referenced Safetensors shard before saving the path for
-future launches.
-
-For scripts and launch agents, set `QWENFIELDFARE_MODEL`:
-
-```bash
-QWENFIELDFARE_MODEL="/absolute/path/to/Qwen3.6-35B-A3B-4bit" \
-  .build/release/QwenFieldfareMac
-```
-
-The model must use the exact compatible Qwen 3.6 35B-A3B MLX Q4 tensor names,
-shapes, affine quantization layout, tokenizer, and chat configuration. This is
-not a generic Safetensors runtime.
-
-## Mac app guide
-
-### Runtime modes
-
-| Mode | Intended use | Memory behavior |
-| --- | --- | --- |
-| **Active Expert Streaming** | Recommended chat mode | Dense weights stay resident; routed experts use a bounded cache planned under a selected 3, 4, or 5 GiB Metal target |
-| **Fast Resident Q4** | High-memory diagnostic mode | Loads the full Q4 model into unified memory |
-| **Memory Saver Q4** | Low-memory fallback | Streams layer weights and experts with lower throughput |
-
-Only one model-owning process should run at a time. Do not run the Mac app,
-Qwen benchmark, MLX, Ollama, or another local model process concurrently when
-collecting memory or performance results.
-
-### Active-streaming memory budget
-
-Select 3, 4, or 5 GiB in the inspector. Changing the choice unloads the
-runtime before the next model load; the cache is never resized in place. The
-planner reserves dense/recurrent state, KV state, scratch, and headroom before
-deriving the cache capacity. At 8K context it yields:
-
-| Target | Expert-cache slots | Observed Metal allocation | 512-token greedy control |
-| ---: | ---: | ---: | ---: |
-| 3 GiB | 969 | 2.927 GiB | 30.28 tok/s |
-| 4 GiB | 1,576 | 3.928 GiB | 32.53 tok/s |
-| 5 GiB (default) | 2,183 | 4.928 GiB | 34.15 tok/s |
-
-At 64K, the 3 GiB plan is unavailable because it cannot retain eight lockable
-expert slots for every layer. The response limit cannot exceed the selected
-context. Prompt tokens and prior conversation turns consume part of the same
-context window.
-
-The response limit cannot exceed the selected context. Prompt tokens and prior
-conversation turns consume part of the same context window.
-
-### Default generation settings
-
-| Setting | Default |
-| --- | ---: |
-| Thinking | Off |
-| Context | 8,192 tokens |
-| Maximum output | 4,096 tokens |
-| Temperature | 1.0 |
-| Top-K | 20 |
-| Top-P | 0.95 |
-| Presence penalty | 1.5 |
-| Repetition penalty | 1.0 |
-| Idle unload | 60 seconds |
-
-Press **Return** to send, **Shift+Return** for a newline, or use the stop button
-to cancel generation. **New Chat** clears retained conversation context without
-changing the loaded runtime.
-
-## Native and standalone server modes
-
-Build release, then open `.build/release/QwenFieldfareMac`. Click **Local Server**
-in the header. Choose the checkpoint, port, context,3/4/5GiB Metal target and queue
-limit; **Start Server** cancels/drains/unloads native chat and starts the existing
-Core/HTTP server in the app process. Native chat is disabled until **Stop Server**
-finishes. **Restart** safely reloads; settings persist but never auto-start on reopen.
-Quitting drains the owned server. No second runner or child process is created.
-
-Authentication is required. The app stores its credential in Keychain and uses
-the CLI's private0600 key-file validation contract. **Copy API URL** and **Copy
-OpenCode Guidance** contain no key. Copy/reveal/export of the key is explicit and
-warned; an exported file must use a new private path. Import an owned private CLI
-key and choose **Observe CLI** to inspect an independent server; **Disconnect**
-and quitting the app leave that process running. Other model owners produce a
-recoverable conflict, never a second allocation.
-
-For independent headless operation:
-
-```bash
-# Set QWENFIELDFARE_API_KEY privately OR provide an owned0600 key file:
-.build/release/QwenFieldfareServer --model /absolute/path/to/Qwen3.6-35B-A3B-4bit \
-  --host 127.0.0.1 --port 8080 --context 8192 --memory-gib 5 \
-  --queue-capacity 2 --api-key-file /absolute/private/path/api-key
-```
-
-The [server/OpenCode guide](docs/AGENT_INTEGRATION.md) has authenticated health,
-request, shutdown and OpenCode1.19.5 configuration commands. Server diagnostics
-show actual occupancy/counters,Metal allocation and one bounded last-request timing
-record; missing measurements stay unavailable. Metal allocation is not total RAM
-or an exact peak. The earlier28m17s coding workflow/167.9s first-content baseline
-is preserved; S2-03 introduces diagnostics, not prefix reuse or a speed claim.
-[Validation and limitations](docs/evidence/2026-11-17-s203/README.md).
-
-## Benchmark command line
-
-`QwenFieldfareBench` is the supported command-line Qwen entry point. It
-uses greedy generation so repeated runs can be compared exactly.
-
-```bash
-export QWEN_MODEL="$HOME/models/Qwen3.6-35B-A3B-4bit"
-
-swift run -c release QwenFieldfareBench \
-  --model "$QWEN_MODEL" \
-  --prompt "Explain HashMap in Java with an example." \
-  --context 8192 \
-  --memory-gib 5 \
-  --max-new 128
-```
-
-Useful benchmark options:
-
-| Option | Purpose |
+| Path | Purpose |
 | --- | --- |
-| `--metrics-only` | Suppress generated text and print timing/cache metrics |
-| `--memory-gib 3\|4\|5` | Select the shared active-streaming allocation plan; default: 5 GiB |
-| `--cache-slots N` | Diagnostic raw override; cannot be combined with `--memory-gib` |
-| `--load-only` | Validate model loading without generation |
-| `--warmup-runs N` | Run `N` unmeasured generations while retaining the loaded expert cache |
-| `--runs N` | Run and summarize `N` measured generations in one process |
-| `--analyze-cache` | Record and analyze the routed-expert access trace |
-| `--gpu-profile` | Add exact Metal command-buffer timing; profiling only |
-| `--subcomponent-profile` | Profile production attention subcomponents |
-| `--packed-experts` | Use the optional packed routed-expert store |
+| `Sources/FlintFieldfareCore/` | Flint model loading, Metal kernels, forward runner, bounded expert cache |
+| `Sources/FlintFieldfareBench/` | Standalone benchmark CLI (planned F6) |
+| `Sources/FlintFieldfareServer/` | Standalone SwiftNIO HTTP server (planned F6) |
+| `Tests/FlintFieldfareCoreTests/` | Flint-specific test suite (12 passing) |
 
-Profiling changes instrumentation and should not be used for headline
-throughput comparisons.
+Existing `QwenFieldfareCore`, `QwenFieldfareMac`, `QwenFieldfareBench`,
+`QwenFieldfareServer` targets remain untouched.
 
-## Model format and packed experts
+## Measured results (all-resident MLX baseline)
 
-The production runtime reads the compatible MLX Safetensors checkpoint
-directly.
-
-The repository includes an optional Qwen-specific packed-expert experiment.
-It creates a checksummed `qwen_q4_experts/` directory beside the raw model:
-
-```bash
-export QWEN_MODEL="$HOME/models/Qwen3.6-35B-A3B-4bit"
-
-swift run -c release QwenFieldfarePack \
-  --model "$QWEN_MODEL"
-```
-
-Resume an interrupted pack:
-
-```bash
-swift run -c release QwenFieldfarePack \
-  --model "$QWEN_MODEL" \
-  --resume
-```
-
-Verify all packed layer hashes:
-
-```bash
-swift run -c release QwenFieldfarePack \
-  --verify \
-  --model "$QWEN_MODEL"
-```
-
-Use a separate output directory when desired:
-
-```bash
-swift run -c release QwenFieldfarePack \
-  --model "$QWEN_MODEL" \
-  --output "/absolute/path/to/qwen_q4_experts"
-```
-
-Custom output directories can be packed and verified, but the benchmark
-currently auto-discovers only the default `qwen_q4_experts/` directory beside
-the model.
-
-The default packed store is approximately 16.875 GiB and contains 40 durable
-`layer_XX.q4exp` files plus `manifest.json`. Packing is resumable at layer
-boundaries and verification checks every payload hash.
-
-This format remains experimental. On the validated workload, raw safetensors
-measured 25.04 tok/s and packed one-read storage measured 24.38 tok/s. The app
-therefore continues to use raw safetensors. Use `--packed-experts` only with
-`QwenFieldfareBench` for storage experiments.
-
-## Measured results
-
-Machine: Apple M5 (`Mac17,2`), 32 GiB unified memory, macOS 26.6.2, Swift
-6.3.3. Results are workload-specific measurements, not hardware ceilings.
+Machine: Apple M5 (`Mac17,2`), 32 GiB unified memory, macOS 27.2.1, Swift 6.4.2.
+Measurements captured on 2026-11-18 using `mlx` 0.32.4 / `mlx_vlm` 0.7.12.
 
 | Measurement | Result |
 | --- | ---: |
-| Historical MLX teacher-forced parity | 132/132 next-token predictions |
-| Historical active streaming, 8K, 2,183 slots, 512 tokens | 23.28 tok/s |
-| Corrected inter-token control, same 512-token workload | 19.68 tok/s; 50.80 ms/token |
-| Exact-greedy fast path, five paired 128-token runs | 29.02 to 31.97 tok/s; +10.16% paired mean |
-| Exact-greedy fast path, three paired 512-token runs | +6.22%, +8.85%, and +5.01% |
-| Metal allocation in that 512-token run | 4.928 GiB |
-| Cache hit rate | 74.63% |
-| Cache misses | 43,267 |
-| Logical expert data fetched | 71.302 GiB |
-| 64K context load, 1,523 slots | 4.937 GiB Metal |
-| Full-resident MLX reference | 49.86 tok/s, 19.631 GB peak memory |
+| Cold load time | 4.39 s |
+| Active memory (weights) | 16.61 GB |
+| Peak memory (8K context) | 17.68 GB |
+| Swap triggered | +657.6 MB (on 32 GB machine) |
+| Short prompt decode | ~70 tok/s |
+| 8K prompt decode | ~60 tok/s |
+| 8K prompt prefill | ~1,317 tok/s |
 
-### Active-streaming budget controls (2026-11-05)
+### Streaming design targets
 
-Release-mode greedy controls used the 21-token HashMap prompt, 8K context,
-seed 42, one retained-runner warmup and two measured runs per profile on the
-validated Apple M5 / 32 GiB machine. Raw Safetensors were used and GPU
-profiling was disabled. File-cache state was uncontrolled; these values show
-the supported memory/speed trade-off, not a speedup over an earlier build.
+| Component | Footprint |
+| --- | ---: |
+| Resident weights | ~1.28 GB |
+| Expert cache (1,024 slots, 3-bit) | ~1.31 GB |
+| KV cache (8K context) | ~0.26 GB |
+| Metal activations + scratch | ~0.15 GB |
+| Process runtime + heap | ~0.20 GB |
+| **Planned total working set** | **~3.20 GB** |
 
-| Target | Slots | 128-token decode mean | 512-token decode mean | 512-token cache hit rate |
-| ---: | ---: | ---: | ---: | ---: |
-| 3 GiB | 969 | 31.76 tok/s | 30.28 tok/s | 57.5% |
-| 4 GiB | 1,576 | 34.07 tok/s | 32.53 tok/s | 68.9% |
-| 5 GiB | 2,183 | 35.83 tok/s | 34.15 tok/s | 76.8% |
-
-Compared with the previous 2,100-slot trace, the promoted 2,183-slot cache
-reduced misses by 1,480 (3.31%) and logical expert traffic by 2.439 GiB. It did
-not establish a deterministic throughput increase because file-page-cache,
-GPU/DVFS, and system state varied between runs.
-
-See the [active-streaming report](docs/QWEN_ACTIVE_STREAMING.md)
-for the measured evidence, rejected experiments, and limitations.
-See the [optimization analysis](docs/OPTIMIZATION_PLAN.md) for the ranked next
-work, measurement protocol, promotion gates, and experiments not to repeat.
-See the [product roadmap](docs/PRODUCT_ROADMAP.md) for reliability,
-distribution, and feature priorities.
-See the [local agent and memory plan](docs/AGENT_RUNTIME_PLAN.md) for proposed
-memory budgets, faster prompt processing, and OpenCode/Hermes server support.
-OpenCode is qualified for the documented bounded workflow; Hermes and prefix reuse remain planned.
+Bounded streaming caps unified memory at ~3.2 GiB (vs 17.7 GB all-resident),
+preventing swap on a 32 GB machine. Interactive speeds of 15–30 tok/s are
+expected once the expert cache reaches ≥70% hit rate.
 
 ## How active-expert streaming works
 
 For each transformer layer and generated token:
 
-1. Metal executes normalization and the layer's Gated DeltaNet or full-attention path.
-2. The Q8 router selects eight of 256 routed experts.
-3. The bounded segmented-LRU cache resolves resident experts and assigns slots for misses.
-4. Missing Q4 expert records are read from the model's memory-mapped safetensors shards into Metal-visible shared buffers.
-5. Shared-expert and cache-hit GPU work overlaps part of the miss I/O.
-6. Metal evaluates routed experts and combines shared, routed, and residual outputs.
-7. Final RMSNorm, Q4 language-model head, and sampling produce the next token.
+1. Metal executes normalization (RMSNorm) and the layer's attention path
+   (full or sliding-window with learned sinks).
+2. The FP32 sigmoid router scores all 256 experts and selects the top-6.
+3. Normalized scores sum to 1 (in FP32).
+4. Each selected expert's SwiGLU MLP is evaluated. Experts already resident
+   in cache are served directly; missing experts are streamed from the
+   model's memory-mapped safetensors shards into Metal-visible buffers.
+5. Each expert writes its weighted down-projection into a scratch buffer at
+   position $k \times 2048$ ($k \in [0, 5]$), regardless of cache residency.
+6. A dedicated combine kernel sums these contributions in fixed order 0→5.
+   This guarantees bit-identical output across all-hit, partial-hit, and
+   all-miss cache states.
+7. The shared expert (ungated SwiGLU) is evaluated independently and added.
+8. Final RMSNorm + LM head (FP32) → logits over 150,144 tokens.
 
-Dense weights, recurrent DeltaNet state, FP16 full-attention KV state, and the
-expert cache have bounded ownership. The complete routed-expert bank is never
-allocated as Metal buffers in Active Expert Streaming mode.
+Dense weights, attention projections, norms, routers, and shared experts have
+permanent resident ownership. The complete routed-expert bank (256 × 47) is
+never allocated as Metal buffers in streaming mode.
 
 ## Build and validation
-
-Build all release products:
 
 ```bash
 swift build -c release
 ```
 
-Run focused non-model support and storage tests:
+Run the Flint-specific test suite (F1 milestone — 12 tests passing):
 
 ```bash
-Scripts/test.sh --filter QwenGenerationSupportTests
-Scripts/test.sh --filter 'Q4BoundedExpertCacheTests|QwenQ4ExpertStoreTests'
+swift test --filter FlintFieldfareCoreTests
 ```
 
-Generate a standalone MLX greedy reference only after installing the model and
-closing every other model process:
+Teacher-forced parity tests and production inference qualification are planned
+for milestones F3 and beyond. No production-readiness claim is made.
 
-```bash
-python3 Scripts/qwen_mlx_greedy_reference.py \
-  --model /absolute/path/to/Qwen3.6-35B-A3B-4bit \
-  --prompt "Explain HashMap in Java with an example." \
-  --max-tokens 65
-```
+## Key design decisions
 
-The checkpoint-hashed release-mode teacher-forced harness is implemented in
-`QwenFieldfareBench --teacher-reference` and exercised by
-`Scripts/test_teacher_reference.py`. The old named package parity test is absent.
-On 2026-11-17 a fresh reference matched **131/132** predictions (position 61:
-expected 14988, got 10000), so release correctness qualification remains blocked. Independent Stage 1
-reliability work is authorized under the [non-regression policy](docs/NUMERICAL_NON_REGRESSION.md). The cause
-is unresolved. Historical 132/132 results do not establish current parity.
-See [baseline/evidence](docs/PERFORMANCE_BASELINES.md) and
-[development log](docs/DEVELOPMENT_LOG.md).
-
-Current source-audit validation at `72fb923`:
-
-- Full serial package suite: 49/49 passed (32 Core, 17 Presentation).
-- Complete release build: passed.
-- Real-model teacher forcing: failed, 131/132.
-- No current performance gain or complete memory qualification claimed.
-
-Latest Stage1 reader-safety checkpoint (S1-01d):107 package tests passed, three
-opt-in tests skipped; release passed. CPU, active-streaming and fallback readers
-use shared bounded Safetensors validation and descriptor ownership. The bounded
-fallback model integration passed; the teacher CLI covers active streaming only.
-Latest strict active replay remains131/132, exit1. No production-readiness or
-full numerical-equivalence claim is made. [Evidence](docs/evidence/2026-11-17-s101d/README.md).
-
-The [authoritative backlog](TODO.md), [architecture](docs/ARCHITECTURE.md) and
-[recovery memory](docs/AGENT_MEMORY.md) track the local coding-agent mission.
-The Qwen-specific local server is authorized for later gated implementation;
-S2-00/01 implement local HTTP/tools; S2-02 qualifies OpenCode1.19.5 and S2-03 adds native server controls. Hermes remains unqualified.
-
-## Repository map
-
-| Path | Purpose |
-| --- | --- |
-| `Sources/QwenFieldfareCore/Runtime/Generation/` | Qwen chat, sampling, and active-expert generation |
-| `Sources/QwenFieldfareCore/Kernels/LinearAttention/` | Gated DeltaNet and Qwen dense/MoE kernel wrappers |
-| `Sources/QwenFieldfareCore/Metal/LinearAttention/` | Qwen Metal kernels |
-| `Sources/QwenFieldfareCore/Storage/` | Bounded expert cache and optional packed store |
-| `Sources/QwenFieldfareApp/Mac/` | Native SwiftUI chat app and diagnostics |
-| `Sources/QwenFieldfareBench/` | Reproducible Qwen benchmark executable |
-| `Sources/QwenFieldfarePack/` | Resumable packed-expert builder and verifier |
-| `Tests/QwenFieldfareCore/` | Qwen correctness, cache, and storage validation |
-| `docs/` | Qwen active-streaming measurements and engineering notes |
+1. **Isolated implementation line** — Flint targets live alongside untouched
+   Qwen code. No risk of breaking the Qwen build.
+2. **Fixed router-order reduction** — Accumulate by position 0→5, never by
+   cache residency. Zero residency-dependent floating-point drift.
+3. **Dual 3-bit / 4-bit support** — Dynamically detects from `config.json`.
+   Works with both the official INT4 and the 3-bit mixed community checkpoint.
+4. **Learned attention sinks** — Per-head scalars (`softmax_offset`) integrated
+   into softmax denominator without dummy KV memory.
+5. **Dedicated inference lease** — Lock at `/tmp/flintfieldfare-inference-{uid}.lock`
+   prevents multiple concurrent Flint instances from exhausting memory.
 
 ## Known limitations
 
-- Decode speed remains below the full-resident MLX reference.
-- The runtime is text-only; vision, audio, video, tool execution, and MTP
-  speculative decoding are not implemented.
-- The local server supports a bounded Chat Completions subset; advanced schemas, generic multi-model hosting and server-side tool execution are unsupported.
-- The app does not download the model. Install the model with `hf download`
-  before first use.
-- True cold-storage state, thermal state, and macOS file-page-cache state can
-  materially change performance.
-- The optional packed-expert format increases disk use and has not improved
-  throughput on the validated machine.
-- Generated output can be incorrect. Verify important answers.
+- Inference runtime (F2–F3) is under active development. No generation yet.
+- Text-only; vision, audio, and video are not implemented.
+- The local server and chat UI are not yet built for Flint.
+- The runtime does not download the model. Install with `hf download` first.
+- Cold-start performance will be lower than all-resident MLX until the
+  expert cache warms up.
 
 ## Attribution
 
-This project is based on and derived from
-[TurboFieldfare](https://github.com/drumih/turbo-fieldfare) by
-[Andrey Mikhaylov](https://github.com/drumih). The original project introduced
-the bounded-memory active-expert streaming design on Apple Silicon.
-This derivative ports and extends that work for Qwen 3.6 35B-A3B, including
-Qwen-specific Gated DeltaNet/full-attention kernels, model loading, caching,
-chat behavior, benchmarks, and UI.
+This project derives from [TurboFieldfare](https://github.com/drumih/turbo-fieldfare)
+by Andrey Mikhaylov — introducing the bounded expert streaming design on
+Apple Silicon. QwenFieldfare ports and extends that work for Qwen 3.6 35B-A3B
+and is now being extended for Recursive Flint 40B-A2.5B.
 
 The original TurboFieldfare source and this derivative are distributed under
-the [Apache License 2.0](LICENSE). Preserve the license and applicable
-attribution notices when redistributing source or binaries. See
-[NOTICE](NOTICE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+the [Apache License 2.0](LICENSE).
 
 QwenFieldfare is an independent community research project. It is not
-affiliated with, sponsored by, or endorsed by the Qwen team, Alibaba, MLX,
-Hugging Face, Apple, or the original TurboFieldfare author.
+affiliated with, sponsored by, or endorsed by the Qwen team, Recursive SI,
+MLX, Hugging Face, Apple, or the original TurboFieldfare author.
 
 ## Model license and redistribution
 
 Model weights are separate from this source repository:
 
-- Base model: [Qwen/Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B)
-- Q4 MLX checkpoint: [mlx-community/Qwen3.6-35B-A3B-4bit](https://huggingface.co/mlx-community/Qwen3.6-35B-A3B-4bit)
+- Base model: [RecursiveSI/flint](https://huggingface.co/RecursiveSI/flint)
+- Community 3-bit mixed: [mlx-community/flint-mixed-3-4bit](https://huggingface.co/mlx-community/flint-mixed-3-4bit)
 
-Both model repositories identify their artifacts as Apache-2.0. If you publish
-a separate copy or modification of the model, include the applicable license,
-model-card/source attribution, and a clear description of your changes. The
-upstream model repositories and their current files remain authoritative.
+Both model repositories identify their licenses. If you publish a separate
+copy or modification of the model, include the applicable license,
+model-card/source attribution, and a clear description of your changes.
 
 ## License
 
