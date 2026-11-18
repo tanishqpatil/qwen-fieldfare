@@ -10,7 +10,7 @@ FlintFieldfare applies the **bounded expert streaming** architecture:
 - Core model weights (embeddings, attention projections, layer norms, routers, dense MLPs, and shared experts) remain permanently resident in Apple Silicon unified memory (~1.28 GB).
 - The 12,032 routed experts (256 experts $\times$ 47 MoE layers) reside on high-speed NVMe SSD storage.
 - Active experts (6 per layer per token) are streamed into a bounded Metal buffer cache (e.g. 1,024 slots $\approx$ 1.31 GB).
-- The complete running working set is bounded to **~3.2 GiB**, leaving >20 GB of unified memory completely free on a 32 GB machine.
+- The complete running working set targets an architectural budget of **~3.2 GiB**, leaving >20 GB of unified memory completely free on a 32 GB machine.
 
 ## 2. Implemented vs Proposed Behavior
 
@@ -20,8 +20,9 @@ FlintFieldfare applies the **bounded expert streaming** architecture:
 | **Flint Checkpoint Audit** | Implemented | Verified 1,751 tensors, U32 packed format, BF16 parameters |
 | **Model Specification** | Implemented | 49 layers, 14 full/35 sliding attention, sink offsets, top-6 routing |
 | **Memory Plan** | Implemented | Verified ~1.28 GB resident, ~1.31 GB expert cache, ~3.2 GB total working set |
-| **FlintModelDirectory** | Proposed (F1) | Swift type validating `config.json`, `layer_types`, `no_rope_layer_indices` |
-| **FlintInferenceLease** | Proposed (F1) | Single-process POSIX lock at `/tmp/flintfieldfare-inference-\(uid).lock` |
+| **FlintModelDirectory** | Implemented (F1) | Swift type validating `config.json`, strict Case A/B quantization, shards |
+| **FlintInferenceLease** | Implemented (F1) | Single-process POSIX lock at `/tmp/flintfieldfare-inference-\(uid).lock` |
+| **FlintResidentLoader** | Proposed (F1) | Safe binary loader for permanently resident weights (~1.28 GiB) |
 | **Flint Metal Attention** | Proposed (F2) | Q/K RMSNorm, learned sink `softmax_offset`, sliding window 513 |
 | **Flint Metal MoE** | Proposed (F2) | FP32 sigmoid top-6 router, fixed router-order position reduction |
 | **Flint Forward Runner** | Proposed (F3) | 49-layer forward evaluation and greedy generation |

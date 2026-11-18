@@ -56,9 +56,24 @@
 - **Context**: Bounded expert streaming introduces SSD read latency for cache misses. The design premise must be verified against an empirical all-resident baseline on the target machine (Apple M5 32 GB).
 - **Decision**: Measure the all-resident MLX baseline on M5 using the local `flint-mixed-3-4bit` checkpoint across short and 8K-token prompts before qualifying the streaming engine.
 - **Findings**:
-  - All-resident execution achieves ~70 tok/s decode but consumes 17.68 GB peak unified memory, triggering +657.6 MB disk swap on a 32 GB Mac.
-  - Cold streaming payload is 370.1 MiB/token (exceeding SSD bandwidth at 0% hit rate).
-  - Bounded streaming provides decisive system value by bounding working memory to ~3.2 GiB (>20 GB free unified memory), and reaches interactive performance once cache warms up to $\ge 70\%$.
+  - All-resident execution achieves ~70 tok/s decode but consumes 17.68 GB peak unified memory, elevating memory pressure on a 32 GB Mac (observed swap increase of +657.6 MB during testing).
+  - Cold streaming payload is 370.125 MiB/token (exceeding SSD bandwidth at 0% hit rate).
+  - Bounded streaming provides decisive system value by bounding working memory to the ~3.2 GiB design budget (>20 GB free unified memory for developer multitasking), and interactive performance is hypothesized to be achievable once cache warms up to $\ge 70\text{--}85\%$ hit rate.
 - **Consequences**:
-  - Validates bounded streaming as the primary solution for memory-constrained development environments.
+  - Validates bounded streaming as an engineering trade-off protecting host multitasking at the cost of decode speed on cold cache.
   - Sets concrete performance targets for milestones F3 and F4.
+
+## ADR-F007: Strict Case A (INT4) vs Case B (Mixed 3/4-Bit) Quantization Validation Contract
+
+- **Date**: 2026-11-18
+- **Status**: Accepted
+- **Context**: Independent Review #002 identified that permissive override validation could permit incomplete or conflicting mixed-quantization configurations. Furthermore, official INT4 models omit expert overrides entirely, while mixed checkpoints must provide all 141 overrides uniformly.
+- **Decision**: Implement strict bifurcation in `FlintModelDirectory`:
+  - **Case A (Official INT4)**: Valid base 4-bit, group_size 64, exactly 0 `switch_mlp` overrides. Routed experts inherit base 4-bit.
+  - **Case B (Mixed 3/4-Bit)**: Exactly 141 `switch_mlp` overrides corresponding to all 47 MoE layers $\times$ 3 projections (`gate_proj`, `up_proj`, `down_proj`). All 141 must agree on bit depth (3 or 4) and group size (64).
+  - Any partial override count (1..140), extraneous projection key, or inconsistent bit depth is rejected immediately.
+  - Mandatory strictness: `model_type` must be `"flint"`, `norm_topk_prob` must be `true`, `no_rope_layer_indices` must have exactly 14 unique indices matching full-attention layers, and embedding quantization must be explicitly validated (bits 8 or 4).
+  - Buffer I/O: `readFileBounded` uses safe contiguous `Data.withUnsafeMutableBytes` buffer access rather than ephemeral array pointers.
+- **Consequences**:
+  - Rejects partial, malformed, or corrupt model configurations at validation time before any tensors or Metal resources are allocated.
+  - Fully supports both official INT4 and community 3-bit mixed checkpoints.

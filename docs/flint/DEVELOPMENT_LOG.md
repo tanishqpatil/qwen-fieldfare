@@ -56,3 +56,42 @@
   5. **Updated Documentation (Task 5)**:
      - Updated `MEMORY_PLAN.md`, `PERFORMANCE_BASELINES.md`, `DECISIONS.md` (ADR-F006), `MODEL_SPEC.md`, `ARCHITECTURE.md`.
      - Clearly distinguished empirical measurements from theoretical streaming design estimates.
+
+---
+
+## 2026-11-18 — Review #002 Response: Strict Quantization Contract, Buffer Safety & Baseline Evidence
+
+- **Author**: Inference Systems Architect
+- **Actions Completed**:
+  1. **Strict Repository Isolation Enforced**:
+     - Inspected `qwen-fieldfare` (`pwd -P`: `/Users/tanishq/dev/product/qwen-fieldfare`), confirming clean status on `feature/recursive-flint-40b-a2p5b` (intended Qwen branch: `origin/feature/local-coding-agent-server`).
+     - Maintained zero write operations in `qwen-fieldfare`.
+     - Preserved symlink `/Users/tanishq/dev/product/flint-fieldfare -> /Users/tanishq/dev/product/qwen-fieldfare` without modification.
+     - Confirmed all implementation and tests execute strictly in `/Users/tanishq/dev/product/flint-fieldfare-isolated`.
+  2. **Quantization Validator Hardened with Strict Case A / Case B Bifurcation**:
+     - Hardened `FlintModelDirectory.swift` to enforce strict bifurcation:
+       - **Case A (Official INT4 Checkpoint)**: Base 4-bit, group size 64, exactly 0 `switch_mlp` overrides. Inherits uniform 4-bit.
+       - **Case B (Mixed 3/4-Bit Checkpoint)**: Validates that all 141 required `switch_mlp` projection overrides (47 MoE layers $\times$ 3 projections) exist, agree on group size (64), and agree on bit depth (3 or 4).
+       - Enforced rejection of partial overrides (1..140), extraneous projections, unsupported bit depths, or unsupported group sizes.
+     - Enforced mandatory explicit metadata:
+       - `model_type` must be `"flint"` (missing or invalid fails).
+       - `norm_topk_prob` must be `true` (missing or false fails).
+       - `no_rope_layer_indices` must contain exactly 14 unique layer indices (duplicates fail) matching `expectedFullAttentionIndices`.
+       - Embedding quantization is explicitly validated (bits 8 or 4).
+  3. **Safe File Buffer Reading (`pread`)**:
+     - Replaced ephemeral array buffer references in `readFileBounded` with safe contiguous buffer access using `Data.withUnsafeMutableBytes` and `baseAddress.advanced(by:)`.
+     - Added explicit `errno` checking on negative `pread` return values.
+  4. **Reproducible Baseline Evidence Preserved**:
+     - Created `docs/flint/evidence/2026-11-18-baseline/`.
+     - Preserved `benchmark_flint_mlx.py` and `mlx_flint_benchmark_results.json`.
+     - Documented Python environment, MLX versions, CLI invocation, synchronization methodology (`mx.eval`), timing breakdown, and swap metrics in `docs/flint/evidence/2026-11-18-baseline/README.md`.
+  5. **Documentation Rigor & Claims Clarification**:
+     - Updated `MEMORY_PLAN.md`, `PERFORMANCE_BASELINES.md`, `DECISIONS.md` (ADR-F007), and `ARCHITECTURE.md`.
+     - Explicitly distinguished system memory paging correlation from thrashing causality.
+     - Labeled the **~3.2 GiB** figure strictly as an **architectural design target budget**.
+     - Labeled **70–85% cache hit rates** explicitly as working hypotheses.
+     - Framed all-resident vs streaming as an explicit engineering trade-off.
+     - Verified and corrected SSD bandwidth unit conversions.
+  6. **Comprehensive Test Suite Expansion**:
+     - Added 10 new unit tests covering Case A official INT4, Case A with `mlx_export` embedding bits, Case B partial overrides (140 projections), single override, extraneous projections on dense layers, unsupported group sizes, missing/invalid `model_type`, missing/false `norm_topk_prob`, duplicate `no_rope_layer_indices`, and malformed embedding quantization.
+     - Executed `swift test`: **22 tests passed across 2 suites in 0.008s**.

@@ -175,6 +175,162 @@ import Testing
         }
     }
 
+    @Test func validatesOfficialInt4CheckpointWithoutOverrides() throws {
+        var dict = Self.makeValidConfigDict()
+        // Official INT4 has no switch_mlp overrides
+        dict["quantization"] = [
+            "group_size": 64,
+            "bits": 4
+        ]
+        let data = try JSONSerialization.data(withJSONObject: dict)
+        let config = try FlintModelDirectory.parseAndValidateConfig(data: data)
+
+        #expect(config.routedExpertBits == 4)
+        #expect(config.embeddingBits == 4)
+        #expect(config.groupSize == 64)
+    }
+
+    @Test func validatesOfficialInt4CheckpointWithMlxExportEmbeddingBits() throws {
+        var dict = Self.makeValidConfigDict()
+        dict["quantization"] = [
+            "group_size": 64,
+            "bits": 4
+        ]
+        dict["mlx_export"] = [
+            "bits": 4,
+            "embedding_bits": 8,
+            "routed_expert_bits": 4
+        ]
+        let data = try JSONSerialization.data(withJSONObject: dict)
+        let config = try FlintModelDirectory.parseAndValidateConfig(data: data)
+
+        #expect(config.routedExpertBits == 4)
+        #expect(config.embeddingBits == 8)
+        #expect(config.groupSize == 64)
+    }
+
+    @Test func rejectsPartialMixed3BitOverrides() throws {
+        var dict = Self.makeValidConfigDict()
+        var quant = dict["quantization"] as! [String: Any]
+        // Remove exactly 1 of the 141 overrides (leaving 140)
+        quant.removeValue(forKey: "model.layers.48.mlp.switch_mlp.down_proj")
+        dict["quantization"] = quant
+
+        let data = try JSONSerialization.data(withJSONObject: dict)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: data)
+        }
+    }
+
+    @Test func rejectsSingleMixed3BitOverride() throws {
+        var dict = Self.makeValidConfigDict()
+        // Quantization with base 4-bit plus only 1 switch_mlp override
+        dict["quantization"] = [
+            "group_size": 64,
+            "bits": 4,
+            "model.layers.2.mlp.switch_mlp.gate_proj": [
+                "group_size": 64,
+                "bits": 3
+            ]
+        ]
+
+        let data = try JSONSerialization.data(withJSONObject: dict)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: data)
+        }
+    }
+
+    @Test func rejectsExtraneousSwitchMlpOverride() throws {
+        var dict = Self.makeValidConfigDict()
+        var quant = dict["quantization"] as! [String: Any]
+        // Inject an invalid switch_mlp projection on layer 0 (which is dense)
+        quant["model.layers.0.mlp.switch_mlp.gate_proj"] = [
+            "group_size": 64,
+            "bits": 3
+        ]
+        dict["quantization"] = quant
+
+        let data = try JSONSerialization.data(withJSONObject: dict)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: data)
+        }
+    }
+
+    @Test func rejectsUnsupportedGroupSizeInExpertOverride() throws {
+        var dict = Self.makeValidConfigDict()
+        var quant = dict["quantization"] as! [String: Any]
+        quant["model.layers.2.mlp.switch_mlp.gate_proj"] = [
+            "group_size": 128,
+            "bits": 3
+        ]
+        dict["quantization"] = quant
+
+        let data = try JSONSerialization.data(withJSONObject: dict)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: data)
+        }
+    }
+
+    @Test func rejectsMissingOrInvalidModelType() throws {
+        var dictMissing = Self.makeValidConfigDict()
+        dictMissing.removeValue(forKey: "model_type")
+        let dataMissing = try JSONSerialization.data(withJSONObject: dictMissing)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: dataMissing)
+        }
+
+        var dictInvalid = Self.makeValidConfigDict()
+        dictInvalid["model_type"] = "qwen"
+        let dataInvalid = try JSONSerialization.data(withJSONObject: dictInvalid)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: dataInvalid)
+        }
+    }
+
+    @Test func rejectsMissingOrInvalidNormTopkProb() throws {
+        var dictMissing = Self.makeValidConfigDict()
+        dictMissing.removeValue(forKey: "norm_topk_prob")
+        let dataMissing = try JSONSerialization.data(withJSONObject: dictMissing)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: dataMissing)
+        }
+
+        var dictFalse = Self.makeValidConfigDict()
+        dictFalse["norm_topk_prob"] = false
+        let dataFalse = try JSONSerialization.data(withJSONObject: dictFalse)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: dataFalse)
+        }
+    }
+
+    @Test func rejectsDuplicateNoRopeIndices() throws {
+        var dict = Self.makeValidConfigDict()
+        // Duplicate index 0 to replace 48, keeping count 14 but introducing duplicate
+        var indices = Array(FlintConfig.expectedFullAttentionIndices).sorted()
+        indices[indices.count - 1] = 0 // replace 48 with 0
+        dict["no_rope_layer_indices"] = indices
+
+        let data = try JSONSerialization.data(withJSONObject: dict)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: data)
+        }
+    }
+
+    @Test func rejectsMalformedEmbeddingQuantization() throws {
+        var dict = Self.makeValidConfigDict()
+        var quant = dict["quantization"] as! [String: Any]
+        quant["model.embed_tokens"] = [
+            "group_size": 64,
+            "bits": 2 // unsupported bit depth
+        ]
+        dict["quantization"] = quant
+
+        let data = try JSONSerialization.data(withJSONObject: dict)
+        #expect(throws: FlintModelDirectoryError.self) {
+            try FlintModelDirectory.parseAndValidateConfig(data: data)
+        }
+    }
+
     @Test func rejectsInvalidTensorIndexShardNames() throws {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("flint-test-shards-\(UUID().uuidString)")

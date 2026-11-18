@@ -1,0 +1,91 @@
+{
+  "model_path": "/Users/tanishq/models/flint-mixed-3-4bit",
+  "mlx_version": "0.32.4",
+  "mlx_vlm_version": "0.7.12",
+  "model_load_time_s": 4.386562416999368,
+  "load_active_gb": 16.61257130652666,
+  "load_peak_gb": 16.61257130652666,
+  "load_rss_gb": 6.53741455078125,
+  "short_prompt_runs": [
+    {
+      "run": 1,
+      "prompt_tokens": 13,
+      "gen_tokens": 64,
+      "total_time_s": 3.0136722500028554,
+      "prompt_tps": 13.763785125644135,
+      "generation_tps": 70.39164011279588,
+      "mlx_active_gb": 16.613135881721973,
+      "mlx_peak_gb": 16.676539167761803,
+      "rss_gb": 6.53741455078125,
+      "swap": "1425.19M",
+      "text_preview": " The cache should have a maximum capacity, and when the cache exceeds this capacity, it should evict the least recently "
+    },
+    {
+      "run": 2,
+      "prompt_tokens": 13,
+      "gen_tokens": 64,
+      "total_time_s": 1.0007435419975081,
+      "prompt_tps": 161.9125609897364,
+      "generation_tps": 69.90680139971396,
+      "mlx_active_gb": 16.613135881721973,
+      "mlx_peak_gb": 16.677063688635826,
+      "rss_gb": 6.53741455078125,
+      "swap": "1417.19M",
+      "text_preview": " The cache should have a maximum capacity, and when the cache exceeds this capacity, it should evict the least recently "
+    },
+    {
+      "run": 3,
+      "prompt_tokens": 13,
+      "gen_tokens": 64,
+      "total_time_s": 0.9990843750056229,
+      "prompt_tps": 161.50999421568676,
+      "generation_tps": 70.01753768683709,
+      "mlx_active_gb": 16.613135881721973,
+      "mlx_peak_gb": 16.67708085477352,
+      "rss_gb": 6.53741455078125,
+      "swap": "1417.19M",
+      "text_preview": " The cache should have a maximum capacity, and when the cache exceeds this capacity, it should evict the least recently "
+    }
+  ],
+  "long_prompt_runs": [
+    {
+      "run": 1,
+      "prompt_tokens": 7831,
+      "gen_tokens": 32,
+      "total_time_s": 6.914466791997256,
+      "prompt_tps": 1228.8093658812732,
+      "generation_tps": 60.31036755462945,
+      "mlx_active_gb": 16.613135881721973,
+      "mlx_peak_gb": 17.675897024571896,
+      "rss_gb": 6.53741455078125,
+      "swap": "1401.19M",
+      "text_preview": "public struct MatrixMultiplier {     public let rows: Int     public let cols: Int     public let data: [Float]     publ"
+    },
+    {
+      "run": 2,
+      "prompt_tokens": 7831,
+      "gen_tokens": 32,
+      "total_time_s": 6.479922415994224,
+      "prompt_tps": 1319.8891967062407,
+      "generation_tps": 60.63383204979324,
+      "mlx_active_gb": 16.613135881721973,
+      "mlx_peak_gb": 17.675897024571896,
+      "rss_gb": 6.53741455078125,
+      "swap": "1401.19M",
+      "text_preview": "public struct MatrixMultiplier {     public let rows: Int     public let cols: Int     public let data: [Float]     publ"
+    },
+    {
+      "run": 3,
+      "prompt_tokens": 7831,
+      "gen_tokens": 32,
+      "total_time_s": 6.506516834000649,
+      "prompt_tps": 1313.9897336781955,
+      "generation_tps": 59.83967171697855,
+      "mlx_active_gb": 16.613135881721973,
+      "mlx_peak_gb": 17.675897024571896,
+      "rss_gb": 6.53741455078125,
+      "swap": "1361.19M",
+      "text_preview": "public struct MatrixMultiplier {     public let rows: Int     public let cols: Int     public let data: [Float]     publ"
+    }
+  ]
+}

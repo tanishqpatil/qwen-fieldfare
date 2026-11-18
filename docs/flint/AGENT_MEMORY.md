@@ -11,18 +11,28 @@ This document is the authoritative recovery guide for agents operating on FlintF
 - **Independent Clone Path**: `/Users/tanishq/dev/product/flint-fieldfare-isolated`
 
 ## Current Milestone Status
-- **F0 (Audit, Architecture & Baseline)**: **COMPLETED & REVISED (Review #001)**.
-  - Empirical all-resident MLX baseline measured on M5 (4.39s load, 17.68 GB peak, +657.6 MB swap, ~70 tok/s decode, ~1,317 tok/s 8K prefill).
-  - Derived SSD streaming bandwidth formula vs hit rate (370.1 MiB/tok cold).
+- **F0 (Audit, Architecture & Baseline)**: **COMPLETED & REVISED (Review #001 & #002)**.
+  - Empirical all-resident MLX baseline measured on M5 (4.39s load, 17.68 GB peak, +657.6 MB swap event, ~70 tok/s decode, ~1,317 tok/s 8K prefill).
+  - Reproducible evidence preserved under version control at `docs/flint/evidence/2026-11-18-baseline/` (`benchmark_flint_mlx.py`, `mlx_flint_benchmark_results.json`, `README.md`).
+  - Derived SSD streaming bandwidth formula vs hit rate (370.125 MiB/tok cold).
   - Clearly separated empirical measurements from theoretical streaming design targets (~3.2 GiB).
-  - Architecture decisions ADR-F001 through ADR-F006 recorded in `docs/flint/DECISIONS.md`.
-- **F1 (Metadata & Weight Loading Infrastructure)**: **IN PROGRESS (Hardening complete, readiness gate)**.
-  - `FlintModelDirectory` hardened: rejects missing mandatory fields, verifies exact 49-layer arrangement (14 full, 35 sliding), and validates all 141 routed-expert projections for consistent bit depth.
-  - `FlintInferenceLease` verified: dedicated lock at `/tmp/flintfieldfare-inference-\(uid).lock`.
-  - Focused test suite: 12 tests passing across 2 suites.
+  - Architecture decisions ADR-F001 through ADR-F007 recorded in `docs/flint/DECISIONS.md`.
+- **F1 (Metadata & Weight Loading Infrastructure)**: **IN PROGRESS (Review #002 hardening complete)**.
+  - `FlintModelDirectory` strictly hardened:
+    - Case A (Official INT4): Base 4-bit, group 64, zero switch_mlp overrides.
+    - Case B (Mixed 3/4-Bit): Strict 141 switch_mlp projection validation with bit depth and group size agreement.
+    - Eliminates all configuration ambiguity: requires `model_type == "flint"`, `norm_topk_prob == true`, duplicate-free `no_rope_layer_indices` matching 14 full-attention layers, and explicit embedding quantization validation.
+    - Safe `pread` buffer handling via `Data.withUnsafeMutableBytes` and `baseAddress.advanced(by:)`.
+  - `FlintInferenceLease`: dedicated lock at `/tmp/flintfieldfare-inference-\(uid).lock`.
+  - Focused test suite: 22 comprehensive positive and negative tests passing in 0.008s.
 - **F2 (Mathematical Primitives & Metal Kernels)**: Pending.
 - **F3 (First Real Flint Token Forward)**: Pending.
 - **F4 (Bounded Expert Streaming)**: Pending.
+
+## Strict Workspace Isolation Rules
+1. **Flint Operations**: Execute all edits, builds, tests, and git operations EXCLUSIVELY in `/Users/tanishq/dev/product/flint-fieldfare-isolated`.
+2. **Qwen Preservation**: NEVER write, pull, restore, checkout, or modify `/Users/tanishq/dev/product/qwen-fieldfare`.
+3. **Symlink Invariant**: Leave the existing `/Users/tanishq/dev/product/flint-fieldfare` symlink untouched until explicit user/reviewer authorization is granted.
 
 ## Key Architectural Invariants
 1. **Never use Qwen Recurrent/DeltaNet code for Flint**: Flint is a pure Transformer MoE (14 full-attention, 35 sliding-attention with window 513).
@@ -32,6 +42,5 @@ This document is the authoritative recovery guide for agents operating on FlintF
 5. **Never Commit Weights**: Checkpoint files remain strictly external.
 
 ## Immediate Next Steps
-1. Review #001 gate review with user.
-2. Receive authorization on workspace transition / symlink swap to make `/Users/tanishq/dev/product/flint-fieldfare` the official clone.
-3. Proceed to F1-03 & F1-04: Implement `FlintResidentLoader.swift` and `FlintSafetensorsFile`.
+1. Submit Review #002 report.
+2. Await gate review and explicit authorization before proceeding to F1-03 (`FlintResidentLoader.swift`).

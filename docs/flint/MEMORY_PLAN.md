@@ -40,7 +40,10 @@ Prior to implementing the streaming engine, an empirical all-resident reference 
   - Run 2: Prefill: **1,319.89 tok/s** (6.48s total), Generation: **60.63 tok/s**, Peak: 17.68 GB
   - Run 3: Prefill: **1,313.99 tok/s** (6.51s total), Generation: **59.84 tok/s**, Peak: 17.68 GB
 
-**Key Finding**: While all-resident execution achieves ~70 tok/s decode on the M5, holding 17.7 GB resident in unified memory instantly pushed macOS into swapping (+657.6 MB swap increase), reducing headroom for development environments, agent tooling, and multitasking.
+### System Memory Dynamics: Correlation vs. Causality
+During the benchmark run, `vm.swapusage` increased from an initial `767.56 MB` to `1,425.19 MB` (+657.6 MB) before stabilizing between `1,361 MB` and `1,417 MB`.
+- **System Memory Event**: On a 32 GB unified memory machine running concurrent development tools (IDE, terminals, Antigravity, browser), allocating ~17.68 GB for MLX elevated system memory pressure, prompting macOS to page out inactive background pages.
+- **Rigor Clarification**: This swap increase is an **observed system-level memory response under high unified memory allocation**, not proof of active memory thrashing during decode. Steady decode throughput (~70 tok/s short, ~60 tok/s long context) demonstrates that active model parameters and KV cache remained in physical RAM during generation.
 
 ---
 
@@ -53,34 +56,48 @@ Prior to implementing the streaming engine, an empirical all-resident reference 
 | **3. Attention KV Cache** | Theoretical Estimate | 35 sliding layers (max $513 \times 2,048\text{ B} = 36.8\text{ MB}$) + 14 full layers ($14 \times 2,048\text{ B/token}$). At 8,192 context: | **0.26 GiB** |
 | **4. Metal Activation & Scratch** | Engineering Estimate | Batch 1 decode activations, router scores, and $6 \times 2,048$ intermediate reduction buffers | **~0.15 GiB** |
 | **5. Process Runtime & Heap** | Engineering Estimate | Swift runtime, Tokenizer Trie, SwiftNIO event loops | **~0.20 GiB** |
-| **6. Total Planned Working Set** | **Target Budget (F3/F4)** | Sum of Components 1 through 5 (with 1,024 cache slots and 8K context) | **~3.20 GiB** |
+| **6. Total Planned Working Set** | **Target Design Budget** | Sum of Components 1 through 5 (with 1,024 cache slots and 8K context) | **~3.20 GiB** |
 | **7. Measured All-Resident Peak** | **Empirically Measured** | Real MLX peak allocation on M5 with 8K context | **17.68 GB** |
 
-> **Note on Terminology**: The ~3.2 GiB figure is the **design target budget** for FlintFieldfare's bounded streaming engine. It is NOT yet a measured runtime footprint of FlintFieldfare, as the production streaming runner is under active development in milestones F1–F4.
+> **Important Terminology**: The **~3.2 GiB** figure is strictly an **architectural design target budget** for FlintFieldfare's bounded streaming engine. It is NOT a measured runtime footprint of FlintFieldfare, as the streaming runner is under active development in milestones F1–F4.
 
 ---
 
-## 4. Theoretical SSD I/O Bandwidth vs Expert-Cache Hit Rate
+## 4. Engineering Trade-off: All-Resident vs. Bounded Streaming
 
-Flint evaluates $K = 6$ routed experts per MoE layer across 47 MoE layers = **282 expert evaluations per token**.
-Each 3-bit expert record is $1,376,256\text{ bytes} \approx 1.3125\text{ MiB}$.
+The choice between all-resident execution and bounded expert streaming represents a direct engineering trade-off:
+
+1. **All-Resident Execution (Maximize Inference Throughput)**:
+   - When 18+ GB of RAM is unreserved and dedicated to inference, all-resident execution maximizes performance: ~70 tok/s decode and ~1,317 tok/s prefill on M5.
+   - Best suited for dedicated inference servers or single-purpose benchmark tasks.
+
+2. **Bounded Expert Streaming (Coexistence in Multitasking Workstations)**:
+   - When a developer operates on a 32 GB (or 24 GB) machine running Xcode, language servers, browsers, Docker, or multiple agent conversations, allocating 18 GB to model weights leaves insufficient physical RAM for other tasks, inducing background paging.
+   - Bounded streaming aims to constrain the inference working set to the **~3.2 GiB design budget**, leaving >20 GB of unified memory available for the host OS and developer workflows, trading peak decode speed for seamless local coexistence.
+
+---
+
+## 5. Theoretical SSD I/O Bandwidth vs Expert-Cache Hit Rate
+
+Flint evaluates $K = 6$ routed experts per MoE layer across 47 MoE layers = **282 expert evaluations per token**.  
+Each 3-bit expert record is $1,376,256\text{ bytes} \approx 1.3125\text{ MiB}$ (1.376 MB decimal).  
 Cold payload per token (0% cache hit):
-$$\text{Payload}_{\text{cold}} = 282 \times 1.3125\text{ MiB} = \mathbf{370.1\text{ MiB / token}}$$
+$$\text{Payload}_{\text{cold}} = 282 \times 1.3125\text{ MiB} = \mathbf{370.125\text{ MiB / token}}\quad (388.11\text{ MB / token})$$
 
 The theoretical required SSD read bandwidth as a function of cache hit rate $H \in [0.0, 1.0]$ and decode speed $R$ (tokens/second) is:
-$$\text{Bandwidth}(H, R) = R \times 370.1\text{ MiB} \times (1 - H)$$
+$$\text{Bandwidth}(H, R) = R \times 370.125\text{ MiB} \times (1 - H)$$
 
-| Cache Hit Rate ($H$) | Misses / Token | Read Traffic / Token | SSD Bandwidth @ 15 tok/s | SSD Bandwidth @ 25 tok/s | Feasibility on Apple M5 SSD (~3.5–5.0 GB/s read) |
-|---|---|---|---|---|---|
-| **0.0% (Cold)** | 282 | 370.1 MiB | 5.55 GB/s | 9.25 GB/s | **Exceeds SSD sequential throughput** |
-| **30.0%** | 197 | 258.6 MiB | 3.88 GB/s | 6.46 GB/s | Near SSD saturation |
-| **50.0%** | 141 | 185.1 MiB | 2.78 GB/s | 4.63 GB/s | Viable at moderate decode speeds |
-| **70.0%** | 85 | 111.0 MiB | 1.67 GB/s | 2.78 GB/s | **Comfortably viable** |
-| **85.0%** | 42 | 55.5 MiB | 0.83 GB/s | 1.39 GB/s | High efficiency |
-| **95.0%** | 14 | 18.5 MiB | 0.28 GB/s | 0.46 GB/s | Minimal I/O overhead |
+| Cache Hit Rate ($H$) | Misses / Token | Read Traffic / Token (MiB) | Read Traffic / Token (MB) | SSD Bandwidth @ 15 tok/s (GB/s) | SSD Bandwidth @ 20 tok/s (GB/s) | Feasibility on Apple M5 SSD (~3.5–5.0 GB/s read) |
+|---|---|---|---|---|---|---|
+| **0.0% (Cold Start)** | 282 | 370.125 MiB | 388.11 MB | 5.82 GB/s | 7.76 GB/s | **Exceeds SSD sequential throughput** |
+| **50.0%** | 141 | 185.06 MiB | 194.05 MB | 2.91 GB/s | 3.88 GB/s | Approaching SSD saturation |
+| **70.0% (Hypothesis)** | 84.6 | 111.04 MiB | 116.43 MB | 1.75 GB/s | 2.33 GB/s | **Comfortably viable** |
+| **80.0% (Hypothesis)** | 56.4 | 74.025 MiB | 77.62 MB | 1.16 GB/s | 1.55 GB/s | **Highly efficient** |
+| **90.0% (Hypothesis)** | 28.2 | 37.01 MiB | 38.81 MB | 0.58 GB/s | 0.78 GB/s | Minimal I/O overhead |
+| **95.0% (Hypothesis)** | 14.1 | 18.51 MiB | 19.41 MB | 0.29 GB/s | 0.39 GB/s | Near memory-resident performance |
 
 ### I/O Feasibility Conclusion
 
-1. **Cold-start streaming** at 0% cache hit rate cannot match all-resident decode speed because streaming 282 experts per token would require >5 GB/s SSD bandwidth.
-2. Bounded expert streaming provides its primary value by **capping unified memory usage at ~3.2 GiB** instead of 18–24 GB, completely preventing system memory thrashing and swap stalls.
-3. Interactive streaming speeds (15–30 tok/s) are achievable once the expert cache warms up to $\ge 70\text{--}85\%$ hit rate.
+1. **Cold-start streaming** at 0% cache hit rate cannot match all-resident decode speed because streaming 282 experts per token would require >5.8 GB/s SSD bandwidth.
+2. Bounded expert streaming provides its primary value by **capping unified memory usage at the ~3.2 GiB design budget**, preventing memory pressure and preserving system responsiveness.
+3. Interactive streaming speeds (15–20 tok/s) are theoretically feasible under the **working hypothesis** that expert cache hit rates reach $\ge 70\text{--}85\%$ on repeated coding prompts. **This hit-rate assumption remains an explicit hypothesis** to be empirically tested and measured in milestone F4.

@@ -17,7 +17,12 @@
 
 ## 1. Verified All-Resident Reference Baseline (Measured on M5)
 
-The following empirical measurements were captured on 2026-11-18 using `mlx_vlm` 0.7.12 with `/Users/tanishq/models/flint-mixed-3-4bit` (all-resident in unified memory, temperature 0.0 deterministic greedy):
+The following empirical measurements were captured on 2026-11-18 using `mlx_vlm` 0.7.12 with `/Users/tanishq/models/flint-mixed-3-4bit` (all-resident in unified memory, temperature 0.0 deterministic greedy).
+
+The exact benchmark implementation and structured JSON metrics are preserved under version control at:
+- Driver: `docs/flint/evidence/2026-11-18-baseline/benchmark_flint_mlx.py`
+- Raw data: `docs/flint/evidence/2026-11-18-baseline/mlx_flint_benchmark_results.json`
+- Methodology: `docs/flint/evidence/2026-11-18-baseline/README.md`
 
 ### 1.1 Model Loading
 
@@ -56,10 +61,10 @@ The following empirical measurements were captured on 2026-11-18 using `mlx_vlm`
 
 ---
 
-## 2. Performance Analysis & Target Comparison
+## 2. Performance Analysis & Engineering Trade-off
 
-1. **All-Resident Strengths**: Excellent prefill throughput on long context (~1,317 tok/s) due to chunked SDPA, and steady decode throughput (~60–70 tok/s).
-2. **All-Resident Cost**: Peak memory reaches **17.68 GB**, triggering **>600 MB** of system swap activity on a 32 GB machine and severely limiting memory headroom for concurrent developer tasks.
-3. **FlintFieldfare Streaming Target**:
-   - Primary metric: Bounded memory footprint of **~3.2 GiB** (saving >14 GB unified memory).
-   - Secondary metric: Interactive decode throughput (>15–30 tok/s) once the expert cache achieves $\ge 70\%$ hit rate.
+1. **All-Resident Throughput**: All-resident execution achieves excellent throughput (~70 tok/s decode, ~1,317 tok/s prefill on M5) when unified memory is dedicated solely to inference.
+2. **System Memory Footprint**: Holding 17.7 GB resident elevates system memory pressure, resulting in an observed swap increase from 767.56 MB to 1,425.19 MB (+657.6 MB). As detailed in the methodology documentation, this represents a system memory response under high allocation rather than sustained thrashing during decode (generation speed remained steady at ~60–70 tok/s).
+3. **FlintFieldfare Streaming Design Objective**:
+   - Primary metric: Bounded memory footprint targeting an **architectural budget of ~3.2 GiB** (saving >14 GB unified memory for developer multitasking).
+   - Secondary metric: Interactive decode throughput (15–20 tok/s) under the **working hypothesis** that expert cache hit rates reach $\ge 70\text{--}85\%$ on structured coding workloads. This hypothesis will be qualified empirically in milestone F4.

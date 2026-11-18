@@ -182,26 +182,35 @@ public enum FlintModelDirectory {
         }
         defer { close(fd) }
         var info = stat()
-        guard fstat(fd, &info) == 0, info.st_mode & S_IFMT == S_IFREG else {
+        guard fstat(fd, &info) == 0, (info.st_mode & S_IFMT) == S_IFREG else {
             throw FlintModelDirectoryError.invalidMetadata("\(url.lastPathComponent) is not a regular file")
         }
         guard info.st_size > 0 else {
             throw FlintModelDirectoryError.invalidMetadata("\(url.lastPathComponent) is empty")
         }
         guard info.st_size <= off_t(maximumMetadataBytes) else {
-            throw FlintModelDirectoryError.invalidMetadata("\(url.lastPathComponent) exceeds maximum metadata bound")
+            throw FlintModelDirectoryError.invalidMetadata("\(url.lastPathComponent) exceeds maximum metadata bound (\(info.st_size) > \(maximumMetadataBytes) bytes)")
         }
         let length = Int(info.st_size)
-        var buffer = [UInt8](repeating: 0, count: length)
+        var data = Data(count: length)
         var totalRead = 0
-        while totalRead < length {
-            let bytes = pread(fd, &buffer[totalRead], length - totalRead, off_t(totalRead))
-            guard bytes > 0 else {
-                throw FlintModelDirectoryError.invalidMetadata("short read on \(url.lastPathComponent)")
+        try data.withUnsafeMutableBytes { (rawBuffer: UnsafeMutableRawBufferPointer) throws in
+            guard let baseAddress = rawBuffer.baseAddress else {
+                throw FlintModelDirectoryError.invalidMetadata("failed to obtain memory buffer for \(url.lastPathComponent)")
             }
-            totalRead += bytes
+            while totalRead < length {
+                let bytes = pread(fd, baseAddress.advanced(by: totalRead), length - totalRead, off_t(totalRead))
+                if bytes < 0 {
+                    let err = errno
+                    throw FlintModelDirectoryError.invalidMetadata("read failed on \(url.lastPathComponent) with errno \(err): \(String(cString: strerror(err)))")
+                }
+                guard bytes > 0 else {
+                    throw FlintModelDirectoryError.invalidMetadata("unexpected EOF / short read on \(url.lastPathComponent): read \(totalRead) of \(length) bytes")
+                }
+                totalRead += bytes
+            }
         }
-        return Data(buffer)
+        return data
     }
 
     public static func parseAndValidateConfig(data: Data) throws -> FlintConfig {
@@ -221,11 +230,12 @@ public enum FlintModelDirectory {
             throw FlintModelDirectoryError.invalidMetadata("architectures must include FlintForCausalLM")
         }
 
-        // Model type check
-        if let modelType = dict["model_type"] as? String {
-            guard modelType == "flint" else {
-                throw FlintModelDirectoryError.invalidMetadata("unsupported model_type: \(modelType)")
-            }
+        // Model type check: mandatory, must be "flint"
+        guard let modelType = dict["model_type"] as? String else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: model_type")
+        }
+        guard modelType == "flint" else {
+            throw FlintModelDirectoryError.invalidMetadata("unsupported model_type: \(modelType) (expected flint)")
         }
 
         // Mandatory dimensions - NO SILENT FALLBACKS
@@ -324,9 +334,15 @@ public enum FlintModelDirectory {
             throw FlintModelDirectoryError.invalidMetadata("layer_types full_attention arrangement mismatch: expected \(FlintConfig.expectedFullAttentionIndices.sorted()), got \(fullIndices.sorted())")
         }
 
-        // No-RoPE layer indices validation
+        // No-RoPE layer indices validation: exactly 14 unique indices matching the full-attention layers
         guard let noRopeIndices = dict["no_rope_layer_indices"] as? [Int] else {
             throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: no_rope_layer_indices")
+        }
+        guard noRopeIndices.count == 14 else {
+            throw FlintModelDirectoryError.invalidMetadata("no_rope_layer_indices must contain exactly 14 layer indices, got \(noRopeIndices.count)")
+        }
+        guard Set(noRopeIndices).count == 14 else {
+            throw FlintModelDirectoryError.invalidMetadata("no_rope_layer_indices contains duplicate layer indices: \(noRopeIndices)")
         }
         guard Set(noRopeIndices) == FlintConfig.expectedFullAttentionIndices else {
             throw FlintModelDirectoryError.invalidMetadata("no_rope_layer_indices must exactly match the 14 full-attention layers")
@@ -377,10 +393,11 @@ public enum FlintModelDirectory {
             throw FlintModelDirectoryError.invalidMetadata("router score function must be sigmoid, got \(rScoreFn)")
         }
 
-        if let normTopk = dict["norm_topk_prob"] as? Bool {
-            guard normTopk == true else {
-                throw FlintModelDirectoryError.invalidMetadata("norm_topk_prob must be true")
-            }
+        guard let normTopk = dict["norm_topk_prob"] as? Bool else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: norm_topk_prob")
+        }
+        guard normTopk == true else {
+            throw FlintModelDirectoryError.invalidMetadata("norm_topk_prob must be true for Flint router normalization")
         }
 
         let bosTokenId = dict["bos_token_id"] as? Int ?? 150000
@@ -394,8 +411,9 @@ public enum FlintModelDirectory {
         }
 
         // Comprehensive Quantization Validation
-        guard let quant = dict["quantization"] as? [String: Any] else {
-            throw FlintModelDirectoryError.invalidMetadata("missing mandatory quantization metadata")
+        let quantDict = (dict["quantization"] ?? dict["quantization_config"]) as? [String: Any]
+        guard let quant = quantDict else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory quantization metadata (quantization / quantization_config)")
         }
         guard let baseGroupSize = quant["group_size"] as? Int, baseGroupSize == 64 else {
             throw FlintModelDirectoryError.invalidMetadata("quantization group_size must be 64")
@@ -404,41 +422,105 @@ public enum FlintModelDirectory {
             throw FlintModelDirectoryError.invalidMetadata("base quantization bits must be 4")
         }
 
-        var embeddingBits = 8
-        if let embedQuant = quant["model.embed_tokens"] as? [String: Any] {
-            guard let eb = embedQuant["bits"] as? Int, eb == 8 else {
-                throw FlintModelDirectoryError.invalidMetadata("embedding bits must be 8")
+        // Embedding quantization:
+        // Supported: INT8 (standard MLX/Flint) or INT4 (uniform).
+        // If explicitly in quant["model.embed_tokens"], validate group_size and bits.
+        // Otherwise, inspect mlx_export["embedding_bits"] or default to baseBits.
+        let embeddingBits: Int
+        if let embedVal = quant["model.embed_tokens"] {
+            guard let embedQuant = embedVal as? [String: Any] else {
+                throw FlintModelDirectoryError.invalidMetadata("model.embed_tokens in quantization must be a dictionary")
+            }
+            guard let eb = embedQuant["bits"] as? Int, eb == 8 || eb == 4 else {
+                throw FlintModelDirectoryError.invalidMetadata("unsupported model.embed_tokens bits: \(String(describing: embedQuant["bits"])) (expected 8 or 4)")
+            }
+            guard let eg = embedQuant["group_size"] as? Int, eg == 64 else {
+                throw FlintModelDirectoryError.invalidMetadata("unsupported model.embed_tokens group_size: \(String(describing: embedQuant["group_size"])) (expected 64)")
             }
             embeddingBits = eb
+        } else if let mlxExport = dict["mlx_export"] as? [String: Any],
+                  let eb = mlxExport["embedding_bits"] as? Int {
+            guard eb == 8 || eb == 4 else {
+                throw FlintModelDirectoryError.invalidMetadata("unsupported mlx_export embedding_bits: \(eb) (expected 8 or 4)")
+            }
+            embeddingBits = eb
+        } else {
+            // Unquantized or uniform 4-bit embedding: explicit fallback to baseBits (4)
+            embeddingBits = baseBits
         }
 
-        // Validate EVERY required routed-expert projection across all 47 MoE layers
-        var detectedRoutedBits: Int? = nil
+        // Validate routed expert quantization:
+        // Case A: Official INT4 checkpoint (0 switch_mlp overrides, inherits base 4-bit / group 64)
+        // Case B: Mixed 3/4-bit checkpoint (ALL 141 projections must explicitly exist, have group_size 64, and match bits == 3 or 4)
+        // Any partial count (1..140), extraneous keys, or inconsistent bit depth/group size is rejected.
         let projections = ["gate_proj", "up_proj", "down_proj"]
+        var expectedSwitchMlpKeys: [String] = []
         for layerIdx in 2..<numHiddenLayers {
             for proj in projections {
-                let key = "model.layers.\(layerIdx).mlp.switch_mlp.\(proj)"
-                if let projQuant = quant[key] as? [String: Any] {
-                    guard let g = projQuant["group_size"] as? Int, g == 64 else {
-                        throw FlintModelDirectoryError.invalidMetadata("expert projection \(key) group_size must be 64")
-                    }
-                    guard let b = projQuant["bits"] as? Int, b == 3 || b == 4 else {
-                        throw FlintModelDirectoryError.invalidMetadata("expert projection \(key) bits must be 3 or 4, got \(String(describing: projQuant["bits"]))")
-                    }
-                    if let current = detectedRoutedBits {
-                        guard current == b else {
-                            throw FlintModelDirectoryError.invalidMetadata("inconsistent expert quantization: \(key) has bits=\(b) while other experts have bits=\(current)")
-                        }
-                    } else {
-                        detectedRoutedBits = b
-                    }
-                }
+                expectedSwitchMlpKeys.append("model.layers.\(layerIdx).mlp.switch_mlp.\(proj)")
             }
         }
-        let routedBits = detectedRoutedBits ?? baseBits
+        let expectedKeySet = Set(expectedSwitchMlpKeys)
+        precondition(expectedSwitchMlpKeys.count == 141, "Invariant: Flint has 47 MoE layers * 3 projections = 141")
+
+        var switchMlpOverrides: [String: (bits: Int, groupSize: Int)] = [:]
+        for (key, val) in quant {
+            guard key.contains("switch_mlp") else { continue }
+            guard let projDict = val as? [String: Any] else {
+                throw FlintModelDirectoryError.invalidMetadata("quantization entry for \(key) must be a dictionary")
+            }
+            guard let b = projDict["bits"] as? Int else {
+                throw FlintModelDirectoryError.invalidMetadata("missing bits in quantization entry for \(key)")
+            }
+            guard let g = projDict["group_size"] as? Int else {
+                throw FlintModelDirectoryError.invalidMetadata("missing group_size in quantization entry for \(key)")
+            }
+            switchMlpOverrides[key] = (bits: b, groupSize: g)
+        }
+
+        let routedBits: Int
+        if switchMlpOverrides.isEmpty {
+            // Case A: Official INT4 checkpoint
+            routedBits = baseBits
+        } else if switchMlpOverrides.count == 141 {
+            // Case B: Mixed 3/4-bit checkpoint
+            let foundKeys = Set(switchMlpOverrides.keys)
+            guard foundKeys == expectedKeySet else {
+                let missing = expectedKeySet.subtracting(foundKeys)
+                let extra = foundKeys.subtracting(expectedKeySet)
+                throw FlintModelDirectoryError.invalidMetadata("switch_mlp overrides key mismatch: \(missing.count) missing, \(extra.count) unexpected extra")
+            }
+
+            guard let firstOverride = switchMlpOverrides[expectedSwitchMlpKeys[0]] else {
+                throw FlintModelDirectoryError.invalidMetadata("missing expected switch_mlp override")
+            }
+            guard firstOverride.bits == 3 || firstOverride.bits == 4 else {
+                throw FlintModelDirectoryError.invalidMetadata("unsupported routed expert bits: \(firstOverride.bits) (expected 3 or 4)")
+            }
+            guard firstOverride.groupSize == 64 else {
+                throw FlintModelDirectoryError.invalidMetadata("unsupported routed expert group_size: \(firstOverride.groupSize) (expected 64)")
+            }
+
+            for key in expectedSwitchMlpKeys {
+                let override = switchMlpOverrides[key]!
+                guard override.bits == firstOverride.bits else {
+                    throw FlintModelDirectoryError.invalidMetadata("inconsistent expert quantization: \(key) has bits=\(override.bits), expected \(firstOverride.bits)")
+                }
+                guard override.groupSize == 64 else {
+                    throw FlintModelDirectoryError.invalidMetadata("inconsistent expert quantization: \(key) has group_size=\(override.groupSize), expected 64")
+                }
+            }
+            routedBits = firstOverride.bits
+        } else {
+            // Incomplete or invalid mixed overrides (e.g. 1..140 overrides or extraneous projections)
+            let foundKeys = Set(switchMlpOverrides.keys)
+            let missing = expectedKeySet.subtracting(foundKeys)
+            let extra = foundKeys.subtracting(expectedKeySet)
+            throw FlintModelDirectoryError.invalidMetadata("incomplete or invalid mixed quantization: found \(switchMlpOverrides.count) switch_mlp overrides, expected 0 (INT4) or 141 (Mixed). Missing: \(missing.count), Extra: \(extra.count)")
+        }
 
         return FlintConfig(
-            modelType: dict["model_type"] as? String ?? "flint",
+            modelType: modelType,
             hiddenSize: hiddenSize,
             intermediateSize: intermediateSize,
             numHiddenLayers: numHiddenLayers,
