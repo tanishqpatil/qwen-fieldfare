@@ -2178,11 +2178,12 @@ kernel void qwen_cached_moe_gate_up_subset_q4_simd_f32(
     }
 }
 
-kernel void qwen_cached_moe_down_subset_q4_simd_f32(
+// Both residency subsets write disjoint rows addressed by router position.
+kernel void qwen_cached_moe_down_by_position_q4_simd_f32(
     device const uchar* cache_arena       [[buffer(0)]],
     device const float* batched_act       [[buffer(1)]],
     device const float* scores            [[buffer(2)]],
-    device float* routed_out              [[buffer(3)]],
+    device float* contributions           [[buffer(3)]],
     constant uint* slot_indices           [[buffer(4)]],
     constant uint* expert_positions       [[buffer(5)]],
     constant uint& expert_count           [[buffer(6)]],
@@ -2190,40 +2191,28 @@ kernel void qwen_cached_moe_down_subset_q4_simd_f32(
     uint sg_idx                           [[simdgroup_index_in_threadgroup]],
     uint lane                             [[thread_index_in_simdgroup]]
 ) {
-    threadgroup float partial[8];
-    if (row >= 2048) return;
-    float weighted = 0.0f;
-    if (sg_idx < expert_count) {
-        const uint position = expert_positions[sg_idx];
-        const uint slot = slot_indices[position];
-        device const uchar* base = cache_arena + slot * 1769472;
-        const float value = qwen_q4_row_simd_f32(
-            base + 1179648, base + 1703936, base + 1736704,
-            batched_act + position * 512, row, 512, 0, 0, 0, lane);
-        if (lane == 0) weighted = value * scores[position];
-    }
-    if (lane == 0) partial[sg_idx] = weighted;
-    threadgroup_barrier(mem_flags::mem_threadgroup);
-    if (sg_idx == 0 && lane == 0) {
-        routed_out[row] = partial[0] + partial[1] + partial[2] + partial[3]
-                        + partial[4] + partial[5] + partial[6] + partial[7];
-    }
+    if (row >= 2048 || sg_idx >= expert_count) return;
+    const uint position = expert_positions[sg_idx];
+    const uint slot = slot_indices[position];
+    device const uchar* base = cache_arena + slot * 1769472;
+    const float value = qwen_q4_row_simd_f32(
+        base + 1179648, base + 1703936, base + 1736704,
+        batched_act + position * 512, row, 512, 0, 0, 0, lane);
+    if (lane == 0) contributions[position * 2048 + row] = value * scores[position];
 }
 
-kernel void qwen_combine_cached_moe_subsets_f32(
-    device const float* hit_out       [[buffer(0)]],
-    device const float* miss_out      [[buffer(1)]],
-    device const float* shared_out    [[buffer(2)]],
-    device const float* attn_res      [[buffer(3)]],
-    device float* cur_out             [[buffer(4)]],
-    constant uint& hit_count          [[buffer(5)]],
-    constant uint& miss_count         [[buffer(6)]],
-    uint gid                          [[thread_position_in_grid]]
+// Sum router positions after both subsets are complete. Cache residency never partitions this sum.
+kernel void qwen_combine_cached_moe_by_position_f32(
+    device const float* contributions [[buffer(0)]],
+    device const float* shared_out    [[buffer(1)]],
+    device const float* attn_res      [[buffer(2)]],
+    device float* cur_out             [[buffer(3)]],
+    uint row                          [[thread_position_in_grid]]
 ) {
-    if (gid >= 2048) return;
-    const float hit = hit_count > 0 ? hit_out[gid] : 0.0f;
-    const float miss = miss_count > 0 ? miss_out[gid] : 0.0f;
-    cur_out[gid] = attn_res[gid] + shared_out[gid] + hit + miss;
+    if (row >= 2048) return;
+    float routed = contributions[row];
+    for (uint i = 1; i < 8; ++i) routed += contributions[i * 2048 + row];
+    cur_out[row] = attn_res[row] + shared_out[row] + routed;
 }
 
 inline float qwen_q8_row_simd_f32(

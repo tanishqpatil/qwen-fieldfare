@@ -76,13 +76,17 @@ public struct QwenActiveStreamingMemoryConfiguration: Equatable, Sendable {
                 + linearAttentionLayerCount * ((8_192 * 4 * 4) + (32 * 4) + (32 * 4) + (128 * 4))
                 + fullAttentionLayerCount * 2 * 256 * 4 // Q/K norms
         )
-    public static let fixedScratchBytes: UInt64 = 1_341_348
+    static let routedContributionBytes = expertsPerLayer * 2_048 * MemoryLayout<Float>.stride
+    // Replace the two former subset sums with eight router-position rows.
+    private static let routedScratchGrowth = UInt64(routedContributionBytes - 2 * 2_048 * MemoryLayout<Float>.stride)
+    public static let fixedScratchBytes: UInt64 = 1_341_348 + routedScratchGrowth
 
     /// Zero-copy LM-head mapping still has Metal accounting and allocator
     /// overhead. This conservative reserve also leaves headroom below the user
     /// target for page alignment and small command resources. It was calibrated
-    /// to retain the prior 5 GiB / 8K 2,183-slot profile.
-    public static let mappedModelAndSafetyReserveBytes: UInt64 = 366_570_000
+    /// to retain the prior 5 GiB / 8K 2,183-slot profile. Charge the small
+    /// router scratch increase to this reserve so cache capacities stay fixed.
+    public static let mappedModelAndSafetyReserveBytes: UInt64 = 366_570_000 - routedScratchGrowth
 
     public static let perContextKVBytes: UInt64 =
         UInt64(fullAttentionLayerCount * 2 * 2 * 256 * MemoryLayout<Float16>.size)

@@ -233,8 +233,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
     private let batchedActBuf: MTLBuffer
     private let shActBuf: MTLBuffer
     private let sharedOutBuf: MTLBuffer
-    private let routedHitOutBuf: MTLBuffer
-    private let routedMissOutBuf: MTLBuffer
+    private let routedContributionsBuf: MTLBuffer
     private let expertIndicesBuf: MTLBuffer
     private let activeSlotIndicesBuf: MTLBuffer
     private let hitExpertPositionsBuf: MTLBuffer
@@ -279,8 +278,8 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
     private let cachedMoeGateUpSiluSimdPipe: MTLComputePipelineState
     private let cachedMoeDownResidualSimdPipe: MTLComputePipelineState
     private let cachedMoeGateUpSubsetSimdPipe: MTLComputePipelineState
-    private let cachedMoeDownSubsetSimdPipe: MTLComputePipelineState
-    private let combineMoeSubsetsPipe: MTLComputePipelineState
+    private let cachedMoeDownByPositionSimdPipe: MTLComputePipelineState
+    private let combineMoEByPositionPipe: MTLComputePipelineState
     private let routerQ8LogitsSimdPipe: MTLComputePipelineState
     private let routerTop8Pipe: MTLComputePipelineState
 
@@ -364,8 +363,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
               let bab = device.makeBuffer(length: 8 * 512 * 4, options: .storageModeShared),
               let sab = device.makeBuffer(length: 512 * 4, options: .storageModeShared),
               let sob = device.makeBuffer(length: 2048 * 4, options: .storageModeShared),
-              let rhob = device.makeBuffer(length: 2048 * 4, options: .storageModeShared),
-              let rmob = device.makeBuffer(length: 2048 * 4, options: .storageModeShared),
+              let rcb = device.makeBuffer(length: QwenActiveStreamingMemoryConfiguration.routedContributionBytes, options: .storageModeShared),
               let eib = device.makeBuffer(length: 8 * 4, options: .storageModeShared),
               let asib = device.makeBuffer(length: 8 * 4, options: .storageModeShared),
               let hepb = device.makeBuffer(length: 8 * 4, options: .storageModeShared),
@@ -387,7 +385,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         self.cosBuf = cosB; self.sinBuf = sinB
         self.attnOutBuf = aob; self.attnResBuf = arb; self.normMLPBuf = nmb
         self.batchedActBuf = bab; self.shActBuf = sab; self.sharedOutBuf = sob
-        self.routedHitOutBuf = rhob; self.routedMissOutBuf = rmob
+        self.routedContributionsBuf = rcb
         self.expertIndicesBuf = eib; self.activeSlotIndicesBuf = asib
         self.hitExpertPositionsBuf = hepb; self.missExpertPositionsBuf = mepb
         self.routerLogitsBuf = rlb
@@ -426,8 +424,8 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         self.cachedMoeGateUpSiluSimdPipe = try metalContext.pipeline("qwen_cached_moe_gate_up_silu_q4_simd_f32")
         self.cachedMoeDownResidualSimdPipe = try metalContext.pipeline("qwen_cached_moe_down_residual_q4_simd_f32")
         self.cachedMoeGateUpSubsetSimdPipe = try metalContext.pipeline("qwen_cached_moe_gate_up_subset_q4_simd_f32")
-        self.cachedMoeDownSubsetSimdPipe = try metalContext.pipeline("qwen_cached_moe_down_subset_q4_simd_f32")
-        self.combineMoeSubsetsPipe = try metalContext.pipeline("qwen_combine_cached_moe_subsets_f32")
+        self.cachedMoeDownByPositionSimdPipe = try metalContext.pipeline("qwen_cached_moe_down_by_position_q4_simd_f32")
+        self.combineMoEByPositionPipe = try metalContext.pipeline("qwen_combine_cached_moe_by_position_f32")
         self.routerQ8LogitsSimdPipe = try metalContext.pipeline("qwen_router_q8_logits_simd_f32")
         self.routerTop8Pipe = try metalContext.pipeline("qwen_router_top8_logits_f32")
 
@@ -1296,11 +1294,11 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
                         MTLSize(width: (Int(count) * 512 + 7) / 8, height: 1, depth: 1),
                         threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
 
-                    hitEncoder.setComputePipelineState(self.cachedMoeDownSubsetSimdPipe)
+                    hitEncoder.setComputePipelineState(self.cachedMoeDownByPositionSimdPipe)
                     hitEncoder.setBuffer(self.expertCache.cacheBuffer, offset: 0, index: 0)
                     hitEncoder.setBuffer(self.batchedActBuf, offset: 0, index: 1)
                     hitEncoder.setBuffer(self.scoresBuf, offset: 0, index: 2)
-                    hitEncoder.setBuffer(self.routedHitOutBuf, offset: 0, index: 3)
+                    hitEncoder.setBuffer(self.routedContributionsBuf, offset: 0, index: 3)
                     hitEncoder.setBuffer(self.activeSlotIndicesBuf, offset: 0, index: 4)
                     hitEncoder.setBuffer(self.hitExpertPositionsBuf, offset: 0, index: 5)
                     hitEncoder.setBytes(&count, length: 4, index: 6)
@@ -1355,11 +1353,11 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
                     MTLSize(width: (Int(count) * 512 + 7) / 8, height: 1, depth: 1),
                     threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
 
-                enc2.setComputePipelineState(cachedMoeDownSubsetSimdPipe)
+                enc2.setComputePipelineState(cachedMoeDownByPositionSimdPipe)
                 enc2.setBuffer(expertCache.cacheBuffer, offset: 0, index: 0)
                 enc2.setBuffer(batchedActBuf, offset: 0, index: 1)
                 enc2.setBuffer(scoresBuf, offset: 0, index: 2)
-                enc2.setBuffer(routedMissOutBuf, offset: 0, index: 3)
+                enc2.setBuffer(routedContributionsBuf, offset: 0, index: 3)
                 enc2.setBuffer(activeSlotIndicesBuf, offset: 0, index: 4)
                 enc2.setBuffer(missExpertPositionsBuf, offset: 0, index: 5)
                 enc2.setBytes(&count, length: 4, index: 6)
@@ -1368,16 +1366,13 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
                     threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
             }
 
-            var mutableHitCount = hitCount
-            var mutableMissCount = missCount
-            enc2.setComputePipelineState(combineMoeSubsetsPipe)
-            enc2.setBuffer(routedHitOutBuf, offset: 0, index: 0)
-            enc2.setBuffer(routedMissOutBuf, offset: 0, index: 1)
-            enc2.setBuffer(sharedOutBuf, offset: 0, index: 2)
-            enc2.setBuffer(attnResBuf, offset: 0, index: 3)
-            enc2.setBuffer(curOutBuf, offset: 0, index: 4)
-            enc2.setBytes(&mutableHitCount, length: 4, index: 5)
-            enc2.setBytes(&mutableMissCount, length: 4, index: 6)
+            // The prior hit command and the miss work above use the same queue.
+            // Their disjoint writes cover all eight positions before this combine.
+            enc2.setComputePipelineState(combineMoEByPositionPipe)
+            enc2.setBuffer(routedContributionsBuf, offset: 0, index: 0)
+            enc2.setBuffer(sharedOutBuf, offset: 0, index: 1)
+            enc2.setBuffer(attnResBuf, offset: 0, index: 2)
+            enc2.setBuffer(curOutBuf, offset: 0, index: 3)
             enc2.dispatchThreadgroups(
                 MTLSize(width: 2048 / 64, height: 1, depth: 1),
                 threadsPerThreadgroup: MTLSize(width: 64, height: 1, depth: 1))

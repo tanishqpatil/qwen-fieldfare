@@ -96,6 +96,7 @@ let package = Package(
                 "Kernels/Attention/QwenFP16AttentionBridgeTests.swift",
                 "QwenDeltaNetMathTests.swift",
                 "QwenActiveStreamingMemoryConfigurationTests.swift",
+                "QwenExpertReductionTests.swift",
                 "QwenGenerationSupportTests.swift",
                 "QwenModelDirectoryTests.swift",
                 "QwenInferenceLeaseTests.swift",
