@@ -116,3 +116,14 @@ forwards) passed. It is IO/state smoke evidence, not MLX parity or a new numeric
 acceptance policy. [Validation](evidence/2026-11-17-s101d/validation.json) records
 the exact scope and limitations. No source-inventory baseline or strict test is
 weakened to accommodate the migration.
+
+## S3-01a bounded projection batching gate
+
+The eight-row candidate preserved per-layer causal positions and recurrent
+ordering, all tested router IDs and weight bits, and full state digests at
+uneven and context boundaries. It matched the tokenwise reference on the
+430-token, 512-output continuation and five logit/hidden samples. The
+independent S3-00d digest at output 465 also matched. The original fixture
+and required checkpoint verification both ran on the candidate. Its
+strict result remains 131/132 with the sole original mismatch. See the
+[qualification record](evidence/2026-11-18-s301a/README.md).

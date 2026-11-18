@@ -1,6 +1,19 @@
 # Authoritative implementation backlog
 
-## Current milestone — S3-00d restore exact-prefix state reuse
+## Current milestone — S3-01a bounded chunked prefill
+
+- [x] Isolate development from the published S3-00d tip and define the execution contract.
+- [x] Implement and test one eight-row layer-major projection candidate.
+- [x] Qualify state, strict reference, sustained decode and prefix reuse.
+- [x] Measure fresh prompts and suffixes, decide promotion and prepare the scoped evidence.
+
+Decision C. Projection-only batching passed correctness and missed the 20%
+TTFT target. Tokenwise execution and exact-prefix reuse are restored to the
+S3-00d source. The next proposed experiment batches router readback by layer.
+See the [design](docs/BOUNDED_PREFILL_CONTRACT.md) and
+[qualification evidence](docs/evidence/2026-11-18-s301a/README.md).
+
+## Historical milestone — S3-00d restore exact-prefix state reuse
 
 - [x] Restore the one-runner ledger and opt-in CLI/native server controls over fixed router order.
 - [x] Run model-free state-contract and terminal-delivery lifecycle tests.

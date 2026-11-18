@@ -1,0 +1,17 @@
+Build complete! (46.75 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenChunkedPrefillTests started.
+◇ Test eightRowsHaveExplicitScratchWithoutChangingSlots() started.
+✔ Test eightRowsHaveExplicitScratchWithoutChangingSlots() passed after 0.001 seconds.
+◇ Test affineProjectionDispatchMatchesSeparateRows() started.
+✔ Test affineProjectionDispatchMatchesSeparateRows() passed after 0.030 seconds.
+◇ Test realBoundariesAndSustainedContinuation() started.
+Chunked prefill sustained: 512 output IDs, 5 sampled hidden/logit pairs.
+✔ Test realBoundariesAndSustainedContinuation() passed after 79.553 seconds.
+➜ Test measureFreshExactPrefixSuffix() skipped.
+◇ Test realPrefixAndContextBoundary() started.
+✔ Test realPrefixAndContextBoundary() passed after 9.125 seconds.
+✔ Suite QwenChunkedPrefillTests passed after 88.709 seconds.
+✔ Test run with 5 tests in 1 suite passed after 88.709 seconds.

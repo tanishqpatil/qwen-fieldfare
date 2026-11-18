@@ -1,0 +1,10 @@
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenChunkedPrefillTests started.
+◇ Test measureFreshExactPrefixSuffix() started.
+Suffix chunked8: reused=18 fresh=89 prefill_seconds=3.1596899032592773 total_seconds=3.691054416660336 generated=16 hits=25245 misses=8035 bytes=14217707520 metal=5291982848
+Suffix tokenwise: reused=18 fresh=89 prefill_seconds=2.673766016960144 total_seconds=3.1437480000022333 generated=16 hits=25245 misses=8035 bytes=14217707520 metal=5291982848
+✔ Test measureFreshExactPrefixSuffix() passed after 9.233 seconds.
+✔ Suite QwenChunkedPrefillTests passed after 9.234 seconds.
+✔ Test run with 1 test in 1 suite passed after 9.234 seconds.

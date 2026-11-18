@@ -1,5 +1,15 @@
 # Optimization analysis and priority order
 
+## S3-01a fresh-token prefill candidate
+
+Start from qualified exact-prefix reuse and fixed router order. Evaluate
+batching across eight rows for every layer's input RMSNorm and Q4 projections.
+The latency gate remains 20% TTFT reduction on representative prompts.
+The measured candidate missed the gate and was archived. A separate
+router readback experiment has an explicit synchronization hypothesis.
+See the [bounded design](BOUNDED_PREFILL_CONTRACT.md) and
+[experiment](evidence/2026-11-18-s301a/README.md).
+
 2026-11-18 execution result: S3-00 exact-prefix reuse is **blocked**. Five short
 raw-ID tool-cycle pairs matched,but sustained512 diverged. A bounded full-replay
 expert-history diagnostic reproduced both behaviors. Candidate fully reverted;

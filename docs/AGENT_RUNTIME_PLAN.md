@@ -1,6 +1,11 @@
 # QwenFieldfare: controlled memory, faster requests, and local agents
 
-2026-11-18 execution result: S3-00 exact-prefix reuse is **blocked**. Five short
+S3-00d qualified off-by-default exact-prefix reuse on the fixed router-order
+runner. See the [published baseline](evidence/2026-11-18-s300d/README.md).
+S3-01a evaluates bounded fresh-token prefill independently. See the
+[experiment record](evidence/2026-11-18-s301a/README.md).
+
+Historical 2026-11-18 result: the initial S3-00 prefix candidate was rejected. Five short
 raw-ID tool-cycle pairs matched,but sustained512 diverged. A bounded full-replay
 expert-history diagnostic reproduced both behaviors. Candidate fully reverted;
 production remains S2-03 reset/replay,no cache controls ship. See

@@ -1,6 +1,16 @@
 # QwenFieldfare
 
-## Current milestone — S3-00d exact-prefix state reuse
+## Current milestone — S3-01a bounded chunked prefill
+
+Work on `feature/bounded-chunked-prefill` from verified S3-00d tip `2e5b993`.
+Qualify one bounded opt-in candidate. Preserve the tokenwise default and
+exact-prefix protocol, fixed router reduction, checkpoint and strict fixture.
+Decision C closes this milestone. Preserve the diagnostic patch and
+measurements on this feature branch. Full tokenwise inference and exact-prefix
+reuse use the S3-00d source. Further runtime development requires its own
+milestone. Main and the server branch remain separate.
+
+## Historical milestone — S3-00d exact-prefix state reuse
 
 Qualify one in-place exact consumed-token prefix per active server runner
 against fixed router-order full replay. The default is off. Native chat

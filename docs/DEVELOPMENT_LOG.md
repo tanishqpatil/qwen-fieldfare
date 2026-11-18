@@ -1453,3 +1453,33 @@ The temporary repository paths and prompt counts differed. The fixed
 input gate independently established same-runtime raw equivalence.
 Review the final scope, retain the strict MLX blocker, publish the
 implementation and evidence on the feature branch and stop at S3-00d.
+
+
+## S3-01a bounded layer-major prefill
+
+Create `feature/bounded-chunked-prefill` at the published S3-00d tip
+`2e5b993`. Implement eight-row input RMSNorm and Q4 projection dispatches
+across 30 linear and 10 full-attention layers. Leave stateful updates,
+router readbacks, expert-cache accesses and fixed accumulation ordered
+within each layer. Keep all per-token LM-head work. Requested scratch
+624,640 bytes, page-rounded reserve 655,360 bytes, unchanged expert slots.
+
+The initial Metal compile rejected mixed scalar/vector grid coordinates
+in RMSNorm. Matching the coordinate types fixed the entry point. The
+first real run matched all 512 generated IDs and five hidden/logit pairs.
+The boundary test incorrectly expected a non-EOS prediction at the last
+available position. Both schedules predicted EOS. The revised case
+checks the EOS result and tests actual context exhaustion separately.
+
+Final candidate validation passed 173 package tests with seven skips,
+release build, six checker tests and the checkpoint state, sustained
+output and exact-prefix gates. The strict fixture verified the checkpoint
+and returned 131/132 with only the original token-61 mismatch.
+Unprofiled prefill changes were +10.53% at 214 tokens, +4.17% at 1,010,
++7.75% at 4,022, and −6.19% at 6,128. The independent 89-token suffix
+regressed from 2.674 s to 3.160 s. Host swap changed materially during
+the long pair, so the longest timing is confounded. Expert demand
+matched at every size, observed Metal 4.928/4.929 GiB. The separately
+profiled short pair reduced GPU time by about 5% without improving wall
+time. Decision C. Archive the exact source, restore S3-00d, finish final
+checks and stop at the evidence checkpoint on the isolated feature branch.

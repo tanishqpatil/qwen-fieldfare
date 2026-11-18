@@ -239,3 +239,15 @@ The default stays off. The original S3-00 rejection and independent strict
 MLX 131/132 baseline remain evidence. See the
 [technical contract](EXACT_PREFIX_STATE_CONTRACT.md) and
 [qualification evidence](evidence/2026-11-18-s300d/README.md).
+
+
+## ADR — S3-01a reject projection-only batching for promotion
+
+2026-11-18. The eight-row projection experiment preserves the tested
+Qwen state, logits, routed experts, prefix boundaries and strict mismatch
+set. The 5 GiB plan retains 2,183 slots with a 655,360-byte scratch
+reservation. Shorter prompts fell below the 20% TTFT target, the exact
+suffix took longer, and a host swap change limits the long result.
+Restore S3-00d and archive the source. The remaining per-token router
+readback warrants a separate bounded scheduling experiment.
+See the [decision record](evidence/2026-11-18-s301a/README.md).

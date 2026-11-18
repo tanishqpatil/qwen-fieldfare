@@ -648,3 +648,25 @@ bounded by context, plus its normal allocation capacity. Health reports
 that capacity and aggregate timing and cache counters. See the
 [exact state contract](EXACT_PREFIX_STATE_CONTRACT.md) and
 [runtime controls](RUNTIME_CONTROLS.md).
+
+
+## S3-01a bounded layer-major projection experiment
+
+At each layer, use a chunk row as the second dimension of the input
+RMSNorm and Q4 projection grids. The stateful consumers use the output
+row for the current absolute position. Layer-major execution preserves
+ascending positions in each Conv history, DeltaNet state, and causal
+KV sequence. The cache has 40 isolated layer partitions, so each
+partition sees the original demand sequence. Expert acquisition and
+fixed-order combination remain per-token.
+
+The candidate keeps one existing set of model state and adds bounded
+hidden/projection scratch. It does not hold a chunk-wide union of expert
+weights. The original sampling and LM-head work remain in the step, so
+the projection experiment is separate from the older unused-head result.
+See the [contract](BOUNDED_PREFILL_CONTRACT.md) and
+[qualification record](evidence/2026-11-18-s301a/README.md).
+
+S3-01a rejects deployment of this projection-only schedule on performance
+grounds. The runtime returns to S3-00d. The code and measurements remain
+available in the isolated investigation branch.

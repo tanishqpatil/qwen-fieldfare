@@ -1,6 +1,26 @@
 # Agent recovery memory
 
-## Current milestone — S3-00d exact-prefix qualification
+## Current milestone — S3-01a bounded chunked prefill
+
+Branch `feature/bounded-chunked-prefill` at validated server tip `2e5b993`.
+Initial candidate batches per-layer input RMSNorm and Q4 projections over
+eight rows. Conv, DeltaNet, causal attention and routed experts preserve
+per-layer ascending token order. Keep the tokenwise default, all head GPU
+work, and 2,183 slots on the 5 GiB/8K plan. The independent strict reference
+still has the known 131/132 release blocker. The candidate passed the
+checkpoint-verifying strict mismatch-set check and the 512-output
+numerical gate with all five hidden/logit samples equal. Context, exact
+prefix, and cancellation/replay also passed. The 89-fresh-ID suffix
+paired test was 2.674 s tokenwise versus 3.160 s with eight rows.
+Fresh-prompt reductions at 214 / 1,010 / 4,022 / 6,128 tokens were
++10.53% / +4.17% / +7.75% / −6.19%. Swap rose during the long candidate
+run, limiting the long-pair interpretation. Decision C. Runtime and tests
+are restored to S3-00d. The candidate source patch is archived. A single
+attention/router readback per layer and chunk is the next scoped hypothesis.
+See the [execution contract](BOUNDED_PREFILL_CONTRACT.md) and
+[evidence](evidence/2026-11-18-s301a/README.md).
+
+## Historical milestone — S3-00d exact-prefix qualification
 
 Base 7370a1d on `feature/local-coding-agent-server`. Fixed router-order
 production arithmetic remains the full-replay control. The initial

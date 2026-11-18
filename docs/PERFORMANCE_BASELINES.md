@@ -1,6 +1,16 @@
 # Performance and correctness baselines
 
-Current execution (2026-11-18): S3-00 is **blocked,not promoted**. Five short
+S3-00d qualified the opt-in exact-prefix server on Apple M5 at 8K.
+Its 1,255 / 4,116 / 6,114-token full-replay first-token times were
+49.04 / 159.42 / 242.73 s. See the
+[retained baseline](evidence/2026-11-18-s300d/README.md). S3-01a measures
+the remaining fresh-token work separately with fixed input and unchanged
+expert capacity. The 4,022-token pair improved 7.75%, short of the 20%
+gate. The 89-token fresh suffix regressed and the long pair had unequal
+host swap conditions. The candidate was archived.
+See the [chunked-prefill evidence](evidence/2026-11-18-s301a/README.md).
+
+Historical result (2026-11-18): the original S3-00 candidate was rejected. Five short
 same-Swift tool-cycle pairs matched and measured73.126% paired mean prefill
 reduction,then the first sustained512 continuation diverged at output465.
 Full-replay-only cold/warm expert-history diagnostic reproduced the difference.
