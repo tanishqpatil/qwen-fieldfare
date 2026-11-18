@@ -207,11 +207,16 @@ kernel void flint_rmsnorm_general_bf16(
     uint tid [[thread_position_in_threadgroup]],
     uint row [[threadgroup_position_in_grid]]
 ) {
-    threadgroup float shared_sums[32]; // Max 32 warps (1024 threads)
+    threadgroup float shared_sums[8];
     threadgroup float shared_scale;
 
     uint simd_lane = tid & 31;
     uint simd_id = tid >> 5;
+
+    if (tid < 8) {
+        shared_sums[tid] = 0.0f;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
 
     device const bfloat* x_row = in_x + row * D;
     device bfloat* y_row = out_y + row * D;
@@ -253,11 +258,16 @@ kernel void flint_rmsnorm_general_f32(
     uint tid [[thread_position_in_threadgroup]],
     uint row [[threadgroup_position_in_grid]]
 ) {
-    threadgroup float shared_sums[32];
+    threadgroup float shared_sums[8];
     threadgroup float shared_scale;
 
     uint simd_lane = tid & 31;
     uint simd_id = tid >> 5;
+
+    if (tid < 8) {
+        shared_sums[tid] = 0.0f;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
 
     device const float* x_row = in_x + row * D;
     device float* y_row = out_y + row * D;

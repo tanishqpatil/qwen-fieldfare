@@ -68,7 +68,7 @@ import Testing
                      "Case Name", "Dim", "Rows", "Dtype", "Max Abs Diff", "Max Rel Diff", "Max ULP", "Status"))
         print(String(repeating: "-", count: 125))
 
-        for (idx, c) in fixture.cases.enumerated() {
+        for (_, c) in fixture.cases.enumerated() {
             let inData = Self.parseHexToData(c.input_hex)
             let wData = Self.parseHexToData(c.weight_hex)
             let expectedOutData = Self.parseHexToData(c.output_hex)
@@ -352,6 +352,129 @@ import Testing
         #expect(throws: FlintMetalError.self) {
             try kernel.execute(input: inBuf, inputOffset: -1, weight: wBuf, output: outBuf, rows: 1, dimension: 2048, epsilon: 1e-6)
         }
+
+        // 8. Non-finite epsilon (NaN, +inf, -inf)
+        #expect(throws: FlintMetalError.self) {
+            try kernel.execute(input: inBuf, weight: wBuf, output: outBuf, rows: 1, dimension: 2048, epsilon: Float.nan)
+        }
+        #expect(throws: FlintMetalError.self) {
+            try kernel.execute(input: inBuf, weight: wBuf, output: outBuf, rows: 1, dimension: 2048, epsilon: Float.infinity)
+        }
+
+        // 9. Misaligned offsets (e.g. odd byte offset for 2-byte or 4-byte dtype)
+        let paddedBuf = try context.makeBuffer(byteCount: 4096 * 4)
+        #expect(throws: FlintMetalError.self) {
+            try kernel.execute(input: paddedBuf, inputOffset: 1, weight: wBuf, output: outBuf, rows: 1, dimension: 128, epsilon: 1e-6, dtype: .float32)
+        }
+        #expect(throws: FlintMetalError.self) {
+            try kernel.execute(input: inBuf, weight: wBuf, weightOffset: 1, output: outBuf, rows: 1, dimension: 128, epsilon: 1e-6)
+        }
+
+        // 10. Arithmetic overflow in row/dimension calculation (Int.max)
+        #expect(throws: FlintMetalError.self) {
+            try kernel.execute(input: inBuf, weight: wBuf, output: outBuf, rows: Int.max, dimension: 2048, epsilon: 1e-6)
+        }
+        #expect(throws: FlintMetalError.self) {
+            try kernel.execute(input: inBuf, weight: wBuf, output: outBuf, rows: 1, dimension: Int.max, epsilon: 1e-6)
+        }
+    }
+
+    // MARK: - 5. General RMSNorm Fallback Dimensions (16, 64, 129, 192, 256, 512, 1024)
+
+    @Test func generalFallbackDimensionsAndEdgeCases() throws {
+        let context = try FlintMetalContext()
+        let kernel = try FlintRMSNormKernel(context: context)
+
+        let testDimensions = [16, 64, 129, 192, 256, 512, 1024]
+
+        for dim in testDimensions {
+            // Generate deterministic inputs
+            var xF32 = [Float](repeating: 0, count: dim)
+            var wF32 = [Float](repeating: 0, count: dim)
+            for i in 0..<dim {
+                xF32[i] = sin(Float(i + 1) * 0.1) * 2.0
+                wF32[i] = cos(Float(i + 1) * 0.05) + 1.0
+            }
+
+            let wBF16 = FlintRMSNormReference.floatArrayToBF16(wF32)
+            let wEffectiveF32 = FlintRMSNormReference.bf16ArrayToFloat(wBF16)
+
+            // Reference calculation (CPU FP32 with BF16 checkpoint weights)
+            let refOutF32 = FlintRMSNormReference.evaluateFP32(input: xF32, weights: wEffectiveF32, rows: 1, dimension: dim, epsilon: 1e-6)
+
+            // 1. Test FP32 General Metal Kernel
+            let inBufF32 = try xF32.withUnsafeBytes { ptr in
+                try context.makeBuffer(bytes: ptr.baseAddress!, byteCount: dim * 4)
+            }
+            let wBufBF16 = try wBF16.withUnsafeBytes { ptr in
+                try context.makeBuffer(bytes: ptr.baseAddress!, byteCount: dim * 2)
+            }
+            let outBufF32 = try context.makeBuffer(byteCount: dim * 4)
+
+            try kernel.execute(
+                input: inBufF32,
+                weight: wBufBF16,
+                output: outBufF32,
+                rows: 1,
+                dimension: dim,
+                epsilon: 1e-6,
+                dtype: .float32,
+                waitUntilCompleted: true
+            )
+
+            let metalOutF32 = Array(UnsafeBufferPointer(start: outBufF32.contents().assumingMemoryBound(to: Float.self), count: dim))
+            for i in 0..<dim {
+                let diff = abs(metalOutF32[i] - refOutF32[i])
+                #expect(diff <= 1e-5)
+            }
+
+            // 2. Test BF16 General Metal Kernel
+            let xBF16 = FlintRMSNormReference.floatArrayToBF16(xF32)
+            let inBufBF16 = try xBF16.withUnsafeBytes { ptr in
+                try context.makeBuffer(bytes: ptr.baseAddress!, byteCount: dim * 2)
+            }
+            let outBufBF16 = try context.makeBuffer(byteCount: dim * 2)
+
+            try kernel.execute(
+                input: inBufBF16,
+                weight: wBufBF16,
+                output: outBufBF16,
+                rows: 1,
+                dimension: dim,
+                epsilon: 1e-6,
+                dtype: .bfloat16,
+                waitUntilCompleted: true
+            )
+
+            let rawBF16 = Array(UnsafeBufferPointer(start: outBufBF16.contents().assumingMemoryBound(to: UInt16.self), count: dim))
+            let metalOutBF16Float = FlintRMSNormReference.bf16ArrayToFloat(rawBF16)
+            for i in 0..<dim {
+                let diff = abs(metalOutBF16Float[i] - refOutF32[i])
+                let rel = diff / max(abs(refOutF32[i]), 1e-4)
+                #expect(rel <= 0.015)
+            }
+        }
+    }
+
+    // MARK: - 6. Canonical Metal Shader Source Equivalence
+
+    @Test func canonicalMetalShaderSourceEquivalence() throws {
+        // Verify that embedded shader source is 100% byte-for-byte identical to on-disk flint_rmsnorm.metal
+        let metalFilePath = "Sources/FlintFieldfareCore/Metal/flint_rmsnorm.metal"
+        let fullPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(metalFilePath)
+        guard FileManager.default.fileExists(atPath: fullPath.path) else {
+            Issue.record("flint_rmsnorm.metal not found at path: \(fullPath.path)")
+            return
+        }
+        let diskSource = try String(contentsOf: fullPath, encoding: .utf8)
+        #expect(diskSource == FlintRMSNormKernel.embeddedShaderSource, "Disk flint_rmsnorm.metal and FlintRMSNormKernel.embeddedShaderSource have drifted!")
+
+        // Verify that loadShaderSource() returns valid non-empty MSL
+        let loaded = FlintRMSNormKernel.loadShaderSource()
+        #expect(!loaded.isEmpty)
+        #expect(loaded.contains("flint_rmsnorm_2048_bf16"))
+        #expect(loaded.contains("flint_rmsnorm_128_bf16"))
+        #expect(loaded.contains("flint_rmsnorm_general_bf16"))
     }
 
     // MARK: - 5. Apple M5 Hardware Benchmark & Telemetry

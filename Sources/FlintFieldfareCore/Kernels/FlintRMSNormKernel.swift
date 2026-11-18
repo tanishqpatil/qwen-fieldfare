@@ -38,12 +38,44 @@ public final class FlintRMSNormKernel: @unchecked Sendable {
     private let psoGeneral_bf16: MTLComputePipelineState
     private let psoGeneral_f32: MTLComputePipelineState
 
+    // MARK: - Overflow-Safe Arithmetic Helpers
+
+    private static func checkedMul(_ a: Int, _ b: Int) throws -> Int {
+        let (res, overflow) = a.multipliedReportingOverflow(by: b)
+        guard !overflow, res >= 0 else {
+            throw FlintMetalError.invalidParameter("Integer overflow in calculation (\(a) * \(b))")
+        }
+        return res
+    }
+
+    private static func checkedAdd(_ a: Int, _ b: Int) throws -> Int {
+        let (res, overflow) = a.addingReportingOverflow(b)
+        guard !overflow, res >= 0 else {
+            throw FlintMetalError.invalidParameter("Integer overflow in calculation (\(a) + \(b))")
+        }
+        return res
+    }
+
+    /// Loads canonical Metal shading language source from Bundle.module, falling back to embedded source.
+    public static func loadShaderSource() -> String {
+        #if SWIFT_PACKAGE
+        if let url = Bundle.module.url(forResource: "flint_rmsnorm", withExtension: "metal", subdirectory: "Metal") ??
+                     Bundle.module.url(forResource: "flint_rmsnorm", withExtension: "metal") {
+            if let src = try? String(contentsOf: url, encoding: .utf8) {
+                return src
+            }
+        }
+        #endif
+        return embeddedShaderSource
+    }
+
     /// Initializes the RMSNorm kernel by compiling or retrieving pipeline states from the Metal context.
     public init(context: FlintMetalContext) throws {
         self.context = context
 
-        // Compile Metal library from embedded shader source
-        let library = try context.makeLibrary(source: Self.embeddedShaderSource)
+        // Prefer canonical packaged Metal shader resource from Bundle.module, falling back to embedded source
+        let source = Self.loadShaderSource()
+        let library = try context.makeLibrary(source: source)
 
         self.pso2048_bf16 = try context.computePipelineState(functionName: "flint_rmsnorm_2048_bf16", library: library)
         self.pso2048_f32 = try context.computePipelineState(functionName: "flint_rmsnorm_2048_f32", library: library)
@@ -95,26 +127,41 @@ public final class FlintRMSNormKernel: @unchecked Sendable {
         guard dimension > 0 else {
             throw FlintMetalError.invalidParameter("dimension must be positive (got \(dimension))")
         }
-        guard epsilon > 0 else {
-            throw FlintMetalError.invalidParameter("epsilon must be positive (got \(epsilon))")
+        guard epsilon > 0, epsilon.isFinite, !epsilon.isNaN else {
+            throw FlintMetalError.invalidParameter("epsilon must be positive and finite (got \(epsilon))")
         }
         guard inputOffset >= 0, weightOffset >= 0, outputOffset >= 0 else {
             throw FlintMetalError.invalidParameter("Offsets cannot be negative")
         }
 
-        let bytesPerRow = dimension * dtype.elementByteWidth
-        let totalInputRequired = inputOffset + (rows * bytesPerRow)
+        // Validate byte alignment for pointers
+        guard inputOffset % dtype.elementByteWidth == 0 else {
+            throw FlintMetalError.invalidParameter("inputOffset (\(inputOffset)) is not aligned to \(dtype.elementByteWidth) bytes")
+        }
+        guard outputOffset % dtype.elementByteWidth == 0 else {
+            throw FlintMetalError.invalidParameter("outputOffset (\(outputOffset)) is not aligned to \(dtype.elementByteWidth) bytes")
+        }
+        guard weightOffset % 2 == 0 else {
+            throw FlintMetalError.invalidParameter("weightOffset (\(weightOffset)) is not aligned to 2 bytes (BF16)")
+        }
+
+        // Overflow-checked buffer capacity bounds validation
+        let bytesPerRow = try Self.checkedMul(dimension, dtype.elementByteWidth)
+        let totalInputRowsBytes = try Self.checkedMul(rows, bytesPerRow)
+        let totalInputRequired = try Self.checkedAdd(inputOffset, totalInputRowsBytes)
         guard input.length >= totalInputRequired else {
             throw FlintMetalError.bufferTooSmall(name: "input", actual: input.length, required: totalInputRequired)
         }
 
         // Checkpoint weights are always BF16 (2 bytes per element)
-        let totalWeightRequired = weightOffset + (dimension * 2)
+        let totalWeightBytes = try Self.checkedMul(dimension, 2)
+        let totalWeightRequired = try Self.checkedAdd(weightOffset, totalWeightBytes)
         guard weight.length >= totalWeightRequired else {
             throw FlintMetalError.bufferTooSmall(name: "weight", actual: weight.length, required: totalWeightRequired)
         }
 
-        let totalOutputRequired = outputOffset + (rows * bytesPerRow)
+        let totalOutputRowsBytes = try Self.checkedMul(rows, bytesPerRow)
+        let totalOutputRequired = try Self.checkedAdd(outputOffset, totalOutputRowsBytes)
         guard output.length >= totalOutputRequired else {
             throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: totalOutputRequired)
         }
@@ -156,7 +203,8 @@ public final class FlintRMSNormKernel: @unchecked Sendable {
             encoder.setBytes(&epsCopy, length: MemoryLayout<Float>.size, index: 3)
             encoder.setBytes(&dimCopy, length: MemoryLayout<UInt32>.size, index: 4)
 
-            let threadsPerThreadgroup = MTLSize(width: min(256, dimension), height: 1, depth: 1)
+            // General kernel uses a fixed 256-thread reduction with bounds checking
+            let threadsPerThreadgroup = MTLSize(width: 256, height: 1, depth: 1)
             let threadgroups = MTLSize(width: rows, height: 1, depth: 1)
             encoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerThreadgroup)
         }
@@ -263,263 +311,306 @@ public final class FlintRMSNormKernel: @unchecked Sendable {
     // MARK: - Embedded Metal Shading Language Source
 
     public static let embeddedShaderSource = """
-    #include <metal_stdlib>
-    using namespace metal;
+#include <metal_stdlib>
+using namespace metal;
 
-    kernel void flint_rmsnorm_2048_bf16(
-        device const bfloat* in_x [[buffer(0)]],
-        device const bfloat* weight [[buffer(1)]],
-        device bfloat* out_y [[buffer(2)]],
-        constant float& eps [[buffer(3)]],
-        uint tid [[thread_position_in_threadgroup]],
-        uint row [[threadgroup_position_in_grid]]
-    ) {
-        threadgroup float shared_sums[8];
-        threadgroup float shared_scale;
+// ==============================================================================
+// Flint RMSNorm Metal Compute Kernels
+//
+// Mathematical Specification:
+//   y = x * rsqrt(mean(x * x, axis=-1) + epsilon) * weight
+//
+// Invariants:
+// - Weights are stored in bfloat16 representation matching checkpoint storage.
+// - All squared accumulations, means, epsilon additions, and scale computations
+//   evaluate in full FP32 (single precision) to prevent underflow/overflow.
+// - Reductions utilize SIMD shuffle operations (`simd_sum`) and threadgroup memory.
+// - Zero memory allocations occur during kernel execution.
+// - Weights are strictly read-only (`device const bfloat*`).
+// ==============================================================================
 
-        uint simd_lane = tid & 31;
-        uint simd_id = tid >> 5;
+// MARK: - Hidden Dimension 2048 (Input, Post-Attention, and Final Norms)
 
-        device const bfloat* x_row = in_x + row * 2048;
-        device bfloat* y_row = out_y + row * 2048;
+/// RMSNorm for hidden dimension 2048 with bfloat16 input and output.
+/// Dispatch configuration: 256 threads per threadgroup, (rows, 1, 1) threadgroups.
+kernel void flint_rmsnorm_2048_bf16(
+    device const bfloat* in_x [[buffer(0)]],
+    device const bfloat* weight [[buffer(1)]],
+    device bfloat* out_y [[buffer(2)]],
+    constant float& eps [[buffer(3)]],
+    uint tid [[thread_position_in_threadgroup]],
+    uint row [[threadgroup_position_in_grid]]
+) {
+    threadgroup float shared_sums[8];
+    threadgroup float shared_scale;
 
-        float local_sq = 0.0f;
-        for (uint i = tid; i < 2048; i += 256) {
-            float v = float(x_row[i]);
-            local_sq += v * v;
-        }
+    uint simd_lane = tid & 31;
+    uint simd_id = tid >> 5;
 
-        float simd_sq = simd_sum(local_sq);
-        if (simd_lane == 0) {
-            shared_sums[simd_id] = simd_sq;
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
+    device const bfloat* x_row = in_x + row * 2048;
+    device bfloat* y_row = out_y + row * 2048;
 
-        if (simd_id == 0) {
-            float s = (simd_lane < 8) ? shared_sums[simd_lane] : 0.0f;
-            float total_sq = simd_sum(s);
-            if (simd_lane == 0) {
-                shared_scale = rsqrt((total_sq / 2048.0f) + eps);
-            }
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        float scale = shared_scale;
-        for (uint i = tid; i < 2048; i += 256) {
-            y_row[i] = bfloat(float(x_row[i]) * scale * float(weight[i]));
-        }
+    // Strided accumulation in FP32 across 8 elements per thread (256 * 8 = 2048)
+    float local_sq = 0.0f;
+    for (uint i = tid; i < 2048; i += 256) {
+        float v = float(x_row[i]);
+        local_sq += v * v;
     }
 
-    kernel void flint_rmsnorm_2048_f32(
-        device const float* in_x [[buffer(0)]],
-        device const bfloat* weight [[buffer(1)]],
-        device float* out_y [[buffer(2)]],
-        constant float& eps [[buffer(3)]],
-        uint tid [[thread_position_in_threadgroup]],
-        uint row [[threadgroup_position_in_grid]]
-    ) {
-        threadgroup float shared_sums[8];
-        threadgroup float shared_scale;
+    // Warp-level reduction
+    float simd_sq = simd_sum(local_sq);
+    if (simd_lane == 0) {
+        shared_sums[simd_id] = simd_sq;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
 
-        uint simd_lane = tid & 31;
-        uint simd_id = tid >> 5;
-
-        device const float* x_row = in_x + row * 2048;
-        device float* y_row = out_y + row * 2048;
-
-        float local_sq = 0.0f;
-        for (uint i = tid; i < 2048; i += 256) {
-            float v = x_row[i];
-            local_sq += v * v;
-        }
-
-        float simd_sq = simd_sum(local_sq);
+    // Threadgroup-level reduction (8 warps)
+    if (simd_id == 0) {
+        float s = (simd_lane < 8) ? shared_sums[simd_lane] : 0.0f;
+        float total_sq = simd_sum(s);
         if (simd_lane == 0) {
-            shared_sums[simd_id] = simd_sq;
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        if (simd_id == 0) {
-            float s = (simd_lane < 8) ? shared_sums[simd_lane] : 0.0f;
-            float total_sq = simd_sum(s);
-            if (simd_lane == 0) {
-                shared_scale = rsqrt((total_sq / 2048.0f) + eps);
-            }
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        float scale = shared_scale;
-        for (uint i = tid; i < 2048; i += 256) {
-            y_row[i] = x_row[i] * scale * float(weight[i]);
+            shared_scale = rsqrt((total_sq / 2048.0f) + eps);
         }
     }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
 
-    kernel void flint_rmsnorm_128_bf16(
-        device const bfloat* in_x [[buffer(0)]],
-        device const bfloat* weight [[buffer(1)]],
-        device bfloat* out_y [[buffer(2)]],
-        constant float& eps [[buffer(3)]],
-        uint tid [[thread_position_in_threadgroup]],
-        uint row [[threadgroup_position_in_grid]]
-    ) {
-        threadgroup float shared_sums[4];
-        threadgroup float shared_scale;
+    float scale = shared_scale;
+    for (uint i = tid; i < 2048; i += 256) {
+        y_row[i] = bfloat(float(x_row[i]) * scale * float(weight[i]));
+    }
+}
 
-        uint simd_lane = tid & 31;
-        uint simd_id = tid >> 5;
+/// RMSNorm for hidden dimension 2048 with float32 input and output.
+kernel void flint_rmsnorm_2048_f32(
+    device const float* in_x [[buffer(0)]],
+    device const bfloat* weight [[buffer(1)]],
+    device float* out_y [[buffer(2)]],
+    constant float& eps [[buffer(3)]],
+    uint tid [[thread_position_in_threadgroup]],
+    uint row [[threadgroup_position_in_grid]]
+) {
+    threadgroup float shared_sums[8];
+    threadgroup float shared_scale;
 
-        device const bfloat* x_row = in_x + row * 128;
-        device bfloat* y_row = out_y + row * 128;
+    uint simd_lane = tid & 31;
+    uint simd_id = tid >> 5;
 
-        float v = float(x_row[tid]);
-        float sq = v * v;
+    device const float* x_row = in_x + row * 2048;
+    device float* y_row = out_y + row * 2048;
 
-        float simd_sq = simd_sum(sq);
-        if (simd_lane == 0) {
-            shared_sums[simd_id] = simd_sq;
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        if (simd_id == 0) {
-            float s = (simd_lane < 4) ? shared_sums[simd_lane] : 0.0f;
-            float total_sq = simd_sum(s);
-            if (simd_lane == 0) {
-                shared_scale = rsqrt((total_sq / 128.0f) + eps);
-            }
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        float scale = shared_scale;
-        y_row[tid] = bfloat(v * scale * float(weight[tid]));
+    float local_sq = 0.0f;
+    for (uint i = tid; i < 2048; i += 256) {
+        float v = x_row[i];
+        local_sq += v * v;
     }
 
-    kernel void flint_rmsnorm_128_f32(
-        device const float* in_x [[buffer(0)]],
-        device const bfloat* weight [[buffer(1)]],
-        device float* out_y [[buffer(2)]],
-        constant float& eps [[buffer(3)]],
-        uint tid [[thread_position_in_threadgroup]],
-        uint row [[threadgroup_position_in_grid]]
-    ) {
-        threadgroup float shared_sums[4];
-        threadgroup float shared_scale;
-
-        uint simd_lane = tid & 31;
-        uint simd_id = tid >> 5;
-
-        device const float* x_row = in_x + row * 128;
-        device float* y_row = out_y + row * 128;
-
-        float v = x_row[tid];
-        float sq = v * v;
-
-        float simd_sq = simd_sum(sq);
-        if (simd_lane == 0) {
-            shared_sums[simd_id] = simd_sq;
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        if (simd_id == 0) {
-            float s = (simd_lane < 4) ? shared_sums[simd_lane] : 0.0f;
-            float total_sq = simd_sum(s);
-            if (simd_lane == 0) {
-                shared_scale = rsqrt((total_sq / 128.0f) + eps);
-            }
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        float scale = shared_scale;
-        y_row[tid] = v * scale * float(weight[tid]);
+    float simd_sq = simd_sum(local_sq);
+    if (simd_lane == 0) {
+        shared_sums[simd_id] = simd_sq;
     }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
 
-    kernel void flint_rmsnorm_general_bf16(
-        device const bfloat* in_x [[buffer(0)]],
-        device const bfloat* weight [[buffer(1)]],
-        device bfloat* out_y [[buffer(2)]],
-        constant float& eps [[buffer(3)]],
-        constant uint& D [[buffer(4)]],
-        uint tid [[thread_position_in_threadgroup]],
-        uint row [[threadgroup_position_in_grid]]
-    ) {
-        threadgroup float shared_sums[32];
-        threadgroup float shared_scale;
-
-        uint simd_lane = tid & 31;
-        uint simd_id = tid >> 5;
-
-        device const bfloat* x_row = in_x + row * D;
-        device bfloat* y_row = out_y + row * D;
-
-        float local_sq = 0.0f;
-        for (uint i = tid; i < D; i += 256) {
-            float v = float(x_row[i]);
-            local_sq += v * v;
-        }
-
-        float simd_sq = simd_sum(local_sq);
+    if (simd_id == 0) {
+        float s = (simd_lane < 8) ? shared_sums[simd_lane] : 0.0f;
+        float total_sq = simd_sum(s);
         if (simd_lane == 0) {
-            shared_sums[simd_id] = simd_sq;
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        if (simd_id == 0) {
-            float s = (simd_lane < 8) ? shared_sums[simd_lane] : 0.0f;
-            float total_sq = simd_sum(s);
-            if (simd_lane == 0) {
-                shared_scale = rsqrt((total_sq / float(D)) + eps);
-            }
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        float scale = shared_scale;
-        for (uint i = tid; i < D; i += 256) {
-            y_row[i] = bfloat(float(x_row[i]) * scale * float(weight[i]));
+            shared_scale = rsqrt((total_sq / 2048.0f) + eps);
         }
     }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
 
-    kernel void flint_rmsnorm_general_f32(
-        device const float* in_x [[buffer(0)]],
-        device const bfloat* weight [[buffer(1)]],
-        device float* out_y [[buffer(2)]],
-        constant float& eps [[buffer(3)]],
-        constant uint& D [[buffer(4)]],
-        uint tid [[thread_position_in_threadgroup]],
-        uint row [[threadgroup_position_in_grid]]
-    ) {
-        threadgroup float shared_sums[32];
-        threadgroup float shared_scale;
+    float scale = shared_scale;
+    for (uint i = tid; i < 2048; i += 256) {
+        y_row[i] = x_row[i] * scale * float(weight[i]);
+    }
+}
 
-        uint simd_lane = tid & 31;
-        uint simd_id = tid >> 5;
+// MARK: - Head Dimension 128 (Attention Q and K Norms)
 
-        device const float* x_row = in_x + row * D;
-        device float* y_row = out_y + row * D;
+/// RMSNorm for head dimension 128 with bfloat16 input and output.
+/// Dispatch configuration: 128 threads per threadgroup (1 element per thread), (rows, 1, 1) threadgroups.
+kernel void flint_rmsnorm_128_bf16(
+    device const bfloat* in_x [[buffer(0)]],
+    device const bfloat* weight [[buffer(1)]],
+    device bfloat* out_y [[buffer(2)]],
+    constant float& eps [[buffer(3)]],
+    uint tid [[thread_position_in_threadgroup]],
+    uint row [[threadgroup_position_in_grid]]
+) {
+    threadgroup float shared_sums[4];
+    threadgroup float shared_scale;
 
-        float local_sq = 0.0f;
-        for (uint i = tid; i < D; i += 256) {
-            float v = x_row[i];
-            local_sq += v * v;
-        }
+    uint simd_lane = tid & 31;
+    uint simd_id = tid >> 5;
 
-        float simd_sq = simd_sum(local_sq);
+    device const bfloat* x_row = in_x + row * 128;
+    device bfloat* y_row = out_y + row * 128;
+
+    float v = float(x_row[tid]);
+    float sq = v * v;
+
+    float simd_sq = simd_sum(sq);
+    if (simd_lane == 0) {
+        shared_sums[simd_id] = simd_sq;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    if (simd_id == 0) {
+        float s = (simd_lane < 4) ? shared_sums[simd_lane] : 0.0f;
+        float total_sq = simd_sum(s);
         if (simd_lane == 0) {
-            shared_sums[simd_id] = simd_sq;
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        if (simd_id == 0) {
-            float s = (simd_lane < 8) ? shared_sums[simd_lane] : 0.0f;
-            float total_sq = simd_sum(s);
-            if (simd_lane == 0) {
-                shared_scale = rsqrt((total_sq / float(D)) + eps);
-            }
-        }
-        threadgroup_barrier(mem_flags::mem_threadgroup);
-
-        float scale = shared_scale;
-        for (uint i = tid; i < D; i += 256) {
-            y_row[i] = x_row[i] * scale * float(weight[i]);
+            shared_scale = rsqrt((total_sq / 128.0f) + eps);
         }
     }
-    """
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    float scale = shared_scale;
+    y_row[tid] = bfloat(v * scale * float(weight[tid]));
+}
+
+/// RMSNorm for head dimension 128 with float32 input and output.
+kernel void flint_rmsnorm_128_f32(
+    device const float* in_x [[buffer(0)]],
+    device const bfloat* weight [[buffer(1)]],
+    device float* out_y [[buffer(2)]],
+    constant float& eps [[buffer(3)]],
+    uint tid [[thread_position_in_threadgroup]],
+    uint row [[threadgroup_position_in_grid]]
+) {
+    threadgroup float shared_sums[4];
+    threadgroup float shared_scale;
+
+    uint simd_lane = tid & 31;
+    uint simd_id = tid >> 5;
+
+    device const float* x_row = in_x + row * 128;
+    device float* y_row = out_y + row * 128;
+
+    float v = x_row[tid];
+    float sq = v * v;
+
+    float simd_sq = simd_sum(sq);
+    if (simd_lane == 0) {
+        shared_sums[simd_id] = simd_sq;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    if (simd_id == 0) {
+        float s = (simd_lane < 4) ? shared_sums[simd_lane] : 0.0f;
+        float total_sq = simd_sum(s);
+        if (simd_lane == 0) {
+            shared_scale = rsqrt((total_sq / 128.0f) + eps);
+        }
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    float scale = shared_scale;
+    y_row[tid] = v * scale * float(weight[tid]);
+}
+
+// MARK: - General Dimension Fallback (Arbitrary D up to 8192)
+
+/// General RMSNorm for arbitrary dimension D with bfloat16 input and output.
+kernel void flint_rmsnorm_general_bf16(
+    device const bfloat* in_x [[buffer(0)]],
+    device const bfloat* weight [[buffer(1)]],
+    device bfloat* out_y [[buffer(2)]],
+    constant float& eps [[buffer(3)]],
+    constant uint& D [[buffer(4)]],
+    uint tid [[thread_position_in_threadgroup]],
+    uint row [[threadgroup_position_in_grid]]
+) {
+    threadgroup float shared_sums[8];
+    threadgroup float shared_scale;
+
+    uint simd_lane = tid & 31;
+    uint simd_id = tid >> 5;
+
+    if (tid < 8) {
+        shared_sums[tid] = 0.0f;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    device const bfloat* x_row = in_x + row * D;
+    device bfloat* y_row = out_y + row * D;
+
+    float local_sq = 0.0f;
+    for (uint i = tid; i < D; i += 256) {
+        float v = float(x_row[i]);
+        local_sq += v * v;
+    }
+
+    float simd_sq = simd_sum(local_sq);
+    if (simd_lane == 0) {
+        shared_sums[simd_id] = simd_sq;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    if (simd_id == 0) {
+        float s = (simd_lane < 8) ? shared_sums[simd_lane] : 0.0f;
+        float total_sq = simd_sum(s);
+        if (simd_lane == 0) {
+            shared_scale = rsqrt((total_sq / float(D)) + eps);
+        }
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    float scale = shared_scale;
+    for (uint i = tid; i < D; i += 256) {
+        y_row[i] = bfloat(float(x_row[i]) * scale * float(weight[i]));
+    }
+}
+
+/// General RMSNorm for arbitrary dimension D with float32 input and output.
+kernel void flint_rmsnorm_general_f32(
+    device const float* in_x [[buffer(0)]],
+    device const bfloat* weight [[buffer(1)]],
+    device float* out_y [[buffer(2)]],
+    constant float& eps [[buffer(3)]],
+    constant uint& D [[buffer(4)]],
+    uint tid [[thread_position_in_threadgroup]],
+    uint row [[threadgroup_position_in_grid]]
+) {
+    threadgroup float shared_sums[8];
+    threadgroup float shared_scale;
+
+    uint simd_lane = tid & 31;
+    uint simd_id = tid >> 5;
+
+    if (tid < 8) {
+        shared_sums[tid] = 0.0f;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    device const float* x_row = in_x + row * D;
+    device float* y_row = out_y + row * D;
+
+    float local_sq = 0.0f;
+    for (uint i = tid; i < D; i += 256) {
+        float v = x_row[i];
+        local_sq += v * v;
+    }
+
+    float simd_sq = simd_sum(local_sq);
+    if (simd_lane == 0) {
+        shared_sums[simd_id] = simd_sq;
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    if (simd_id == 0) {
+        float s = (simd_lane < 8) ? shared_sums[simd_lane] : 0.0f;
+        float total_sq = simd_sum(s);
+        if (simd_lane == 0) {
+            shared_scale = rsqrt((total_sq / float(D)) + eps);
+        }
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+
+    float scale = shared_scale;
+    for (uint i = tid; i < D; i += 256) {
+        y_row[i] = x_row[i] * scale * float(weight[i]);
+    }
+}
+
+"""
 }

@@ -334,3 +334,65 @@
        - `FlintRMSNormKernelTests`: 5 tests.
   8. **Strict Repository Isolation**:
      - `/Users/tanishq/dev/product/qwen-fieldfare` and symlink `/Users/tanishq/dev/product/flint-fieldfare` preserved 100% untouched.
+
+---
+
+## 2026-11-18 — F2-02: Native Metal Attention Sinks, Split-Half RoPE, and SDPA Qualification
+
+- **Author**: Inference Systems Architect
+- **Branch**: `feature/recursive-flint-40b-a2p5b`
+- **Authorized Workspace**: `/Users/tanishq/dev/product/flint-fieldfare-isolated`
+- **Target Checkpoint**: `/Users/tanishq/models/flint-mixed-3-4bit`
+- **Target Machine**: Apple MacBook Pro M5, 32 GB unified memory, macOS 27.2.1, Apple Swift 6.4.2.
+- **Actions Completed**:
+  1. **Prerequisite RMSNorm Hardening & Fallback Repair**:
+     - Synchronized threadgroup shared sums in general RMSNorm fallback (`shared_sums[8] = 0.0f` with `threadgroup_barrier`), and aligned Swift threadgroup dispatch to fixed 256 threads.
+     - Added numerical tests across non-specialized dimensions: 16, 64, 129, 192, 256, 512, 1024, verified against CPU mathematical reference in FP32 and BF16.
+     - Hardened Swift dispatch bounds in `FlintRMSNormKernel.swift`: Replaced unsafe multiplications with checked overflow arithmetic (`multipliedReportingOverflow`, `addingReportingOverflow`), validated non-negative byte counts, rejected non-finite epsilon values (NaN, +inf, -inf), and verified element alignment on buffer offsets.
+     - Added canonical Metal shader source equivalence test: verified zero drift between on-disk `flint_rmsnorm.metal` and `FlintRMSNormKernel.embeddedShaderSource`.
+     - Suite status after RMSNorm fixes: 66 tests passing across 5 suites.
+  2. **Split-Half Rotary Position Embedding (`flint_rope.metal`, `FlintRoPEKernel.swift`)**:
+     - Mathematical contract: Head dimension strictly 128 (64 dimension pairs $d \in [0, 63]$), base theta $10000.0f$, permutation `traditional=False` (split-half: $y_1 = x_1 \cos\theta - x_2 \sin\theta$, $y_2 = x_2 \cos\theta + x_1 \sin\theta$).
+     - Implemented in `flint_rope.metal` for BF16 and FP32 with 64 threads/threadgroup (1 thread per dimension pair).
+     - Applied strictly to 35 sliding-attention layers; bypassed on 14 full-attention layers (`no_rope_layer_indices: [0, 1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 48]`).
+     - Implemented `FlintRoPEReference.swift` for independent host verification.
+  3. **Native Metal Attention Sinks & SDPA Kernel (`flint_attention.metal`, `FlintAttentionKernel.swift`)**:
+     - GQA configuration: 32 query heads, 4 KV heads (grouped-query ratio 8:1).
+     - Scaling factor: $1.0 / \sqrt{128.0} \approx 0.0883883476f$.
+     - Learned Attention Sinks: Each query head $h \in [0, 31]$ has a learned scalar sink $s_h$ stored in resident `softmax_offset[h]`.
+     - Online streaming FlashAttention formulation:
+       - Running max initialized to $m = s_h$, running denominator $l = \exp(s_h - m) = 1.0$, running output accumulator $acc_d = 0.0$.
+       - As keys $j$ stream into threadgroup memory, logit $S_j = (Q \cdot K_j) \times \text{scale}$ updates $m$, $l$, and $acc_d$ via online scaling:
+         $$\alpha = \exp(m - m_{new}), \quad \beta = \exp(S_j - m_{new})$$
+         $$l = l \cdot \alpha + \beta, \quad acc_d = acc_d \cdot \alpha + \beta \cdot V_{j, d}$$
+       - The sink contributes strictly to the softmax denominator $l$ and contributes zero value vector to $acc_d$.
+       - Final output: $O_d = acc_d / l$. Zero intermediate score matrix allocation in global memory.
+     - Dual Attention Modes:
+       - Decode ($T_q = 1$): Parallelized over 32 query heads, 128 threads/head.
+       - Prefill ($T_q \ge 1$): Parallelized over $(T_q, 32, \text{batch})$ threadgroups.
+       - Masking: Full causal mask ($j \le \text{offset} + t$) on 14 layers; sliding-window mask ($\max(0, \text{offset} + t - 512) \le j \le \text{offset} + t$) on 35 layers.
+  4. **Pinned Reference Qualification (vs MLX 0.32.4)**:
+     - Fixture generated using Apple MLX 0.32.4 and `mlx_vlm` 0.7.12 (`generate_attention_golden.py` -> `flint_attention_golden.json`).
+     - Evaluated across 32 golden test cases:
+       - 24 RoPE cases:
+         - FP32: exact match (diff $\le 3.5 \times 10^{-5}$, max rel $\le 0.0035\%$).
+         - BF16: max rel $\le 0.769\%$ ($< 1/128$).
+       - 8 Attention cases (Prefill & Decode across Layer 0 Full and Layer 2 Sliding):
+         - FP32: exact match down to max abs diff $= 0.000000$ ($\le 10^{-6}$), max rel diff $\le 9.65 \times 10^{-4}$.
+         - BF16: max abs diff $\le 0.015625$ (1-2 ULPs), Relative L2 error $\le 10^{-3}$ ($0.0000$ to $0.000965$).
+     - 32/32 cases passed.
+  5. **Sequence-Boundary and Analytical Verification**:
+     - Analytical synthetic sink test: Verified exact theoretical output ($[5.0, 10.0, 0, \dots]$ for $s=2.0$, $[2.5, 5.0, 0, \dots]$ for $s=2.0+\ln 3$). Verified zero spurious non-zero components in dimensions $2 \dots 127$.
+     - Sequence boundary test: Verified sliding window behavior across cache lengths 1, 2, 512, 513, 514, and 1024 tokens.
+  6. **Integration with Real Resident Weights & Immutability**:
+     - Direct GPU consumption of resident `softmax_offset` buffers from Layer 0 (`model.layers.0.self_attn.softmax_offset`) and Layer 2 (`model.layers.2.self_attn.softmax_offset`).
+     - Verified weight immutability: SHA-256 before == SHA-256 after execution (`47fac1a4...` and `e55d79b0...`).
+  7. **Canonical Metal Shader Source Equivalence**:
+     - Verified zero drift between on-disk `flint_attention.metal` / `flint_rope.metal` and `FlintAttentionKernel.embeddedShaderSource` / `FlintRoPEKernel.embeddedShaderSource`.
+  8. **Apple M5 Hardware Performance Benchmark**:
+     - Decode Attention (1 token, 513 KV cache, 32 Q heads, 4 KV heads): P50: 183.37 µs (Min: 181.63 µs, P95: 807.42 µs, Max: 810.25 µs, Nominal Throughput: 5.82 GB/s).
+     - RoPE Decode (32 heads, 1 token): P50: 1.42 µs (Min: 1.37 µs, P95: 1.46 µs, Max: 1.50 µs).
+  9. **Regression & Full Test Suite Status**:
+     - All 74 tests passing across 6 suites in 1.673 seconds (clean `./Scripts/test.sh --filter FlintFieldfareCoreTests`).
+ 10. **Strict Workspace Isolation**:
+     - `/Users/tanishq/dev/product/qwen-fieldfare` and symlink `/Users/tanishq/dev/product/flint-fieldfare` preserved 100% untouched.

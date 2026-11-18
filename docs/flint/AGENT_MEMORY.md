@@ -54,27 +54,37 @@ This document is the authoritative recovery guide for agents operating on FlintF
   - Qwen Test Suite Lock Contention Resolution:
     - Diagnosed that parallel test target execution (`swift test`) causes race conditions on `/tmp/qwenfieldfare_inference.lock` between `QwenFieldfareServerTests` and `QwenFieldfareCoreTests`. Sequential execution (`--no-parallel`) passes 100% (99/99 tests in 0.129s).
     - FlintFieldfare uses an isolated dedicated lease lock `/tmp/flintfieldfare-inference-(uid).lock` preventing any cross-process or cross-target contention.
-- **F2 (Mathematical Primitives & Metal Kernels)**: **F2-01 COMPLETED**.
+- **F2 (Mathematical Primitives & Metal Kernels)**: **F2-01 & F2-02 COMPLETED**.
   - `FlintRMSNormKernel` & Metal Shading Language (`flint_rmsnorm.metal`):
     - Implemented native Metal compute kernels for width 2048 (hidden state, 256 threads, 8-warp SIMD reduction) and width 128 (head dim for per-head `q_norm` and `k_norm`, 128 threads, 4-warp SIMD reduction).
-    - General fallback kernel for arbitrary dimensions.
-    - FP32 internal accumulation for mathematical stability matching reference standard.
-    - Supports both BF16 and FP32 activation dtypes; BF16 checkpoint weights.
-    - Direct zero-copy consumption of resident weights (`readOnlyPointer` / `metalBuffer`). Zero weight mutation (SHA-256 verified invariant before and after execution).
-    - Pre-compiled pipeline state cache and zero per-invocation heap allocations in command encoding.
-    - Full parameter and buffer bounds validation prior to dispatch.
-    - Allocation safety: `FlintResidentBuffer` validates `buf.length >= byteCount`, requires `.storageModeShared`, and enforces non-null pointers (`invalidMetalBuffer`).
-  - Independent Reference Qualification (vs MLX 0.32.4):
-    - Evaluated across 20 deterministic golden test cases spanning widths 2048 and 128, BF16 and FP32, batch sizes 1 to 32 rows, epsilon values $10^{-6}$ and $10^{-5}$, and boundary inputs (zeros, ones, small/large magnitudes, mixed signs).
-    - FP32 exact match: Max absolute difference = $0.000000$ (0.0 ULP, RMS error $0.00\text{e}+00$).
-    - BF16 match: Max ULP difference $\le 1$ ($0.0625$ at $|y| \approx 8.0$, $0.015625$ at $|y| \approx 1.0$), max relative difference $\le 0.781\%$ ($1/128$, the mathematical limit of 7-bit BF16 mantissa).
-    - 20/20 cases passed.
-  - Apple M5 Hardware Performance Benchmark:
-    - Hidden Norm Decode (1 token, dim 2048): P50 = 14.00 µs (Min: 13.87 µs, P95: 19.17 µs).
-    - Hidden Norm Prefill (128 tokens, dim 2048): P50 = 25.25 µs (Min: 23.75 µs, P95: 26.00 µs, Throughput: 41.86 GB/s).
-    - Q Norm (32 heads, dim 128): P50 = 6.42 µs (Min: 6.29 µs, P95: 6.50 µs).
-    - K Norm (4 heads, dim 128): P50 = 6.37 µs (Min: 6.25 µs, P95: 6.42 µs).
-  - Test Suite: **64 tests passing across 5 suites in 0.542 seconds**.
+    - General fallback kernel repaired and qualified: synchronized threadgroup shared sums (`shared_sums[8] = 0.0f`), verified across non-specialized dimensions (16, 64, 129, 192, 256, 512, 1024) in FP32 and BF16 against CPU reference.
+    - Swift dispatch bounds hardened with overflow-checked integer arithmetic (`multipliedReportingOverflow`, `addingReportingOverflow`), non-finite epsilon rejection (NaN, ±inf), and offset alignment checks.
+    - Canonical Metal shader source equivalence test: verified zero drift between on-disk `flint_rmsnorm.metal` and `embeddedShaderSource`.
+    - Direct zero-copy consumption of resident weights. Zero weight mutation (SHA-256 verified invariant before and after execution).
+    - Independent Reference Qualification (vs MLX 0.32.4): 20/20 cases passed (FP32 exact match $0.000000$, BF16 max ULP $\le 1$, max relative diff $\le 0.781\%$).
+    - Apple M5 Benchmark: Hidden Norm Decode 14.00 µs, Hidden Norm Prefill 25.25 µs (41.86 GB/s), Q Norm 6.42 µs, K Norm 6.37 µs.
+  - `FlintAttentionKernel` & `FlintRoPEKernel` (F2-02):
+    - GQA architecture: 32 query heads, 4 KV heads (8:1 ratio), head dimension strictly 128, scaling factor $1.0 / \sqrt{128} \approx 0.0883883476$.
+    - Split-half RoPE (`traditional=False`, base 10000.0) implemented in `flint_rope.metal` and `FlintRoPEKernel.swift` with 64 threads/threadgroup. Bypassed on 14 full-attention layers (`[0, 1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 48]`) and applied to 35 sliding-attention layers.
+    - Online streaming FlashAttention formulation: threadgroup-based parallel online softmax accumulation in FP32 with zero global memory matrix allocations.
+    - Learned Attention Sinks: per-head scalar `softmax_offset[32]` initialized as starting max $m = s_h$, running sum $l = \exp(s_h - m) = 1.0$, and running accumulator $acc_d = 0.0$, strictly contributing to the softmax denominator without adding a spurious value vector.
+    - Dual masking modes: full causal attention (all cached keys attended) and sliding window causal attention (window 513 tokens, attended keys $\max(0, p - 512) \le j \le p$).
+    - Sequence boundary verification: verified across boundary lengths 1, 2, 512, 513, 514, and 1024 tokens.
+    - Resident Weight Zero-Copy & Immutability: direct execution using resident buffers for Layer 0 (`model.layers.0.self_attn.softmax_offset`) and Layer 2 (`model.layers.2.self_attn.softmax_offset`). SHA-256 before execution == SHA-256 after execution.
+    - Pinned MLX 0.32.4 Numerical Qualification: All 32 golden test cases passed.
+      - 24 RoPE cases: FP32 exact match (diff $\le 3.5 \times 10^{-5}$, max rel $\le 0.0035\%$), BF16 max rel $\le 0.769\%$.
+      - 8 Attention cases: FP32 max abs diff $= 0.000000$ (max rel diff $\le 9.65 \times 10^{-4}$), BF16 max abs diff $\le 0.015625$ (1-2 ULPs, relative L2 error $\le 10^{-3}$).
+    - Canonical Metal shader source equivalence test: verified zero drift between on-disk `flint_attention.metal` / `flint_rope.metal` and their embedded Swift strings.
+    - Apple M5 Hardware Benchmark:
+      - Decode Attention (1 token, 513 KV cache): P50 = 183.37 µs (Min: 181.63 µs, P95: 807.42 µs, Max: 810.25 µs, Nominal: 5.82 GB/s).
+      - RoPE Decode (32 heads, 1 token): P50 = 1.42 µs (Min: 1.37 µs, P95: 1.46 µs, Max: 1.50 µs).
+  - Test Suite Breakdown: **74 tests passing across 6 suites in 1.673s (clean ./Scripts/test.sh)**:
+    - `FlintAttentionKernelTests`: 8 tests (analytical synthetic sink, RoPE invariants, sliding boundaries 1..514, 32 MLX goldens, resident sinks integration & immutability, buffer bounds, M5 hardware benchmark, shader equivalence).
+    - `FlintRMSNormKernelTests`: 7 tests (mathematical invariants, bounds/Int.max validation, general fallback dims 16..1024, 20 MLX goldens, resident weight immutability, M5 benchmark, shader equivalence).
+    - `FlintResidentLoaderTests`: 9 tests.
+    - `FlintSafetensorsFileTests`: 28 tests.
+    - `FlintModelDirectoryTests`: 20 tests.
+    - `FlintInferenceLeaseTests`: 2 tests.
 - **F3 (First Real Flint Token Forward)**: Pending.
 - **F4 (Bounded Expert Streaming)**: Pending.
 
@@ -91,5 +101,5 @@ This document is the authoritative recovery guide for agents operating on FlintF
 5. **Never Commit Weights**: Checkpoint files remain strictly external.
 
 ## Immediate Next Steps
-1. Submit Review #005 Completion Report (F2-01 Native Metal RMSNorm Kernel and Numerical Qualification).
-2. Request authorization for Milestone F2-02 (Attention Sinks & SDPA Kernel).
+1. Submit Review #006 Completion Report (Prerequisite RMSNorm Fixes + F2-02 Attention Sinks, RoPE, and SDPA Qualification).
+2. Request authorization for Milestone F2-03 (Sigmoid Top-6 Router Kernel).

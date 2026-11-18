@@ -135,6 +135,10 @@ let package = Package(
                 "Infrastructure/ModelIO/FlintResidentWeights.swift",
                 "Kernels/FlintRMSNormKernel.swift",
                 "Kernels/FlintRMSNormReference.swift",
+                "Kernels/FlintRoPEKernel.swift",
+                "Kernels/FlintRoPEReference.swift",
+                "Kernels/FlintAttentionKernel.swift",
+                "Kernels/FlintAttentionReference.swift",
             ],
             resources: [.copy("Metal")]
         ),
@@ -148,6 +152,7 @@ let package = Package(
                 "FlintSafetensorsFileTests.swift",
                 "FlintResidentLoaderTests.swift",
                 "FlintRMSNormKernelTests.swift",
+                "FlintAttentionKernelTests.swift",
             ],
             resources: [.copy("Fixtures")]
         ),
