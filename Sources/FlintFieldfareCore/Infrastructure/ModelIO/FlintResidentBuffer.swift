@@ -19,6 +19,7 @@ public enum FlintResidentError: Error, LocalizedError, Equatable {
     case invalidByteCount(Int)
     case metalDeviceUnavailable
     case metalAllocationFailed(byteCount: Int)
+    case invalidMetalBuffer(reason: String)
     case backendMismatch(expected: String, actual: String)
 
     public var errorDescription: String? {
@@ -29,6 +30,8 @@ public enum FlintResidentError: Error, LocalizedError, Equatable {
             return "Metal device is unavailable for GPU-required resident weight allocation"
         case .metalAllocationFailed(let bytes):
             return "Failed to allocate Metal shared buffer of \(bytes) bytes (.storageModeShared)"
+        case .invalidMetalBuffer(let reason):
+            return "Invalid Metal buffer allocated: \(reason)"
         case .backendMismatch(let expected, let actual):
             return "Resident storage backend mismatch: expected \(expected), got \(actual)"
         }
@@ -76,12 +79,25 @@ public final class FlintResidentBuffer: @unchecked Sendable {
     ///   - byteCount: Non-negative byte size of the tensor.
     ///   - storageMode: Mode governing memory allocation (`.gpuRequired` or `.cpuOnly`).
     ///   - device: Optional Metal device (defaults to system default device in `.gpuRequired` mode).
-    ///   - metalBufferAllocator: Optional test hook to simulate Metal allocation outcomes without mock devices.
-    public init(
+    public convenience init(
+        byteCount: Int,
+        storageMode: FlintStorageMode = .gpuRequired,
+        device: MTLDevice? = nil
+    ) throws {
+        try self.init(
+            byteCount: byteCount,
+            storageMode: storageMode,
+            device: device,
+            metalBufferAllocator: nil
+        )
+    }
+
+    /// Internal initializer with test seam for injecting custom or failing Metal buffer allocations.
+    internal init(
         byteCount: Int,
         storageMode: FlintStorageMode = .gpuRequired,
         device: MTLDevice? = nil,
-        metalBufferAllocator: ((Int) -> MTLBuffer?)? = nil
+        metalBufferAllocator: ((Int) -> MTLBuffer?)?
     ) throws {
         guard byteCount >= 0 else {
             throw FlintResidentError.invalidByteCount(byteCount)
@@ -110,9 +126,21 @@ public final class FlintResidentBuffer: @unchecked Sendable {
             guard let buf = allocatedBuf else {
                 throw FlintResidentError.metalAllocationFailed(byteCount: byteCount)
             }
+            // Enforce allocation safety invariants before binding memory pointers
+            guard buf.length >= byteCount else {
+                throw FlintResidentError.invalidMetalBuffer(
+                    reason: "Allocated Metal buffer length \(buf.length) B is less than requested \(byteCount) B"
+                )
+            }
+            guard buf.storageMode == .shared else {
+                throw FlintResidentError.invalidMetalBuffer(
+                    reason: "Allocated Metal buffer storageMode must be .storageModeShared (got \(buf.storageMode.rawValue))"
+                )
+            }
+            let contents = buf.contents()
             self.metalBuffer = buf
             self.backend = .metalShared
-            self.mutablePointer = UnsafeMutableRawBufferPointer(start: buf.contents(), count: byteCount)
+            self.mutablePointer = UnsafeMutableRawBufferPointer(start: contents, count: byteCount)
 
         case .cpuOnly:
             let rawPtr = UnsafeMutableRawPointer.allocate(byteCount: byteCount, alignment: 64)

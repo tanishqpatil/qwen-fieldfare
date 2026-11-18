@@ -125,6 +125,7 @@ let package = Package(
             dependencies: [.product(name: "Tokenizers", package: "swift-transformers")],
             path: "Sources/FlintFieldfareCore",
             sources: [
+                "Infrastructure/Metal/FlintMetalContext.swift",
                 "Infrastructure/ModelIO/FlintInferenceLease.swift",
                 "Infrastructure/ModelIO/FlintModelDirectory.swift",
                 "Infrastructure/ModelIO/FlintSafetensorsFile.swift",
@@ -132,7 +133,10 @@ let package = Package(
                 "Infrastructure/ModelIO/FlintResidentLoader.swift",
                 "Infrastructure/ModelIO/FlintResidentManifest.swift",
                 "Infrastructure/ModelIO/FlintResidentWeights.swift",
-            ]
+                "Kernels/FlintRMSNormKernel.swift",
+                "Kernels/FlintRMSNormReference.swift",
+            ],
+            resources: [.copy("Metal")]
         ),
         .testTarget(
             name: "FlintFieldfareCoreTests",
@@ -143,7 +147,9 @@ let package = Package(
                 "FlintModelDirectoryTests.swift",
                 "FlintSafetensorsFileTests.swift",
                 "FlintResidentLoaderTests.swift",
-            ]
+                "FlintRMSNormKernelTests.swift",
+            ],
+            resources: [.copy("Fixtures")]
         ),
     ]
 )

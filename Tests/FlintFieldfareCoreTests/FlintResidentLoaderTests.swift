@@ -255,7 +255,29 @@ import Testing
             )
         }
 
-        // 3. CPU only allocates aligned heap and has no Metal buffer
+        // 3. GPU allocator returning undersized buffer is explicitly rejected (preventing buffer overrun)
+        if let dev = device {
+            #expect(throws: FlintResidentError.self) {
+                _ = try FlintResidentBuffer(
+                    byteCount: 1024,
+                    storageMode: .gpuRequired,
+                    device: dev,
+                    metalBufferAllocator: { _ in dev.makeBuffer(length: 512, options: .storageModeShared) }
+                )
+            }
+
+            // 4. GPU allocator returning incompatible storage mode (.storageModePrivate) is explicitly rejected
+            #expect(throws: FlintResidentError.self) {
+                _ = try FlintResidentBuffer(
+                    byteCount: 1024,
+                    storageMode: .gpuRequired,
+                    device: dev,
+                    metalBufferAllocator: { len in dev.makeBuffer(length: len, options: .storageModePrivate) }
+                )
+            }
+        }
+
+        // 5. CPU only allocates aligned heap and has no Metal buffer
         let cpuBuf = try FlintResidentBuffer(byteCount: 1024, storageMode: .cpuOnly, device: device)
         #expect(cpuBuf.backend == .cpuAlignedHeap)
         #expect(cpuBuf.metalBuffer == nil)

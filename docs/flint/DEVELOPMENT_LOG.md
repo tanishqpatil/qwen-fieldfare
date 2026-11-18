@@ -285,3 +285,52 @@
   7. **Qualification Suite Status**:
      - `FlintFieldfareCoreTests`: 59 tests in 4 suites passing in 0.651s.
      - Full package `./Scripts/test.sh`: All suites passing with exit code 0.
+
+---
+
+## 2026-11-18 — F2-01: Native Metal RMSNorm Kernel and Numerical Qualification
+
+- **Author**: Inference Systems Architect
+- **Branch**: `feature/recursive-flint-40b-a2p5b`
+- **Authorized Workspace**: `/Users/tanishq/dev/product/flint-fieldfare-isolated`
+- **Target Checkpoint**: `/Users/tanishq/models/flint-mixed-3-4bit`
+- **Target Machine**: Apple MacBook Pro M5, 32 GB unified memory, macOS 27.2.1, Apple Swift 6.4.2.
+- **Actions Completed**:
+  1. **Allocation Safety Hardening in `FlintResidentBuffer`**:
+     - Added `case invalidMetalBuffer(reason: String)` to `FlintResidentError`.
+     - Validated `buf.length >= byteCount`, required `buf.storageMode == .shared`, and verified non-null contents pointer before creating raw pointer views.
+     - Scoped `metalBufferAllocator` parameter to internal visibility; public initializer delegates without exposing test hook.
+     - Added negative tests in `FlintResidentLoaderTests.swift`: rejects undersized buffer (512 B for 1024 B request) and incompatible storage mode (`.storageModePrivate`).
+  2. **Native Metal RMSNorm Kernel (`flint_rmsnorm.metal`)**:
+     - Implemented width 2048 kernel (`flint_rmsnorm_2048_bf16`, `flint_rmsnorm_2048_f32`) using 256 threads, 8 elements/thread strided loop, 8-warp SIMD reduction in threadgroup memory, and FP32 accumulation.
+     - Implemented width 128 kernel (`flint_rmsnorm_128_bf16`, `flint_rmsnorm_128_f32`) using 128 threads, 1 element/thread, 4-warp SIMD reduction, and FP32 accumulation.
+     - Implemented general fallback kernel for arbitrary widths.
+     - Mathematical contract: $y = x \cdot \text{rsqrt}(\text{mean}(x^2) + \epsilon) \cdot w$.
+  3. **Host Infrastructure & Kernel Dispatcher**:
+     - Implemented `FlintMetalContext`: Thread-safe device and queue management, pipeline state caching.
+     - Implemented `FlintRMSNormKernel`: Pre-compiles PSOs, encodes commands without per-invocation heap allocations, validates buffer bounds and parameters before launch, provides synchronized timing and execution wrappers.
+     - Implemented `FlintRMSNormReference`: Host CPU reference implementation for cross-validation.
+  4. **Independent Reference Qualification (vs MLX 0.32.4)**:
+     - Generated 20 deterministic golden test cases using local MLX 0.32.4 (`generate_rmsnorm_golden.py` -> `flint_rmsnorm_golden.json`).
+     - Evaluated FP32: Exact match ($0.000000$ difference, 0.0 ULP, RMS error $0.00\text{e}+00$).
+     - Evaluated BF16: Maximum ULP distance $\le 1$ ($0.0625$ at $|y| \approx 8.0$, $0.015625$ at $|y| \approx 1.0$), maximum relative difference bounded by $0.7812\%$ ($1/128$), matching the exact numerical limits of the bfloat16 format.
+     - 20/20 cases passed.
+  5. **Integration with Real Resident Weights**:
+     - Connected directly to `FlintResidentWeights` without copying or staging (`readOnlyPointer` / `metalBuffer`).
+     - Tested on `model.norm.weight`, `model.layers.0.input_layernorm.weight`, `model.layers.0.self_attn.q_norm.weight`, `model.layers.0.self_attn.k_norm.weight`.
+     - Verified weight immutability: SHA-256 before == SHA-256 after execution.
+  6. **Apple M5 Hardware Performance Benchmark**:
+     - Hidden Norm Decode (1 token, dim 2048): P50: 14.00 µs (Min: 13.87 µs, P95: 19.17 µs).
+     - Hidden Norm Prefill (128 tokens, dim 2048): P50: 25.25 µs (Min: 23.75 µs, P95: 26.00 µs, Throughput: 41.86 GB/s).
+     - Q Norm (32 heads, dim 128): P50: 6.42 µs (Min: 6.29 µs, P95: 6.50 µs).
+     - K Norm (4 heads, dim 128): P50: 6.37 µs (Min: 6.25 µs, P95: 6.42 µs).
+     - FP32 variants: Decode 14.25 µs, Q-Norm 6.46 µs.
+  7. **Regression and Test Suite Status**:
+     - All 64 tests passing across 5 suites in 0.542 seconds:
+       - `FlintResidentLoaderTests`: 9 tests.
+       - `FlintSafetensorsFileTests`: 28 tests.
+       - `FlintModelDirectoryTests`: 20 tests.
+       - `FlintInferenceLeaseTests`: 2 tests.
+       - `FlintRMSNormKernelTests`: 5 tests.
+  8. **Strict Repository Isolation**:
+     - `/Users/tanishq/dev/product/qwen-fieldfare` and symlink `/Users/tanishq/dev/product/flint-fieldfare` preserved 100% untouched.

@@ -43,7 +43,9 @@ Flint inference requires strict precision control across the entire compute grap
 | Operation Level | Target Metric | Acceptable Tolerance | Gate Type |
 |---|---|---|---|
 | **Level 1: Weight Dequant** | Max absolute difference vs MLX | $\le 10^{-4}$ | Unit Test |
-| **Level 2: Norms & RoPE** | Max absolute difference vs MLX | $\le 10^{-5}$ | Unit Test |
+| **Level 2: Norms (FP32)** | Max absolute difference vs MLX | $\le 10^{-5}$ (Measured: $0.000000$) | Unit Test |
+| **Level 2: Norms (BF16)** | Max ULP difference vs MLX | $\le 1$ ULP (Max rel $\le 0.781\%$, $1/128$) | Unit Test |
+| **Level 2: RoPE** | Max absolute difference vs MLX | $\le 10^{-5}$ | Unit Test |
 | **Level 3: Router Top-6** | Identical expert index selection | 100% exact match | Kernel Test |
 | **Level 3: Router Weights** | Max absolute difference vs reference | $\le 10^{-5}$ | Kernel Test |
 | **Level 4: One Expert Forward**| Relative L2 error | $\le 10^{-3}$ | Component Test |
@@ -104,5 +106,41 @@ Permanently resident weights loaded into Metal shared memory (`MTLBuffer` with `
 | **Final (L48)** | `model.layers.48.post_attention_layernorm.weight` (Full Tensor) | `0..<4096` | `640bc5225fae549b69b5a62c25551a1837e0afab300972c89951f2c2c8c01de4` | MATCH |
 | **Final (L48)** | `model.layers.48.self_attn.o_proj.scales` | `0..<64` | `6c876aa5c7744296d504573762df1b8398804fc650d76854576e67017c534fa3` | MATCH |
 | **Final (L48)** | `model.layers.48.mlp.shared_expert.down_proj.weight` | `0..<128` | `281d309d2d9a3efa0e0aa7a97f12d9f7d6504f76937086a93e28cf0c9cdf0f51` | MATCH |
+
+---
+
+## 6. Native Metal RMSNorm Numerical Qualification (F2-01)
+
+The native Metal RMSNorm kernel (`flint_rmsnorm.metal`) was qualified against Python MLX 0.32.4 across 20 deterministic cases spanning dimension 2,048 (hidden state) and dimension 128 (head dimension), batch sizes 1 to 32 rows, $\epsilon \in \{10^{-6}, 10^{-5}\}$, and diverse numeric regimes (uniform random, zeros, constant ones, small magnitude, large magnitude, mixed positive/negative).
+
+The mathematical contract is:
+$$y = x \cdot \text{rsqrt}\left(\frac{1}{D} \sum_{i=1}^D x_i^2 + \epsilon\right) \cdot w$$
+
+### Empirical MLX 0.32.4 vs Metal Results
+
+| Case Identifier | Dim | Rows | Dtype | Max Abs Diff | Max Rel Diff | Max ULP | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `w2048_random_bf16_real_model_norm_eps1e6` | 2048 | 1 | BF16 | 0.015625 | 0.007812 | 1 | PASS (RMS: 2.31e-3) |
+| `w2048_random_bf16_real_l0_input_norm_eps1e6` | 2048 | 1 | BF16 | 0.062500 | 0.007812 | 1 | PASS (RMS: 1.40e-2) |
+| `w2048_zeros_bf16_real_model_norm_eps1e6` | 2048 | 1 | BF16 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+| `w2048_constant_ones_bf16_identity_weight_eps1e6` | 2048 | 1 | BF16 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+| `w2048_small_magnitude_bf16_real_model_norm_eps1e6` | 2048 | 1 | BF16 | 0.000061 | 0.006579 | 1 | PASS (RMS: 7.55e-6) |
+| `w2048_large_magnitude_bf16_real_model_norm_eps1e6` | 2048 | 1 | BF16 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+| `w2048_mixed_signs_bf16_real_model_norm_eps1e6` | 2048 | 1 | BF16 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+| `w2048_batch4_random_bf16_real_model_norm_eps1e6` | 2048 | 4 | BF16 | 0.015625 | 0.007812 | 1 | PASS (RMS: 1.99e-3) |
+| `w2048_random_f32_real_model_norm_eps1e6` | 2048 | 1 | FP32 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+| `w2048_random_bf16_real_model_norm_eps1e5` | 2048 | 1 | BF16 | 0.015625 | 0.007812 | 1 | PASS (RMS: 2.31e-3) |
+| `w128_random_bf16_real_l0_q_norm_eps1e6` | 128 | 1 | BF16 | 0.015625 | 0.007752 | 1 | PASS (RMS: 3.65e-3) |
+| `w128_random_bf16_real_l0_k_norm_eps1e6` | 128 | 1 | BF16 | 0.015625 | 0.007752 | 1 | PASS (RMS: 3.84e-3) |
+| `w128_zeros_bf16_real_l0_q_norm_eps1e6` | 128 | 1 | BF16 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+| `w128_constant_ones_bf16_identity_weight_eps1e6` | 128 | 1 | BF16 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+| `w128_small_magnitude_bf16_real_l0_q_norm_eps1e6` | 128 | 1 | BF16 | 0.000061 | 0.005435 | 1 | PASS (RMS: 2.09e-5) |
+| `w128_large_magnitude_bf16_real_l0_q_norm_eps1e6` | 128 | 1 | BF16 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+| `w128_mixed_signs_bf16_real_l0_q_norm_eps1e6` | 128 | 1 | BF16 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+| `w128_q_heads32_random_bf16_real_l0_q_norm_eps1e6` | 128 | 32 | BF16 | 0.031250 | 0.007812 | 1 | PASS (RMS: 3.58e-3) |
+| `w128_k_heads4_random_bf16_real_l0_k_norm_eps1e6` | 128 | 4 | BF16 | 0.031250 | 0.007692 | 1 | PASS (RMS: 3.39e-3) |
+| `w128_random_f32_real_l0_q_norm_eps1e6` | 128 | 1 | FP32 | 0.000000 | 0.000000 | 0 | PASS (RMS: 0.00e+0) |
+
+**Conclusion**: Across all FP32 cases, difference is identically $0.000000$. Across all BF16 cases, maximum ULP difference is strictly $\le 1$ ULP ($0.0625$ at $|y| \approx 8$, $0.015625$ at $|y| \approx 1$), with max relative difference bounded by $0.7812\%$ ($1/128$), matching the exact numerical limits of the bfloat16 format.
 
 

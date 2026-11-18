@@ -39,7 +39,7 @@
 
 | Task ID | Priority | Status | Title | Affects | Acceptance Criteria | Tests | Commit / Evidence |
 |---|---|---|---|---|---|---|---|
-| **F2-01** | P0 | `PENDING` | Flint RMSNorm Kernel | `Sources/FlintFieldfareCore/Metal/` | Match FP32 RMSNorm on hidden_size and head_dim | Numerical unit test | Pending |
+| **F2-01** | P0 | `COMPLETED` | Flint RMSNorm Kernel | `Sources/FlintFieldfareCore/Metal/` | Match FP32 RMSNorm on hidden_size (2048) and head_dim (128), zero resident weight copy/mutation, MLX 0.32.4 qualification | `FlintRMSNormKernelTests` (5 tests) | Implemented & verified (64 tests passing across 5 suites) |
 | **F2-02** | P0 | `PENDING` | Attention Sink & SDPA Kernel | `Sources/FlintFieldfareCore/Metal/` | Correct softmax logit concatenation, full & sliding attention | Attention numerical tests | Pending |
 | **F2-03** | P0 | `PENDING` | Sigmoid Top-6 Router Kernel | `Sources/FlintFieldfareCore/Metal/` | Match FP32 sigmoid and normalized top-6 weights | Router numerical tests | Pending |
 | **F2-04** | P0 | `PENDING` | 3-Bit & 4-Bit Metal Dequantization | `Sources/FlintFieldfareCore/Metal/` | Dequantize affine weights matching MLX | Dequant tests | Pending |

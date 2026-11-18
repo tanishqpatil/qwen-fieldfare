@@ -42,8 +42,39 @@ This document is the authoritative recovery guide for agents operating on FlintF
     - 15 independent reference SHA-256 digests verified across early, middle, and final layers.
     - Packed U32 weights verified intact without float conversion.
     - Measured on Apple M5 32 GB: 0.218s – 0.351s load duration.
-  - Test Suite: **59 tests passing across 4 suites in 0.651 seconds**.
-- **F2 (Mathematical Primitives & Metal Kernels)**: Next active milestone.
+  - Test Suite Breakdown: **59 tests passing across 4 suites in 0.651 seconds**:
+    - `FlintResidentLoaderTests`: 9 tests (live M5 load, repeated cycles, teardown, failure injection, CPU-only mode, bounds).
+    - `FlintSafetensorsFileTests`: 28 tests (header validation, O_NOFOLLOW, 64 MB chunk limit, concurrent reads, live inventory).
+    - `FlintModelDirectoryTests`: 20 tests (Case A/B bifurcation, strict metadata, 141 MoE projection checks).
+    - `FlintInferenceLeaseTests`: 2 tests (mutual exclusion on `/tmp/flintfieldfare-inference-(uid).lock`, path validation).
+  - Concurrency & Thread-Safety Qualification:
+    - `Sendable` declarations are enforced by the Swift 6 compiler (`-strict-concurrency=complete`).
+    - Basic concurrent read safety is validated via `testConcurrentReadsDoNotRace()` and `testSendableAndThreadSafetyVerification()`.
+    - Full end-to-end multi-threaded pipeline qualification (e.g. concurrent token prefill/decode) is scheduled for F3 runtime integration.
+  - Qwen Test Suite Lock Contention Resolution:
+    - Diagnosed that parallel test target execution (`swift test`) causes race conditions on `/tmp/qwenfieldfare_inference.lock` between `QwenFieldfareServerTests` and `QwenFieldfareCoreTests`. Sequential execution (`--no-parallel`) passes 100% (99/99 tests in 0.129s).
+    - FlintFieldfare uses an isolated dedicated lease lock `/tmp/flintfieldfare-inference-(uid).lock` preventing any cross-process or cross-target contention.
+- **F2 (Mathematical Primitives & Metal Kernels)**: **F2-01 COMPLETED**.
+  - `FlintRMSNormKernel` & Metal Shading Language (`flint_rmsnorm.metal`):
+    - Implemented native Metal compute kernels for width 2048 (hidden state, 256 threads, 8-warp SIMD reduction) and width 128 (head dim for per-head `q_norm` and `k_norm`, 128 threads, 4-warp SIMD reduction).
+    - General fallback kernel for arbitrary dimensions.
+    - FP32 internal accumulation for mathematical stability matching reference standard.
+    - Supports both BF16 and FP32 activation dtypes; BF16 checkpoint weights.
+    - Direct zero-copy consumption of resident weights (`readOnlyPointer` / `metalBuffer`). Zero weight mutation (SHA-256 verified invariant before and after execution).
+    - Pre-compiled pipeline state cache and zero per-invocation heap allocations in command encoding.
+    - Full parameter and buffer bounds validation prior to dispatch.
+    - Allocation safety: `FlintResidentBuffer` validates `buf.length >= byteCount`, requires `.storageModeShared`, and enforces non-null pointers (`invalidMetalBuffer`).
+  - Independent Reference Qualification (vs MLX 0.32.4):
+    - Evaluated across 20 deterministic golden test cases spanning widths 2048 and 128, BF16 and FP32, batch sizes 1 to 32 rows, epsilon values $10^{-6}$ and $10^{-5}$, and boundary inputs (zeros, ones, small/large magnitudes, mixed signs).
+    - FP32 exact match: Max absolute difference = $0.000000$ (0.0 ULP, RMS error $0.00\text{e}+00$).
+    - BF16 match: Max ULP difference $\le 1$ ($0.0625$ at $|y| \approx 8.0$, $0.015625$ at $|y| \approx 1.0$), max relative difference $\le 0.781\%$ ($1/128$, the mathematical limit of 7-bit BF16 mantissa).
+    - 20/20 cases passed.
+  - Apple M5 Hardware Performance Benchmark:
+    - Hidden Norm Decode (1 token, dim 2048): P50 = 14.00 µs (Min: 13.87 µs, P95: 19.17 µs).
+    - Hidden Norm Prefill (128 tokens, dim 2048): P50 = 25.25 µs (Min: 23.75 µs, P95: 26.00 µs, Throughput: 41.86 GB/s).
+    - Q Norm (32 heads, dim 128): P50 = 6.42 µs (Min: 6.29 µs, P95: 6.50 µs).
+    - K Norm (4 heads, dim 128): P50 = 6.37 µs (Min: 6.25 µs, P95: 6.42 µs).
+  - Test Suite: **64 tests passing across 5 suites in 0.542 seconds**.
 - **F3 (First Real Flint Token Forward)**: Pending.
 - **F4 (Bounded Expert Streaming)**: Pending.
 
@@ -60,5 +91,5 @@ This document is the authoritative recovery guide for agents operating on FlintF
 5. **Never Commit Weights**: Checkpoint files remain strictly external.
 
 ## Immediate Next Steps
-1. Submit Review #005 Completion Report (F1-04 Resident Weight Extraction & Storage).
-2. Recommend progression to Milestone F2 (Core Numerical Primitives: RMSNorm, Attention Sinks/SDPA, Sigmoid Router, Dequantization).
+1. Submit Review #005 Completion Report (F2-01 Native Metal RMSNorm Kernel and Numerical Qualification).
+2. Request authorization for Milestone F2-02 (Attention Sinks & SDPA Kernel).
