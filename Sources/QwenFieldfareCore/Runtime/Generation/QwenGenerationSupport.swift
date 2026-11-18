@@ -95,6 +95,10 @@ public struct QwenGenerationConfiguration: Sendable, Equatable {
         )
     }
 
+    var usesExactGreedy: Bool {
+        temperature == 0 && topK == 1 && presencePenalty == 0 && repetitionPenalty == 1
+    }
+
     public func validate() throws {
         guard maxNewTokens > 0 else {
             throw QwenGenerationConfigurationError.invalidMaxNewTokens(maxNewTokens)
@@ -169,6 +173,31 @@ public enum QwenChatTemplate {
     }
 }
 
+/// Owned by one active-streaming generation. Never stored in the prefix ledger.
+final class QwenSeenTokenBitmap {
+    let tokenCount: Int
+    private var words: [UInt64]
+
+    init(tokenCount: Int, promptTokens: [Int32]) {
+        precondition(tokenCount >= 0)
+        self.tokenCount = tokenCount
+        let wholeWords = tokenCount / UInt64.bitWidth
+        let partialWord = tokenCount % UInt64.bitWidth == 0 ? 0 : 1
+        words = Array(repeating: 0, count: wholeWords + partialWord)
+        for token in promptTokens { insert(token) }
+    }
+
+    func insert(_ token: Int32) {
+        let index = Int(token)
+        guard index >= 0, index < tokenCount else { return }
+        words[index >> 6] |= UInt64(1) << (index & 63)
+    }
+
+    fileprivate func withWords<Result>(_ body: (UnsafeBufferPointer<UInt64>) -> Result) -> Result {
+        words.withUnsafeBufferPointer(body)
+    }
+}
+
 /// Shared generation state machine. Keeping the stop/limit logic independent
 /// of Metal makes 1K+ token behavior testable without loading the model.
 enum QwenGenerationLoop {
@@ -182,11 +211,36 @@ enum QwenGenerationLoop {
         onToken: (Int32) -> Void,
         nextToken: (_ consumedToken: Int32, _ tokenPosition: Int, _ seenTokenIDs: Set<Int32>, _ samplePosition: Int) throws -> Int32
     ) throws -> QwenGenerationResult {
+        try run(
+            initialToken: initialToken,
+            promptTokenCount: promptTokens.count,
+            initialSeen: Set(promptTokens),
+            maxSequenceLength: maxSequenceLength,
+            configuration: configuration,
+            stopTokenIDs: stopTokenIDs,
+            checkCancellation: checkCancellation,
+            onToken: onToken,
+            markSeen: { seen, token in seen.insert(token) },
+            nextToken: nextToken)
+    }
+
+    static func run<Seen>(
+        initialToken: Int32,
+        promptTokenCount: Int,
+        initialSeen: consuming Seen,
+        maxSequenceLength: Int,
+        configuration: QwenGenerationConfiguration,
+        stopTokenIDs: Set<Int32> = QwenSpecialTokens.stopTokenIDs,
+        checkCancellation: () throws -> Void,
+        onToken: (Int32) -> Void,
+        markSeen: (inout Seen, Int32) -> Void,
+        nextToken: (_ consumedToken: Int32, _ tokenPosition: Int, _ seen: Seen, _ samplePosition: Int) throws -> Int32
+    ) throws -> QwenGenerationResult {
         var generated: [Int32] = []
-        generated.reserveCapacity(min(configuration.maxNewTokens, max(0, maxSequenceLength - promptTokens.count)))
-        var seenTokenIDs = Set(promptTokens)
+        generated.reserveCapacity(min(configuration.maxNewTokens, max(0, maxSequenceLength - promptTokenCount)))
+        var seen = consume initialSeen
         var currentToken = initialToken
-        var currentPosition = promptTokens.count
+        var currentPosition = promptTokenCount
 
         while true {
             try checkCancellation()
@@ -202,7 +256,7 @@ enum QwenGenerationLoop {
 
             generated.append(currentToken)
             onToken(currentToken)
-            seenTokenIDs.insert(currentToken)
+            markSeen(&seen, currentToken)
 
             let nextPosition = currentPosition + 1
             if nextPosition >= maxSequenceLength {
@@ -215,7 +269,7 @@ enum QwenGenerationLoop {
             currentToken = try nextToken(
                 currentToken,
                 currentPosition,
-                seenTokenIDs,
+                seen,
                 generated.count
             )
             currentPosition = nextPosition
@@ -238,10 +292,36 @@ enum QwenLogitSelector {
         configuration: QwenGenerationConfiguration,
         samplePosition: Int
     ) -> Int32 {
-        if configuration.temperature == 0,
-           configuration.topK == 1,
-           configuration.presencePenalty == 0,
-           configuration.repetitionPenalty == 1 {
+        select(
+            logits: logits, count: count, configuration: configuration, samplePosition: samplePosition,
+            isSeen: { seenTokenIDs.contains(Int32($0)) })
+    }
+
+    /// The caller supplies a logits buffer with one float for every bitmap token.
+    static func select(
+        logits: UnsafePointer<Float>,
+        seenBitmap: QwenSeenTokenBitmap,
+        configuration: QwenGenerationConfiguration,
+        samplePosition: Int
+    ) -> Int32 {
+        seenBitmap.withWords { words in
+            select(
+                logits: logits, count: seenBitmap.tokenCount, configuration: configuration,
+                samplePosition: samplePosition,
+                isSeen: { (words[$0 >> 6] & (UInt64(1) << ($0 & 63))) != 0 })
+        }
+    }
+
+    // Inline the concrete membership check into the vocabulary traversal.
+    @inline(__always)
+    private static func select(
+        logits: UnsafePointer<Float>,
+        count: Int,
+        configuration: QwenGenerationConfiguration,
+        samplePosition: Int,
+        isSeen: (Int) -> Bool
+    ) -> Int32 {
+        if configuration.usesExactGreedy {
             return exactGreedyToken(logits: logits, count: count)
         }
 
@@ -253,7 +333,7 @@ enum QwenLogitSelector {
         for index in 0..<count {
             let tokenID = Int32(index)
             var logit = logits[index]
-            if seenTokenIDs.contains(tokenID) {
+            if isSeen(index) {
                 if configuration.repetitionPenalty != 1 {
                     logit = logit >= 0
                         ? logit / configuration.repetitionPenalty

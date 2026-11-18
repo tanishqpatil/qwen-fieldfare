@@ -59,6 +59,13 @@ public final class DenseLayerArena: @unchecked Sendable {
 }
 
 public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
+    private static let vocabularySize = 248_320
+
+    private enum SelectionHistory {
+        case set(Set<Int32>)
+        case bitmap(QwenSeenTokenBitmap)
+    }
+
     public enum LayerKind: Sendable {
         case linearAttention
         case fullAttention
@@ -375,7 +382,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
               let attsb = device.makeBuffer(length: 16 * maxSeqLen * 4, options: .storageModeShared),
               let shcb = device.makeBuffer(length: 1 * 4, options: .storageModeShared),
               let fnob = device.makeBuffer(length: 2048 * 4, options: .storageModeShared),
-              let lob = device.makeBuffer(length: 248320 * 4, options: .storageModeShared) else {
+              let lob = device.makeBuffer(length: Self.vocabularySize * MemoryLayout<Float>.stride, options: .storageModeShared) else {
             throw QwenQ4RunnerError.metalBufferAllocationFailed("Failed to allocate scratch buffers")
         }
 
@@ -462,9 +469,9 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         let isWeight = name.hasSuffix(".weight")
         let isQuant = isWeight || name.hasSuffix(".scales") || name.hasSuffix(".biases")
         if name.hasSuffix("embed_tokens.weight") || name.hasSuffix("lm_head.weight") {
-            expected = ("U32", 248_320 * 256 * 4)
+            expected = ("U32", Self.vocabularySize * 256 * 4)
         } else if name.contains("embed_tokens.") || name.contains("lm_head.") {
-            expected = ("BF16", 248_320 * 32 * 2)
+            expected = ("BF16", Self.vocabularySize * 32 * 2)
         } else if name.contains(".switch_mlp.") && isQuant {
             expected = isWeight ? ("U32", 256 * 524_288) : ("BF16", 256 * 32_768)
         } else if name.hasSuffix("input_layernorm.weight") || name.hasSuffix("post_attention_layernorm.weight") || name == "language_model.model.norm.weight" {
@@ -924,17 +931,19 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         samplePosition: Int = 0
     ) throws -> Int32 {
         prefixState.clear(.externalForward)
-        return try forwardTokenImpl(tokenId:tokenId,tokenPos:tokenPos,generationConfiguration:generationConfiguration,seenTokenIDs:seenTokenIDs,samplePosition:samplePosition)
+        return try forwardTokenImpl(
+            tokenId: tokenId, tokenPos: tokenPos, generationConfiguration: generationConfiguration,
+            selectionHistory: .set(seenTokenIDs), samplePosition: samplePosition)
     }
 
     private func forwardTokenImpl(
         tokenId: Int,
         tokenPos: Int,
         generationConfiguration: QwenGenerationConfiguration? = nil,
-        seenTokenIDs: Set<Int32> = [],
+        selectionHistory: SelectionHistory = .set([]),
         samplePosition: Int = 0
     ) throws -> Int32 {
-        guard tokenId >= 0, tokenId < 248_320, tokenPos >= 0, tokenPos < maxSeqLen else {
+        guard tokenId >= 0, tokenId < Self.vocabularySize, tokenPos >= 0, tokenPos < maxSeqLen else {
             throw QwenSafetensorsError.invalidTensor(name: "embedding", reason: "token or position out of bounds")
         }
         // Detect observed mutations before touching mappings; this is not a lock.
@@ -1428,14 +1437,14 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
                 enc2.dispatchThreadgroups(MTLSize(width: 1, height: 1, depth: 1), threadsPerThreadgroup: MTLSize(width: 64, height: 1, depth: 1))
 
                 // LM Head GEMV
-                var lmRows: UInt32 = 248320; var lmCols: UInt32 = 2048
+                var lmRows = UInt32(Self.vocabularySize); var lmCols: UInt32 = 2048
                 var lmWOff = UInt32(lmHeadWOff); var lmSOff = UInt32(lmHeadSOff); var lmBOff = UInt32(lmHeadBOff)
                 enc2.setComputePipelineState(q4SimdPipe)
                 enc2.setBuffer(lmHeadWBuf, offset: 0, index: 0); enc2.setBuffer(lmHeadSBuf, offset: 0, index: 1); enc2.setBuffer(lmHeadBBuf, offset: 0, index: 2)
                 enc2.setBuffer(finalNormOutBuf, offset: 0, index: 3); enc2.setBuffer(logitsOutBuf, offset: 0, index: 4)
                 enc2.setBytes(&lmRows, length: 4, index: 5); enc2.setBytes(&lmCols, length: 4, index: 6)
                 enc2.setBytes(&lmWOff, length: 4, index: 7); enc2.setBytes(&lmSOff, length: 4, index: 8); enc2.setBytes(&lmBOff, length: 4, index: 9)
-                enc2.dispatchThreadgroups(MTLSize(width: (248320 + 7) / 8, height: 1, depth: 1), threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
+                enc2.dispatchThreadgroups(MTLSize(width: (Self.vocabularySize + 7) / 8, height: 1, depth: 1), threadsPerThreadgroup: MTLSize(width: 256, height: 1, depth: 1))
             }
 
             enc2.endEncoding()
@@ -1470,17 +1479,20 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         let logitsPtr = logitsOutBuf.contents().assumingMemoryBound(to: Float.self)
         let selectedToken: Int32
         if let generationConfiguration {
-            selectedToken = QwenLogitSelector.select(
-                logits: UnsafePointer(logitsPtr),
-                count: 248_320,
-                seenTokenIDs: seenTokenIDs,
-                configuration: generationConfiguration,
-                samplePosition: samplePosition
-            )
+            switch selectionHistory {
+            case .set(let seen):
+                selectedToken = QwenLogitSelector.select(
+                    logits: UnsafePointer(logitsPtr), count: Self.vocabularySize, seenTokenIDs: seen,
+                    configuration: generationConfiguration, samplePosition: samplePosition)
+            case .bitmap(let seen):
+                selectedToken = QwenLogitSelector.select(
+                    logits: UnsafePointer(logitsPtr), seenBitmap: seen,
+                    configuration: generationConfiguration, samplePosition: samplePosition)
+            }
         } else {
             var maxLogit: Float = 0.0
             var maxIdx: vDSP_Length = 0
-            vDSP_maxvi(logitsPtr, 1, &maxLogit, &maxIdx, 248_320)
+            vDSP_maxvi(logitsPtr, 1, &maxLogit, &maxIdx, vDSP_Length(Self.vocabularySize))
             selectedToken = Int32(maxIdx)
         }
         let tArgmaxEnd = CFAbsoluteTimeGetCurrent()
@@ -1535,7 +1547,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
     // Called only at a completed forward boundary by the opt-in equivalence test.
     func debugSequenceBoundary() -> (hidden: Data, logits: Data) {
         (Data(bytes: hiddenBuf0.contents(), count: 2_048 * MemoryLayout<Float>.stride),
-         Data(bytes: logitsOutBuf.contents(), count: 248_320 * MemoryLayout<Float>.stride))
+         Data(bytes: logitsOutBuf.contents(), count: Self.vocabularySize * MemoryLayout<Float>.stride))
     }
 
     func debugTopLogits(limit: Int = 5) -> [(tokenID: Int32, logit: Float)] {
@@ -1543,7 +1555,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         let logits = logitsOutBuf.contents().assumingMemoryBound(to: Float.self)
         var candidates: [(tokenID: Int32, logit: Float)] = []
         candidates.reserveCapacity(limit)
-        for tokenID in 0..<248_320 {
+        for tokenID in 0..<Self.vocabularySize {
             let candidate = (tokenID: Int32(tokenID), logit: logits[tokenID])
             if candidates.count < limit {
                 candidates.append(candidate)
@@ -1593,6 +1605,10 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         let reused = try prefixState.begin(prompt:promptTokens,identity:prefixIdentity,configuration:configuration,expectedEpoch:prefixEpoch)
         if reused == 0 {resetStateBuffers()}
         let prefillStart = CFAbsoluteTimeGetCurrent()
+        // Reused GPU state can skip forwards, never the current prompt's sampler history.
+        let history: SelectionHistory = configuration.usesExactGreedy
+            ? .set([])
+            : .bitmap(QwenSeenTokenBitmap(tokenCount: Self.vocabularySize, promptTokens: promptTokens))
         var lastTokenId: Int32 = promptTokens[0]
         for pos in reused..<promptTokens.count {
             try Task.checkCancellation()
@@ -1601,17 +1617,24 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
             let nextId = try forwardTokenImpl(
                 tokenId:Int(token),tokenPos:pos,
                 generationConfiguration:isLastPromptToken ? configuration:nil,
-                seenTokenIDs:isLastPromptToken ? Set(promptTokens):[],samplePosition:0)
+                selectionHistory: history, samplePosition: 0)
             try prefixState.consume(token,position:pos,prompt:true)
             if isLastPromptToken {lastTokenId = nextId}
         }
         onPrefillComplete?((CFAbsoluteTimeGetCurrent() - prefillStart) * 1_000.0)
         let result = try QwenGenerationLoop.run(
-            initialToken:lastTokenId,promptTokens:promptTokens,maxSequenceLength:maxSeqLen,
-            configuration:configuration,checkCancellation:{try Task.checkCancellation()},
-            onToken:{onToken?($0)},nextToken:{token,position,seenTokenIDs,samplePosition in
-                let next = try self.forwardTokenImpl(tokenId:Int(token),tokenPos:position,generationConfiguration:configuration,seenTokenIDs:seenTokenIDs,samplePosition:samplePosition)
-                try self.prefixState.consume(token,position:position,prompt:false)
+            initialToken: lastTokenId, promptTokenCount: promptTokens.count, initialSeen: history,
+            maxSequenceLength: maxSeqLen, configuration: configuration,
+            checkCancellation: { try Task.checkCancellation() },
+            onToken: { onToken?($0) },
+            markSeen: { seen, token in
+                if case .bitmap(let bitmap) = seen { bitmap.insert(token) }
+            },
+            nextToken: { token, position, seen, samplePosition in
+                let next = try self.forwardTokenImpl(
+                    tokenId: Int(token), tokenPos: position, generationConfiguration: configuration,
+                    selectionHistory: seen, samplePosition: samplePosition)
+                try self.prefixState.consume(token, position: position, prompt: false)
                 return next
             })
         try prefixState.finish(promptCount:promptTokens.count,result:result)

@@ -191,3 +191,159 @@ extension QwenGenerationSupportTests {
         }
     }
 }
+
+extension QwenGenerationSupportTests {
+    @Test
+    func setSelectorReferencePreservesPenaltyTieAndNonfiniteBehavior() {
+        let penalty = QwenGenerationConfiguration(
+            maxNewTokens: 1, temperature: 0, topK: 1, topP: 1,
+            presencePenalty: 1, repetitionPenalty: 2, seed: 42)
+        let cases: [(logits: [Float], seen: Set<Int32>, expected: Int32)] = [
+            ([8, 4, 2], [0], 1),
+            ([-1, -2, -4], [0], 1),
+            ([4, 1, 1], [0], 0),
+            ([-0.0, +0.0], [-1, 2], 0),
+            ([.nan, .infinity, 2], [], 0),
+            ([-.infinity, .nan, .infinity], [], 2),
+        ]
+        for test in cases {
+            #expect(QwenLogitSelector.select(logits: test.logits, seenTokenIDs: test.seen,
+                configuration: penalty) == test.expected)
+        }
+    }
+}
+
+@Suite
+struct QwenSeenTokenBitmapTests {
+    private func select(
+        _ logits: [Float], bitmap: QwenSeenTokenBitmap,
+        configuration: QwenGenerationConfiguration, position: Int
+    ) -> Int32 {
+        logits.withUnsafeBufferPointer {
+            QwenLogitSelector.select(
+                logits: $0.baseAddress!, seenBitmap: bitmap,
+                configuration: configuration, samplePosition: position)
+        }
+    }
+
+    @Test
+    func bitmapMatchesSetForSamplingAndBoundaryValues() {
+        let edge: [Float] = [-.infinity, .infinity, .nan, 0.0, -0.0, -3, 4, 4, -3]
+        let logitsCases: [[Float]] = [
+            edge, [.nan, .infinity, -.infinity, 0.0],
+            (0..<1_027).map { Float(($0 * 59) % 29 - 14) / 4 },
+        ]
+        for logits in logitsCases {
+            let bound = Int32(logits.count)
+            let histories: [[Int32]] = [
+                [], [0], [bound - 1], [-1, .min, bound, .max, 0, 0, bound - 1],
+                (0..<bound).filter { $0.isMultiple(of: 3) },
+                Array(0..<bound), Array(1..<bound),
+            ]
+            for history in histories {
+                let bitmap = QwenSeenTokenBitmap(tokenCount: logits.count, promptTokens: history)
+                let set = Set(history)
+                for seed: UInt64 in [0, 42, .max] {
+                    let configurations: [QwenGenerationConfiguration] = [
+                        .greedy(maxNewTokens: 1, seed: seed),
+                        .init(maxNewTokens: 1, temperature: 0, topK: 1,
+                              topP: 1, presencePenalty: 1.5, repetitionPenalty: 2, seed: seed),
+                        .init(maxNewTokens: 1, temperature: 1, topK: 20,
+                              topP: 0.95, presencePenalty: 1.5, repetitionPenalty: 1, seed: seed),
+                        .init(maxNewTokens: 1, temperature: 0.5, topK: 20,
+                              topP: .leastNormalMagnitude, presencePenalty: -1.5, repetitionPenalty: 1, seed: seed),
+                        .init(maxNewTokens: 1, temperature: 2, topK: 256,
+                              topP: 1, presencePenalty: 0, repetitionPenalty: 1.25, seed: seed),
+                    ]
+                    for configuration in configurations {
+                        for position in [0, 1, 511] {
+                            let oracle = QwenLogitSelector.select(
+                                logits: logits, seenTokenIDs: set, configuration: configuration,
+                                samplePosition: position)
+                            #expect(select(logits, bitmap: bitmap, configuration: configuration, position: position) == oracle)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    func bitmapMatchesSetAtFullCheckpointVocabulary() {
+        let count = 248_320
+        var logits = [Float](repeating: -4, count: count)
+        for index in [0, 63, 64, 65, count / 2, count - 1] { logits[index] = 4 }
+        let history = Array(Int32(0)..<Int32(count))
+        let configuration = QwenGenerationConfiguration(maxNewTokens: 2, seed: 42)
+        let bitmap = QwenSeenTokenBitmap(tokenCount: count, promptTokens: Array(history.dropLast()))
+        var set = Set(history.dropLast())
+        for addFinal in [false, true] {
+            if addFinal {
+                set.insert(Int32(count - 1))
+                bitmap.insert(Int32(count - 1))
+            }
+            #expect(select(logits, bitmap: bitmap, configuration: configuration, position: 511)
+                    == QwenLogitSelector.select(logits: logits, seenTokenIDs: set,
+                        configuration: configuration, samplePosition: 511))
+        }
+    }
+
+    @Test
+    func generationPreservesFirstPredictionUpdatesAndCancellationBoundaries() throws {
+        let prompt: [Int32] = [7, 2, 7]
+        let logits: [Float] = [0, 0, 4, 0, 0, 0, 0, 5, 3.75]
+        let policy = QwenGenerationConfiguration(maxNewTokens: 5, temperature: 0, topK: 1,
+            topP: 1, presencePenalty: 2, repetitionPenalty: 1, seed: 42)
+        let cases: [(maxNew: Int, context: Int, cancel: Bool)] = [
+            (5, 32, false), (1, 32, false), (5, 4, false),
+            (5, 32, true), (5, 32, false),
+        ]
+        for test in cases {
+            var configuration = policy
+            configuration.maxNewTokens = test.maxNew
+            let bitmap = QwenSeenTokenBitmap(tokenCount: logits.count, promptTokens: prompt)
+            let first = select(logits, bitmap: bitmap, configuration: configuration, position: 0)
+            #expect(first == QwenLogitSelector.select(logits: logits, seenTokenIDs: Set(prompt),
+                configuration: configuration, samplePosition: 0))
+            #expect(first == 8)
+            var bitmapEvents: [String] = []
+            var setEvents: [String] = []
+            func checkCancellation(_ events: [String]) throws {
+                if test.cancel && !events.isEmpty { throw CancellationError() }
+            }
+            let candidate = Result {
+                try QwenGenerationLoop.run(
+                    initialToken: first, promptTokenCount: prompt.count, initialSeen: bitmap,
+                    maxSequenceLength: test.context, configuration: configuration,
+                    checkCancellation: { try checkCancellation(bitmapEvents) },
+                    onToken: { bitmapEvents.append("callback \($0)") },
+                    markSeen: { $0.insert($1) },
+                    nextToken: { token, position, seen, sample in
+                        let prediction = select(logits, bitmap: seen, configuration: configuration, position: sample)
+                        bitmapEvents.append("forward \(token) \(position) \(sample) \(prediction)")
+                        return sample == 2 ? 248_046 : prediction
+                    })
+            }
+            let oracle = Result {
+                try QwenGenerationLoop.run(
+                    initialToken: first, promptTokens: prompt,
+                    maxSequenceLength: test.context, configuration: configuration,
+                    checkCancellation: { try checkCancellation(setEvents) },
+                    onToken: { setEvents.append("callback \($0)") },
+                    nextToken: { token, position, seen, sample in
+                        let prediction = QwenLogitSelector.select(
+                            logits: logits, seenTokenIDs: seen, configuration: configuration, samplePosition: sample)
+                        setEvents.append("forward \(token) \(position) \(sample) \(prediction)")
+                        return sample == 2 ? 248_046 : prediction
+                    })
+            }
+            #expect(bitmapEvents == setEvents)
+            if test.cancel {
+                #expect(throws: CancellationError.self) { try candidate.get() }
+                #expect(throws: CancellationError.self) { try oracle.get() }
+            } else {
+                #expect(try candidate.get() == oracle.get())
+            }
+        }
+    }
+}
