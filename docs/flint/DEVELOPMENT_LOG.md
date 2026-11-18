@@ -523,7 +523,7 @@
   - `Tests/FlintFieldfareCoreTests/Fixtures/generate_dequant_golden.py`: MLX 0.32.4 golden generator yielding `flint_dequant_golden.json`.
 - **Pinned Reference Qualification (vs MLX 0.32.4 `mx.dequantize`)**:
   - 18 golden test cases covering synthetic edge cases, 4-bit shared expert projections, and 3-bit routed expert projections (first expert 0, middle expert 128, last expert 255 across layers 2, 24, 48 for gate_proj, up_proj, down_proj).
-  - Results: All 15 BF16 cases matched with Max Abs Diff $= 0.000000$ (100% bit-exact). FP32 cases matched with Max Abs Diff $\le 1.5 \times 10^{-5}$ (Level 1 contract $\le 10^{-4}$).
+  - Results: All 13 BF16 cases matched with Max Abs Diff $= 0.000000$ (100% bit-exact). FP32 cases matched with unrounded Float32 reference ($0.000000$ max abs diff, Level 1 contract $\le 10^{-4}$).
 - **Analytical Boundary-Crossing Verification**:
   - Explicitly tested synthetic bit patterns crossing word boundaries (elements 10, 21, 32, 42, 53); matched CPU reference with diff $\le 10^{-5}$.
 - **Bitwise Determinism**:
@@ -639,5 +639,69 @@
 ### 5. Full Test Suite Status
 - **98 tests passing across 9 suites in 7.755 seconds** (clean `./Scripts/test.sh --filter FlintFieldfareCoreTests`).
 - Workspace Isolation: `/Users/tanishq/dev/product/qwen-fieldfare` and legacy symlink remain strictly untouched.
+
+---
+
+## [2026-11-18 21:40] — Milestone F2-06 Completed: SwiGLU Dense & Shared Expert MLP, Router Diagnostic & Reduction Tightening
+
+### 1. Architectural & Milestone Overview
+- **Milestone F2-06**: Native Metal compute kernel for Dense MLP (Layers 0, 1: hidden 2048, intermediate 6144) and Shared Expert MLP (Layers 2..48: hidden 2048, intermediate 1024).
+- **Mathematical Specification**:
+  - `gate = gate_proj(x)`
+  - `up = up_proj(x)`
+  - `activated = SiLU(gate) * up` (evaluated in FP32)
+  - `out = down_proj(activated)`
+- **Integrated Components**:
+  - Dynamic 4-bit affine dequantization (group size 64) from resident checkpoint weights into reusable scratch memory.
+  - FP32 SIMD-coalesced GEMM matrix-vector projections (`flint_gemm_bf16`, `flint_gemm_f32`, `flint_gemm_f32_in_bf16_out`).
+  - Fused SwiGLU compute kernel (`flint_swiglu_bf16`, `flint_swiglu_f32`).
+  - Bounded preallocated scratch memory: 48.0 MiB weight scratch, 4.5 MiB activation scratch ($3 \times 1.5\text{ MiB}$). Strictly 0 heap allocations per forward dispatch.
+
+### 2. Review #010 Corrective Actions
+1. **Real Metal vs MLX Router Diagnostic on 100 Deterministic Tokens (Task 2.A)**:
+   - Replaced NumPy script with real Metal GPU dispatch (`FlintRouterKernel`) against actual pinned MLX `SparseMoeBlock.route` with identical BF16 input and gate weights (`router_100_tokens_mlx.json`).
+   - 96 / 100 tokens (96.0%) match 100% identically in expert set (6/6).
+   - 90 / 100 tokens (90.0%) match 100% in exact rank ordering.
+   - Max weight difference on matched experts: $0.000178$ ($< 2 \times 10^{-4}$).
+   - Boundary Mismatches at Rank 5: exactly 4 tokens (Tokens 11, 25, 27, 65).
+   - For ALL 4 tokens, MLX 6th vs 7th score margin was identically $0.00000000$ (genuinely tied down to float32 precision). Metal resolved ties deterministically by lower expert ID!
+2. **MoE Reduction Multi-Batch Difference Characterization (Task 2.B)**:
+   - Identified exact differing element in `multi_batch_multi_token_bf16`: Index 7161, Metal=`0xb696`, MLX=`0xb695`, difference = 1 ULP ($2.98 \times 10^{-8}$ absolute diff, $2.95 \times 10^{-10}$ relative L2).
+   - Root cause: MLX `mx.sum` uses a pairwise tree reduction schedule in batched tensors that can differ by 1 ULP at rounding boundaries from sequential sum.
+   - Tightened test assertions to evidence-based thresholds: max abs diff $\le 10^{-4}$, relative L2 $\le 10^{-5}$, bit mismatches $\le 1 / 8192$.
+3. **Residual Documentation Correction (Task 2.C)**:
+   - Corrected stale text in `NUMERICAL_CONTRACT.md` and `DEVELOPMENT_LOG.md` to 13 BF16 cases and 5 FP32 cases.
+
+### 3. Implementation Details
+- `Sources/FlintFieldfareCore/Metal/flint_mlp.metal`: GEMM, SiLU, Elementwise Mul, and Fused SwiGLU kernels for BF16 and FP32.
+- `Sources/FlintFieldfareCore/Kernels/FlintMLPReference.swift`: Independent CPU reference implementation comparing all 5 intermediate pipeline stages.
+- `Sources/FlintFieldfareCore/Kernels/FlintMLPKernel.swift`: Swift host controller managing bounded scratch buffers, dequantization, GEMM encoding, SwiGLU fusion, and execution.
+- `Tests/FlintFieldfareCoreTests/FlintMLPKernelTests.swift`: Comprehensive test suite with 8 tests covering MLX qualification, CPU reference contract, live checkpoint integration, 50-run determinism, memory allocation profiling, bounds validation, shader equivalence, and M5 benchmarks.
+
+### 4. MLX 0.32.4 Numerical Qualification (11 Cases Across All 5 Intermediate Stages)
+- All 11 test cases passed across all 5 intermediate stages (`gate_proj`, `up_proj`, `silu_gate`, `gated_product`, `down_proj`):
+  - `dense_l0_single_token_bf16`: Max Abs Diff $0.000000$, Rel L2 $3.11 \times 10^{-5}$, RMS $1.49 \times 10^{-8}$ (PASS)
+  - `dense_l1_single_token_bf16`: Max Abs Diff $0.000001$, Rel L2 $2.91 \times 10^{-4}$, RMS $4.93 \times 10^{-8}$ (PASS)
+  - `shared_l2_single_token_bf16`: Max Abs Diff $0.000000$, Rel L2 $0.000000$, RMS $0.000000$ (100% bit-exact, PASS)
+  - `shared_l24_single_token_bf16`: Max Abs Diff $0.000000$, Rel L2 $0.000000$, RMS $0.000000$ (100% bit-exact, PASS)
+  - `shared_l48_single_token_bf16`: Max Abs Diff $0.000000$, Rel L2 $0.000000$, RMS $0.000000$ (100% bit-exact, PASS)
+  - `dense_l0_t8_bf16`: Max Abs Diff $0.000000$, Rel L2 $2.92 \times 10^{-6}$, RMS $1.34 \times 10^{-9}$ (PASS)
+  - `shared_l2_t8_bf16`: Max Abs Diff $0.000000$, Rel L2 $1.06 \times 10^{-7}$, RMS $7.28 \times 10^{-12}$ (PASS)
+  - `shared_l2_b2_t2_bf16`: Max Abs Diff $0.000000$, Rel L2 $0.000000$, RMS $0.000000$ (100% bit-exact, PASS)
+  - `dense_l0_zero_input_bf16`: Max Abs Diff $0.000000$, Rel L2 $0.000000$, RMS $0.000000$ (PASS)
+  - `dense_l0_single_token_f32`: Max Abs Diff $0.000000$, Rel L2 $3.99 \times 10^{-7}$, RMS $1.91 \times 10^{-10}$ (PASS)
+  - `shared_l2_single_token_f32`: Max Abs Diff $0.000000$, Rel L2 $3.48 \times 10^{-7}$, RMS $2.44 \times 10^{-11}$ (PASS)
+
+### 5. Apple M5 Hardware Performance Benchmark
+- **Dense L0 Decode ($T=1, I=6144$)**: P50: **$1259.67\ \mu\text{s}$**, Min: **$1253.37\ \mu\text{s}$**, P95: **$1579.38\ \mu\text{s}$**
+- **Dense L0 Prefill ($T=8, I=6144$)**: P50: **$2379.63\ \mu\text{s}$**, Min: **$2355.79\ \mu\text{s}$**, P95: **$2424.21\ \mu\text{s}$**
+- **Shared L2 Decode ($T=1, I=1024$)**: P50: **$163.37\ \mu\text{s}$**, Min: **$163.08\ \mu\text{s}$**, P95: **$163.63\ \mu\text{s}$**
+- **Shared L2 Prefill ($T=8, I=1024$)**: P50: **$373.46\ \mu\text{s}$**, Min: **$371.83\ \mu\text{s}$**, P95: **$374.25\ \mu\text{s}$**
+- **Steady-State Allocations**: strictly 0 bytes per dispatch.
+
+### 6. Full Test Suite Status
+- **107 tests passing across 10 suites in 11.196 seconds** (`./Scripts/test.sh --filter FlintFieldfareCoreTests`).
+- Clean repository state, isolated workspace `/Users/tanishq/dev/product/flint-fieldfare-isolated`.
+
 
 

@@ -42,13 +42,13 @@ Flint inference requires strict precision control across the entire compute grap
 
 | Operation Level | Target Metric | Acceptable Tolerance | Gate Type |
 |---|---|---|---|
-| **Level 1: Weight Dequant** | Max absolute difference vs MLX | $\le 10^{-4}$ (Measured: $0.000000$ on all 15 BF16 cases; $\le 1.5 \times 10^{-5}$ on FP32) | Unit Test |
+| **Level 1: Weight Dequant** | Max absolute difference vs MLX | $\le 10^{-4}$ (Measured: $0.000000$ on all 13 BF16 cases; $0.000000$ on unrounded FP32) | Unit Test |
 | **Level 2: Norms (FP32)** | Max absolute difference vs MLX | $\le 10^{-5}$ (Measured: $0.000000$) | Unit Test |
 | **Level 2: Norms (BF16)** | Max ULP difference vs MLX | $\le 1$ ULP (Max rel $\le 0.781\%$, $1/128$) | Unit Test |
 | **Level 2: RoPE** | Max absolute difference vs MLX | $\le 10^{-5}$ | Unit Test |
 | **Level 3: Router Top-6** | Identical expert index selection | 100% exact match (Measured: 100% match across L2, L24, L48) | Kernel Test |
 | **Level 3: Router Weights** | Max absolute difference vs reference | FP32: $\le 10^{-5}$ (Measured: $0.000000$); BF16: $\le 2 \times 10^{-3}$; $\sum w_k = 1.0$ | Kernel Test |
-| **Level 4: One Expert Forward**| Relative L2 error | $\le 10^{-3}$ | Component Test |
+| **Level 4: SwiGLU MLP / Expert Forward**| Relative L2 error | $\le 10^{-3}$ (Measured: $\le 2.91 \times 10^{-4}$ BF16, $\le 4.0 \times 10^{-7}$ FP32) | Component Test |
 | **Level 5: Attention Layer (FP32)** | Max absolute difference vs MLX | $\le 10^{-5}$ (Measured: $0.000000$, Rel L2 $\le 10^{-6}$) | Component Test |
 | **Level 5: Attention Layer (BF16)** | Strict Relative L2 error | $\le 5 \times 10^{-3}$ (Measured: $0.0029 - 0.0047$; aggregate $L_2 \le 0.5\%$; individual element ULPs reach hundreds near zero due to reduction tree differences) | Component Test |
 | **Level 6: Full Decoder Layer**| Relative L2 error | $\le 2 \times 10^{-3}$ | Integration Test |
@@ -254,6 +254,59 @@ Ground truth fixtures were generated using Python MLX 0.32.4 across BF16, FP32, 
 | `single_token_f32_in_bf16_out` | f32_in_bf16_out | 1 | 1 | No | 0.000000 | 0.000000e+00 | 2048/2048 | PASS |
 
 **Conclusion**: Fixed router-order reduction satisfies the Level 4 Numerical Contract ($\text{rel L2} \le 10^{-3}$), demonstrating bitwise determinism, exact residency invariance, and zero heap allocations per dispatch.
+
+---
+
+### Level 4: SwiGLU Dense & Shared Expert MLP Qualification (vs MLX 0.32.4)
+
+Ground truth fixtures were generated using Python MLX 0.32.4 across BF16, FP32, Dense MLP (Layers 0, 1), Shared Expert MLP (Layers 2..48), single token, multi-token ($T=8$), multi-batch ($B=2, T=2$), and zero inputs, utilizing live 4-bit checkpoint weights.
+
+#### Mathematical Specification & Compute Pipeline
+- **Dense MLP (Layers 0, 1)**: `hidden_dim = 2048`, `intermediate_dim = 6144`.
+- **Shared Expert MLP (Layers 2..48)**: `hidden_dim = 2048`, `intermediate_dim = 1024`.
+- **Compute Sequence**:
+  1. $\text{gate} = X \cdot W_{\text{gate}}^T \quad [\text{Batch}, \text{Tokens}, I]$
+  2. $\text{up} = X \cdot W_{\text{up}}^T \quad [\text{Batch}, \text{Tokens}, I]$
+  3. $\text{silu\_gate} = \text{SiLU}(\text{gate}) = \frac{\text{gate}}{1 + \exp(-\text{gate})}$ (computed in FP32)
+  4. $\text{activated} = \text{silu\_gate} \odot \text{up}$ (computed in FP32)
+  5. $\text{out} = \text{activated} \cdot W_{\text{down}}^T \quad [\text{Batch}, \text{Tokens}, H]$
+- **Weight Formats**:
+  - 4-bit MLX affine quantized weights (group size 64).
+  - Scales: `[intermediate_dim, hidden_dim / 64]` BF16.
+  - Biases: `[intermediate_dim, hidden_dim / 64]` BF16.
+  - Dequantized into preallocated reusable weight scratch before GEMM execution.
+- **Accumulation Contract**:
+  - Matrix-vector projections evaluate with FP32 SIMD-coalesced reduction (`simd_sum(acc)` across 32 lanes per output scalar).
+  - Pointwise SwiGLU evaluation occurs in single precision prior to casting.
+  - Steady-state heap allocations: **strictly 0 bytes per dispatch**.
+
+#### MLX 0.32.4 Numerical Qualification Results (11 Cases Across All 5 Intermediate Stages)
+
+| Case Identifier | Kind | Dtype | Layer | Tokens | Max Abs Diff | Relative L2 | RMS Diff | Status |
+|---|---|---|---|---|---|---|---|---|
+| `dense_l0_single_token_bf16` | dense | bfloat16 | 0 | 1 | 0.000000 | 3.112157e-05 | 1.490116e-08 | PASS |
+| `dense_l1_single_token_bf16` | dense | bfloat16 | 1 | 1 | 0.000001 | 2.910385e-04 | 4.933540e-08 | PASS |
+| `shared_l2_single_token_bf16` | shared_expert | bfloat16 | 2 | 1 | 0.000000 | 0.000000e+00 | 0.000000e+00 | PASS |
+| `shared_l24_single_token_bf16` | shared_expert | bfloat16 | 24 | 1 | 0.000000 | 0.000000e+00 | 0.000000e+00 | PASS |
+| `shared_l48_single_token_bf16` | shared_expert | bfloat16 | 48 | 1 | 0.000000 | 0.000000e+00 | 0.000000e+00 | PASS |
+| `dense_l0_t8_bf16` | dense | bfloat16 | 0 | 8 | 0.000000 | 2.918681e-06 | 1.337530e-09 | PASS |
+| `shared_l2_t8_bf16` | shared_expert | bfloat16 | 2 | 8 | 0.000000 | 1.064232e-07 | 7.276180e-12 | PASS |
+| `shared_l2_b2_t2_bf16` | shared_expert | bfloat16 | 2 | 2 | 0.000000 | 0.000000e+00 | 0.000000e+00 | PASS |
+| `dense_l0_zero_input_bf16` | dense | bfloat16 | 0 | 1 | 0.000000 | 0.000000e+00 | 0.000000e+00 | PASS |
+| `dense_l0_single_token_f32` | dense | float32 | 0 | 1 | 0.000000 | 3.997868e-07 | 1.914049e-10 | PASS |
+| `shared_l2_single_token_f32` | shared_expert | float32 | 2 | 1 | 0.000000 | 3.481691e-07 | 2.444073e-11 | PASS |
+
+**Conclusion**: Across all 11 test cases and all 5 intermediate pipeline stages (`gate_proj`, `up_proj`, `silu_gate`, `gated_product`, `down_proj`), the native Metal implementation satisfies the Level 4 Numerical Contract ($\text{rel L2} \le 10^{-3}$, measured $\le 2.91 \times 10^{-4}$ in BF16 and $\le 4.0 \times 10^{-7}$ in FP32).
+
+#### Apple M5 Hardware Benchmark (FlintMLPKernel)
+- **Hardware**: Apple M5, 32 GB Unified Memory, macOS 14+.
+- **Zero Allocations**: Preallocated bounded scratch buffers (48.00 MiB weight scratch, 4.50 MiB activation scratch).
+- **Benchmark Measurements (50 Iterations)**:
+  - **Dense L0 Decode ($T=1, I=6144$)**: P50: **$1259.67\ \mu\text{s}$**, Min: **$1253.37\ \mu\text{s}$**, P95: **$1579.38\ \mu\text{s}$**, Jitter: $326.00\ \mu\text{s}$.
+  - **Dense L0 Prefill ($T=8, I=6144$)**: P50: **$2379.63\ \mu\text{s}$**, Min: **$2355.79\ \mu\text{s}$**, P95: **$2424.21\ \mu\text{s}$**, Jitter: $68.42\ \mu\text{s}$.
+  - **Shared L2 Decode ($T=1, I=1024$)**: P50: **$163.37\ \mu\text{s}$**, Min: **$163.08\ \mu\text{s}$**, P95: **$163.63\ \mu\text{s}$**, Jitter: $0.54\ \mu\text{s}$.
+  - **Shared L2 Prefill ($T=8, I=1024$)**: P50: **$373.46\ \mu\text{s}$**, Min: **$371.83\ \mu\text{s}$**, P95: **$374.25\ \mu\text{s}$**, Jitter: $2.42\ \mu\text{s}$.
+
 
 
 

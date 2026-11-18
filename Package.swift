@@ -145,6 +145,8 @@ let package = Package(
                 "Kernels/FlintDequantizeReference.swift",
                 "Kernels/FlintReductionKernel.swift",
                 "Kernels/FlintReductionReference.swift",
+                "Kernels/FlintMLPKernel.swift",
+                "Kernels/FlintMLPReference.swift",
             ],
             resources: [.copy("Metal")]
         ),
@@ -162,6 +164,7 @@ let package = Package(
                 "FlintRouterKernelTests.swift",
                 "FlintDequantizeKernelTests.swift",
                 "FlintReductionKernelTests.swift",
+                "FlintMLPKernelTests.swift",
             ],
             resources: [.copy("Fixtures")]
         ),

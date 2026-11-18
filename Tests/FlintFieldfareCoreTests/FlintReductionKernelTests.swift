@@ -148,12 +148,14 @@ import Testing
                 let expU16 = expData.withUnsafeBytes { $0.bindMemory(to: UInt16.self) }
 
                 for i in 0..<totalElements {
-                    if actualU16[i] != expU16[i] {
-                        bitMismatches += 1
-                    }
                     let actF = Self.bf16ToFloat(actualU16[i])
                     let expF = Self.bf16ToFloat(expU16[i])
                     let diff = abs(actF - expF)
+                    if actualU16[i] != expU16[i] {
+                        bitMismatches += 1
+                        let ulp = abs(Int(actualU16[i]) - Int(expU16[i]))
+                        print("  [DEBUG \(c.name)] Mismatch at index \(i): Metal=0x\(String(actualU16[i], radix: 16)) (\(actF)), MLX=0x\(String(expU16[i], radix: 16)) (\(expF)), ULP=\(ulp), diff=\(diff)")
+                    }
                     if diff > maxAbsDiff {
                         maxAbsDiff = diff
                     }
@@ -182,9 +184,13 @@ import Testing
             print(String(format: "%-32@ | %-14@ | %5d | %6d | %12.6f | %12.6e | %10@ | PASSED",
                          c.name, c.mode, c.batch, c.tokens, maxAbsDiff, relL2, bitMatchStr))
 
+            // Evidence-based tolerance verification (Review #010):
+            // In batched tensors, MLX mx.sum uses a reduction tree schedule that can differ by
+            // at most 1 ULP in the least significant bit from the mandated sequential router-order sum.
             if outDtype == .bfloat16 {
-                #expect(maxAbsDiff <= 0.05, "Case \(c.name) max abs diff exceeded tolerance: \(maxAbsDiff)")
-                #expect(relL2 <= 0.01, "Case \(c.name) relative L2 exceeded tolerance: \(relL2)")
+                #expect(maxAbsDiff <= 1e-4, "Case \(c.name) max abs diff exceeded tolerance: \(maxAbsDiff)")
+                #expect(relL2 <= 1e-5, "Case \(c.name) relative L2 exceeded tolerance: \(relL2)")
+                #expect(bitMismatches <= 1, "Case \(c.name) bit mismatches exceeded tolerance: \(bitMismatches)/\(totalElements)")
             } else {
                 #expect(maxAbsDiff <= 1e-5, "Case \(c.name) FP32 max abs diff exceeded tolerance: \(maxAbsDiff)")
                 #expect(relL2 <= 1e-5, "Case \(c.name) FP32 relative L2 exceeded tolerance: \(relL2)")

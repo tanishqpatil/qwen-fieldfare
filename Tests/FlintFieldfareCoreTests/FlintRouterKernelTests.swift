@@ -491,4 +491,120 @@ import Testing
         let diskSource = try String(contentsOf: fullPath, encoding: .utf8)
         #expect(diskSource == FlintRouterKernel.embeddedShaderSource, "Disk flint_router.metal and FlintRouterKernel.embeddedShaderSource have drifted!")
     }
+
+    // MARK: - 8. Real Metal vs MLX Router Diagnostic (100 Deterministic Tokens)
+
+    private struct Router100TokenRecord: Decodable {
+        let token_idx: Int
+        let mlx_top6_indices: [UInt32]
+        let mlx_top6_weights: [Float]
+        let mlx_raw_indices: [UInt32]
+        let mlx_raw_weights: [Float]
+        let mlx_top7_scores: [Float]
+        let mlx_margin_rank5_vs_rank6: Float
+        let py_top6_indices: [UInt32]
+        let py_top6_weights: [Float]
+    }
+
+    private struct Router100TokensFixture: Decodable {
+        let metadata: [String: AnyCodable]
+        let input_hex: String
+        let gate_weight_hex: String
+        let tokens: [Router100TokenRecord]
+    }
+
+    @Test func realMetalVsMLXRouterDiagnostic100Tokens() throws {
+        let fixturePath = "Tests/FlintFieldfareCoreTests/Fixtures/router_100_tokens_mlx.json"
+        let fullPath = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(fixturePath)
+        guard FileManager.default.fileExists(atPath: fullPath.path) else {
+            Issue.record("router_100_tokens_mlx.json not found")
+            return
+        }
+        let data = try Data(contentsOf: fullPath)
+        let fixture = try JSONDecoder().decode(Router100TokensFixture.self, from: data)
+
+        let context = try FlintMetalContext()
+        let kernel = try FlintRouterKernel(context: context)
+
+        let inData = Self.parseHexToData(fixture.input_hex)
+        let weightData = Self.parseHexToData(fixture.gate_weight_hex)
+
+        let inBuf = try inData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: inData.count) }
+        let weightBuf = try weightData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: weightData.count) }
+
+        let numTokens = fixture.tokens.count
+        let outExpBuf = try context.makeBuffer(byteCount: numTokens * 6 * MemoryLayout<UInt32>.stride)
+        let outWgtBuf = try context.makeBuffer(byteCount: numTokens * 6 * MemoryLayout<Float>.stride)
+
+        // Dispatch REAL Metal Router on GPU!
+        try kernel.executeForward(
+            input: inBuf,
+            gateWeight: weightBuf,
+            outExperts: outExpBuf,
+            outWeights: outWgtBuf,
+            batch: 1,
+            numTokens: numTokens,
+            dtype: .bfloat16,
+            waitUntilCompleted: true
+        )
+
+        let metalExperts = Array(UnsafeBufferPointer(start: outExpBuf.contents().assumingMemoryBound(to: UInt32.self), count: numTokens * 6))
+        let metalWeights = Array(UnsafeBufferPointer(start: outWgtBuf.contents().assumingMemoryBound(to: Float.self), count: numTokens * 6))
+
+        var exactSetMatches = 0
+        var exactOrderMatches = 0
+        var maxWeightDiffOnMatched: Float = 0.0
+        var rank5Boundaries: [(token: Int, metal: [UInt32], mlx: [UInt32], mlxMargin: Float, tied: Bool)] = []
+
+        for t in 0..<numTokens {
+            let mSliceExp = Array(metalExperts[(t * 6)..<(t * 6 + 6)])
+            let mSliceWgt = Array(metalWeights[(t * 6)..<(t * 6 + 6)])
+            let rec = fixture.tokens[t]
+
+            let metalSet = Set(mSliceExp)
+            let mlxSet = Set(rec.mlx_top6_indices)
+
+            let isSetMatch = (metalSet == mlxSet)
+            let isOrderMatch = (mSliceExp == rec.mlx_top6_indices)
+
+            if isSetMatch {
+                exactSetMatches += 1
+            }
+            if isOrderMatch {
+                exactOrderMatches += 1
+            }
+
+            // Compute weight differences on matched experts
+            for k in 0..<6 {
+                let expId = mSliceExp[k]
+                if let mlxIdx = rec.mlx_top6_indices.firstIndex(of: expId) {
+                    let diff = abs(mSliceWgt[k] - rec.mlx_top6_weights[mlxIdx])
+                    if diff > maxWeightDiffOnMatched {
+                        maxWeightDiffOnMatched = diff
+                    }
+                }
+            }
+
+            if !isSetMatch {
+                let isTied = (rec.mlx_margin_rank5_vs_rank6 == 0.0)
+                rank5Boundaries.append((token: t, metal: mSliceExp, mlx: rec.mlx_top6_indices, mlxMargin: rec.mlx_margin_rank5_vs_rank6, tied: isTied))
+            }
+        }
+
+        print("\n=== REAL METAL VS MLX ROUTER DIAGNOSTIC (100 DETERMINISTIC TOKENS) ===")
+        print(String(format: "Hardware: Apple M5 | Kernel: FlintRouterKernel (actual GPU dispatch)"))
+        print(String(format: "Exact 6/6 Expert Set Match Rate: %d / %d (%.1f%%)", exactSetMatches, numTokens, Double(exactSetMatches) / Double(numTokens) * 100.0))
+        print(String(format: "Exact Rank Ordering Match Rate:  %d / %d (%.1f%%)", exactOrderMatches, numTokens, Double(exactOrderMatches) / Double(numTokens) * 100.0))
+        print(String(format: "Max Weight Difference on Matched: %.6f", maxWeightDiffOnMatched))
+        print(String(format: "Boundary Mismatches at Rank 5:   %d tokens", rank5Boundaries.count))
+
+        for (idx, b) in rank5Boundaries.enumerated() {
+            print(String(format: "  Mismatch #%d (Token %d): Metal=%@ | MLX=%@ | MLX 6th vs 7th Margin=%.8f | Genuinely Tied=%@",
+                         idx + 1, b.token, b.metal.description, b.mlx.description, b.mlxMargin, b.tied ? "YES" : "NO"))
+        }
+        print("=======================================================================\n")
+
+        #expect(exactSetMatches >= 95, "Exact set match rate fell below 95%: \(exactSetMatches)/\(numTokens)")
+        #expect(maxWeightDiffOnMatched <= 2e-3, "Max weight difference on matched experts exceeded 2e-3: \(maxWeightDiffOnMatched)")
+    }
 }

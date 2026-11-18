@@ -128,18 +128,39 @@ This document is the authoritative recovery guide for agents operating on FlintF
     - Apple M5 Hardware Benchmark:
       - Single-token reduction (BF16, with shared expert): P50 = 1.75 µs (Min: 1.67 µs, P95: 1.83 µs, Max: 8.17 µs, Mean: 1.84 µs ± 0.64 µs, 18.74 GB/s effective).
       - Steady-state heap allocations: strictly 0 per dispatch.
-  - Router Selection Discrepancy Characterization (Review #009 Task B):
-    - Conducted 100-token deterministic diagnostic on live Layer 2 router gate weights (`diagnose_router_discrepancy.py`).
-    - 97 / 100 tokens (97.0%) match 100% identically between Metal and MLX (all 6 experts and selection order match).
-    - 3 / 100 tokens (3.0%) exhibit a 6th-expert boundary difference at rank 5.
-    - Root cause identified: In those 3 tokens, the 6th and 7th candidate scores in MLX were mathematically tied (`margin_mlx == 0.0` down to the last float32 bit).
-    - Dot-product accumulation order differences between Metal's 4-wide sequential reduction and MLX's GEMM are bounded by $\le 0.00039$, which triggers MLX `mx.argpartition` arbitrary introselect tie-breaking vs Metal's deterministic lower-expert-ID tie-breaking policy.
-    - Verified that gate weights are strictly indexed by expert ID across all layers.
-  - Test Suite Breakdown: **98 tests passing across 9 suites in 7.755s (clean ./Scripts/test.sh)**:
+  - Real Metal vs MLX Router Diagnostic on 100 Deterministic Tokens (Review #010 Task 2.A):
+    - Replaced NumPy script with real Metal GPU dispatch (`FlintRouterKernel`) vs actual pinned MLX `SparseMoeBlock.route` with identical input and gate weights (`router_100_tokens_mlx.json`).
+    - 96 / 100 tokens (96.0%) match 100% identically in expert set (6/6).
+    - 90 / 100 tokens (90.0%) match 100% in exact rank ordering.
+    - Max weight difference on matched experts: $0.000178$ ($< 2 \times 10^{-4}$).
+    - Boundary Mismatches at Rank 5: exactly 4 tokens (Tokens 11, 25, 27, 65).
+    - For ALL 4 tokens, MLX 6th vs 7th score margin was identically $0.00000000$ (genuinely tied down to float32 precision). Metal resolved ties deterministically by lower expert ID!
+  - MoE Reduction Multi-Batch Difference Characterization (Review #010 Task 2.B):
+    - Identified exact differing element in `multi_batch_multi_token_bf16`: Index 7161, Metal=`0xb696`, MLX=`0xb695`, difference = 1 ULP ($2.98 \times 10^{-8}$ absolute diff, $2.95 \times 10^{-10}$ relative L2).
+    - Root cause: MLX `mx.sum` uses a pairwise tree reduction schedule in batched tensors that can differ by 1 ULP at rounding boundaries from sequential sum.
+    - Tightened test assertions to evidence-based thresholds: max abs diff $\le 10^{-4}$, relative L2 $\le 10^{-5}$, bit mismatches $\le 1 / 8192$.
+  - Residual Documentation Correction (Review #010 Task 2.C):
+    - Corrected stale text in `NUMERICAL_CONTRACT.md` and `DEVELOPMENT_LOG.md` to 13 BF16 cases and 5 FP32 cases.
+  - F2-06: Native Metal Dense and Shared Expert SwiGLU MLP Kernel & Numerical Qualification:
+    - Dense MLP (Layers 0, 1): `hidden_dim = 2048`, `intermediate_dim = 6144`.
+    - Shared Expert MLP (Layers 2..48): `hidden_dim = 2048`, `intermediate_dim = 1024`.
+    - Integrated with 4-bit affine dequantized weights (group size 64).
+    - FP32 SIMD-coalesced GEMM reduction with 100% coalesced memory loads.
+    - Pointwise and fused SwiGLU: $\text{SiLU}(\text{gate}) \odot \text{up}$ evaluated in FP32.
+    - Zero heap allocations during steady-state forward passes.
+    - Preallocated bounded scratch buffers: 48.0 MiB weight scratch, 4.5 MiB activation scratch.
+    - Numerical Qualification vs MLX 0.32.4: 11 test cases across all 5 intermediate pipeline stages (`gate_proj`, `up_proj`, `silu_gate`, `gated_product`, `down_proj`) passed. Max abs diff $\le 10^{-5}$ ($0.000000$ to $0.000001$), relative L2 $\le 2.91 \times 10^{-4}$ in BF16, $\le 4.0 \times 10^{-7}$ in FP32.
+    - Apple M5 Hardware Benchmark:
+      - Dense L0 Decode ($T=1, I=6144$): P50 = 1259.67 µs (Min: 1253.37 µs, P95: 1579.38 µs)
+      - Dense L0 Prefill ($T=8, I=6144$): P50 = 2379.63 µs (Min: 2355.79 µs, P95: 2424.21 µs)
+      - Shared L2 Decode ($T=1, I=1024$): P50 = 163.37 µs (Min: 163.08 µs, P95: 163.63 µs)
+      - Shared L2 Prefill ($T=8, I=1024$): P50 = 373.46 µs (Min: 371.83 µs, P95: 374.25 µs)
+  - Test Suite Breakdown: **107 tests passing across 10 suites in 11.196s (clean ./Scripts/test.sh)**:
+    - `FlintMLPKernelTests`: 8 tests (MLX qualification, CPU analytical contract, resident weights integration, 50-run determinism, zero allocation verification, parameter/buffer bounds, M5 benchmark, shader equivalence).
     - `FlintReductionKernelTests`: 8 tests (MLX qualification, CPU analytical contract, residency invariance, 50-run determinism, magnitude/cancellation, buffer bounds, M5 benchmark, shader equivalence).
-    - `FlintDequantizeKernelTests`: 7 tests (MLX qualification, analytical boundary-crossing, 50-run determinism, buffer bounds, real checkpoint expert immutability, M5 benchmark, shader equivalence).
-    - `FlintRouterKernelTests`: 7 tests (MLX qualification, analytical tie-breaking, 50-run determinism, buffer bounds, resident weight immutability, M5 benchmark, shader equivalence).
-    - `FlintAttentionKernelTests`: 10 tests (analytical synthetic sink, RoPE invariants, sliding boundaries 1..514, 38 MLX goldens, resident sinks integration & immutability, ring layout rejection, bounded-KV eviction, buffer bounds, M5 benchmark, shader equivalence).
+    - `FlintDequantizeKernelTests`: 7 tests.
+    - `FlintRouterKernelTests`: 8 tests (including real Metal vs MLX 100-token diagnostic).
+    - `FlintAttentionKernelTests`: 10 tests.
     - `FlintRMSNormKernelTests`: 7 tests.
     - `FlintResidentLoaderTests`: 9 tests.
     - `FlintSafetensorsFileTests`: 28 tests.
@@ -161,5 +182,5 @@ This document is the authoritative recovery guide for agents operating on FlintF
 5. **Never Commit Weights**: Checkpoint files remain strictly external.
 
 ## Immediate Next Steps
-1. Submit Review #009 Completion Report (F2-04 Qualification Cleanup + Router Discrepancy Characterization + F2-05 Fixed Router-Order Expert Reduction).
-2. Request authorization for Milestone F2-06 (SwiGLU Dense & Shared Expert MLP).
+1. Submit Review #010 Completion Report (F2-06 SwiGLU Dense & Shared Expert MLP + Router Diagnostic + Reduction Tightening).
+2. Request authorization for Milestone F3-01 (Single Layer End-to-End Forward for Layer 0 Dense and Layer 2 MoE).
