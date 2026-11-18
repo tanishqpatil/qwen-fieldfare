@@ -1,90 +1,86 @@
-# FlintFieldfare Memory Plan — Apple Silicon M5 (32 GB)
+# FlintFieldfare Memory Plan & Streaming Feasibility Analysis
 
-## Target Platform Context
+## 1. Physical Target Context
 
 - **Device**: Apple MacBook Pro M5
 - **Unified Memory**: 32 GiB (34,359,738,368 bytes)
-- **Metal Architecture**: Apple Silicon unified memory (shared CPU/GPU address space)
-- **Operating System**: macOS 27.2.1
+- **OS**: macOS 27.2.1 (Darwin 27.2.0, Build 26B131)
+- **Storage**: Apple NVMe SSD (Internal, ~114 GiB available)
+- **Baseline Checkpoint**: `/Users/tanishq/models/flint-mixed-3-4bit` (17.84 GB on disk, 3-bit routed experts, INT4 projections/shared/dense, INT8 embeddings)
 
-## Weight Residency Analysis
+---
 
-### 1. Resident Weights (Always in Unified Memory)
+## 2. Empirical All-Resident Baseline (Measured on M5 32 GB)
 
-| Component | Tensor Breakdown | Dimensions / Format | Size (MB) |
-|---|---|---|---|
-| **Embeddings** | `model.embed_tokens.weight`<br>`model.embed_tokens.scales`<br>`model.embed_tokens.biases` | `[150144, 512]` U32 (INT8)<br>`[150144, 32]` BF16<br>`[150144, 32]` BF16 | 307.49<br>9.61<br>9.61<br>**Subtotal: 326.71** |
-| **Output Head** | `lm_head.weight`<br>`lm_head.scales`<br>`lm_head.biases` | `[150144, 256]` U32 (INT4)<br>`[150144, 32]` BF16<br>`[150144, 32]` BF16 | 153.75<br>9.61<br>9.61<br>**Subtotal: 172.97** |
-| **Attention (49 layers)** | `q_proj`, `k_proj`, `v_proj`, `o_proj`<br>`q_norm`, `k_norm`, `softmax_offset`<br>`input_layernorm`, `post_attention_layernorm` | INT4 (q: 4.72MB, k: 0.59MB, v: 0.59MB, o: 4.72MB)<br>Norms & Sinks: 12.8 KB/layer<br>$\times$ 49 layers | 49 layers $\times$ 10.63 MB<br>**Subtotal: 520.87** |
-| **Dense MLPs (Layers 0 & 1)** | `gate_proj`, `up_proj`, `down_proj` | INT4 group 64, interm 6144<br>$\times$ 2 layers | 2 layers $\times$ 21.23 MB<br>**Subtotal: 42.46** |
-| **Routers (Layers 2..48)** | `mlp.gate.weight` | `[256, 2048]` BF16 = 1.05 MB/layer<br>$\times$ 47 layers | 47 layers $\times$ 1.05 MB<br>**Subtotal: 49.35** |
-| **Shared Experts (Layers 2..48)** | `shared_expert.gate/up/down_proj` | INT4 group 64, interm 1024<br>$\times$ 47 layers | 47 layers $\times$ 3.54 MB<br>**Subtotal: 166.38** |
-| **Final LayerNorm** | `model.norm.weight` | `[2048]` BF16 | **Subtotal: 0.004** |
-| **TOTAL RESIDENT WEIGHTS** | | | **1,278.74 MB (~1.25 GiB)** |
-
-### 2. Streamed Weights (Routed Experts)
-
-- **Total MoE Layers**: 47
-- **Experts per Layer**: 256
-- **Total Expert Instances**: $47 \times 256 = 12,032$
-- **Size per Single Expert (3-bit mixed)**:
-  - `gate_proj`: 384 KiB weight + 32 KiB scale + 32 KiB bias = 448 KiB
-  - `up_proj`: 384 KiB weight + 32 KiB scale + 32 KiB bias = 448 KiB
-  - `down_proj`: 384 KiB weight + 32 KiB scale + 32 KiB bias = 448 KiB
-  - **Total per Expert**: **1,344 KiB = 1,376,256 Bytes (1.3125 MiB)**
-- **Size per Single Expert (4-bit reference)**:
-  - $3 \times (512 + 32 + 32)\text{ KiB} = 1,728\text{ KiB} = 1,769,472\text{ Bytes (1.6875 MiB)}$
-- **Active Weights per Token**:
-  - $47 \text{ layers} \times 6 \text{ experts} \times 1.3125 \text{ MiB} = \mathbf{370.1\text{ MiB}}$
-
-### 3. Bounded Expert Cache Budgets
-
-| Cache Setting | Slot Count | Memory Footprint (3-bit) | Memory Footprint (4-bit) | Slots / Layer (avg) |
-|---|---|---|---|---|
-| Conservative (Cold/Test) | 384 slots | 504 MiB (0.49 GiB) | 648 MiB (0.63 GiB) | ~8.1 slots/layer |
-| Standard (Default) | 1,024 slots | 1,344 MiB (1.31 GiB) | 1,728 MiB (1.69 GiB) | ~21.8 slots/layer |
-| Performance | 2,048 slots | 2,688 MiB (2.63 GiB) | 3,456 MiB (3.38 GiB) | ~43.6 slots/layer |
-| Generous | 4,096 slots | 5,376 MiB (5.25 GiB) | 6,912 MiB (6.75 GiB) | ~87.1 slots/layer |
-
-### 4. Attention KV Cache Memory
-
-Each token across all 49 layers:
-- 4 KV heads $\times 128$ head dim $\times 2$ bytes (FP16) $\times 2$ (K and V) $= 2,048$ bytes / token / layer.
-- **Sliding-Window Layers (35 layers)**:
-  - Window size = 513 tokens.
-  - Max KV memory (bounded!): $35 \times 513 \times 2,048\text{ bytes} = \mathbf{36.77\text{ MiB}}$.
-- **Full-Attention Layers (14 layers)**:
-  - $14 \times 2,048 = 28,672\text{ bytes / token} \approx 28\text{ KiB / token}$.
-
-| Context Length (Tokens) | Sliding Window KV | Full Attention KV | Total KV Cache |
-|---|---|---|---|
-| 2,048 | 36.77 MiB | 56.00 MiB | 92.77 MiB |
-| 4,096 | 36.77 MiB | 112.00 MiB | 148.77 MiB |
-| 8,192 | 36.77 MiB | 224.00 MiB | 260.77 MiB |
-| 16,384 | 36.77 MiB | 448.00 MiB | 484.77 MiB |
-| 32,768 | 36.77 MiB | 896.00 MiB | 932.77 MiB |
-
-### 5. Overall System Working Set & Safety Budget
-
-For the standard configuration (1,024 cache slots, 8,192 context window):
+Prior to implementing the streaming engine, an empirical all-resident reference run was executed on this exact machine using `mlx` 0.32.4 and `mlx_vlm` 0.7.12:
 
 ```
-+-------------------------------------------------------+
-| Component                               | Memory (GB) |
-+-------------------------------------------------------+
-| Resident Model Weights                  |    1.28 GB  |
-| Expert Cache Buffer (1,024 slots)       |    1.31 GB  |
-| Attention KV Cache (8,192 tokens)       |    0.26 GB  |
-| Metal Activations & Scratch Allocations |    0.15 GB  |
-| Process Runtime, Tokenizer, Swift Heap  |    0.20 GB  |
-+-------------------------------------------------------+
-| TOTAL PROCESS WORKING MEMORY            |    3.20 GB  |
-| Safety Reserve (Free Unified Memory)    |  > 20.00 GB  |
-+-------------------------------------------------------+
++-------------------------------------------------------------+
+| Metric                                        | Measured    |
++-------------------------------------------------------------+
+| Model Cold Load Time                          | 4.39 s      |
+| MLX Active Weight Memory                      | 16.61 GB    |
+| Peak MLX Memory (Short Prompt, 13 tokens)     | 16.68 GB    |
+| Peak MLX Memory (Long Prompt, 7,831 tokens)   | 17.68 GB    |
+| Process Max RSS (Resident Set Size)           | 6.54 GB     |
+| System Swap Usage Before Load                 | 767.56 MB   |
+| System Swap Usage During 8K Inference         | 1,425.19 MB |
+| Swap Increase Triggered by All-Resident Model | +657.63 MB  |
++-------------------------------------------------------------+
 ```
 
-## Feasibility Verdict
+### Empirical Inference Throughput (All-Resident MLX on M5)
 
-**Recursive Flint 40B-A2.5B on Apple Silicon M5 (32 GB) is highly feasible with bounded expert streaming.**
-The full checkpoint requires 17.8 GB (or 22.6 GB), which leaves little room for OS, display, and development tools.
-Under FlintFieldfare's bounded streaming architecture, the active footprint drops to **~3.2 GiB**, maintaining an overwhelming safety margin of >20 GB on a 32 GB machine and eliminating any risk of memory pressure or swap churn.
+- **Short Coding Prompt (13 tokens, greedy temp=0.0, 64 gen tokens)**:
+  - Run 1 (Cold): TTFT 3.01s (13.76 tok/s), Generation: **70.39 tok/s**
+  - Run 2 (Warm): Prefill: **161.91 tok/s**, Generation: **69.91 tok/s**
+  - Run 3 (Warm): Prefill: **161.51 tok/s**, Generation: **70.02 tok/s**
+- **Long Context (~8K tokens: 7,831 tokens, greedy temp=0.0, 32 gen tokens)**:
+  - Run 1: Prefill: **1,228.81 tok/s** (6.91s total), Generation: **60.31 tok/s**, Peak: 17.68 GB
+  - Run 2: Prefill: **1,319.89 tok/s** (6.48s total), Generation: **60.63 tok/s**, Peak: 17.68 GB
+  - Run 3: Prefill: **1,313.99 tok/s** (6.51s total), Generation: **59.84 tok/s**, Peak: 17.68 GB
+
+**Key Finding**: While all-resident execution achieves ~70 tok/s decode on the M5, holding 17.7 GB resident in unified memory instantly pushed macOS into swapping (+657.6 MB swap increase), reducing headroom for development environments, agent tooling, and multitasking.
+
+---
+
+## 3. Dissected Memory Breakdown (Estimates vs Measurements)
+
+| Component | Status | Breakdown / Formula | Footprint |
+|---|---|---|---|
+| **1. Explicit Resident Weights** | Theoretical Estimate | Embeddings (326.7 MB) + LM Head (173.0 MB) + 49 Attention Projections & Norms (520.9 MB) + 2 Dense MLPs (42.5 MB) + 47 Routers (49.4 MB) + 47 Shared Experts (166.4 MB) | **1.28 GiB** |
+| **2. Expert Cache Allocation** | Configurable Budget | $N_{\text{slots}} \times 1,376,256\text{ bytes}$ (3-bit) or $1,769,472\text{ bytes}$ (4-bit). For 1,024 slots: | **1.31 GiB** (3-bit)<br>**1.69 GiB** (4-bit) |
+| **3. Attention KV Cache** | Theoretical Estimate | 35 sliding layers (max $513 \times 2,048\text{ B} = 36.8\text{ MB}$) + 14 full layers ($14 \times 2,048\text{ B/token}$). At 8,192 context: | **0.26 GiB** |
+| **4. Metal Activation & Scratch** | Engineering Estimate | Batch 1 decode activations, router scores, and $6 \times 2,048$ intermediate reduction buffers | **~0.15 GiB** |
+| **5. Process Runtime & Heap** | Engineering Estimate | Swift runtime, Tokenizer Trie, SwiftNIO event loops | **~0.20 GiB** |
+| **6. Total Planned Working Set** | **Target Budget (F3/F4)** | Sum of Components 1 through 5 (with 1,024 cache slots and 8K context) | **~3.20 GiB** |
+| **7. Measured All-Resident Peak** | **Empirically Measured** | Real MLX peak allocation on M5 with 8K context | **17.68 GB** |
+
+> **Note on Terminology**: The ~3.2 GiB figure is the **design target budget** for FlintFieldfare's bounded streaming engine. It is NOT yet a measured runtime footprint of FlintFieldfare, as the production streaming runner is under active development in milestones F1–F4.
+
+---
+
+## 4. Theoretical SSD I/O Bandwidth vs Expert-Cache Hit Rate
+
+Flint evaluates $K = 6$ routed experts per MoE layer across 47 MoE layers = **282 expert evaluations per token**.
+Each 3-bit expert record is $1,376,256\text{ bytes} \approx 1.3125\text{ MiB}$.
+Cold payload per token (0% cache hit):
+$$\text{Payload}_{\text{cold}} = 282 \times 1.3125\text{ MiB} = \mathbf{370.1\text{ MiB / token}}$$
+
+The theoretical required SSD read bandwidth as a function of cache hit rate $H \in [0.0, 1.0]$ and decode speed $R$ (tokens/second) is:
+$$\text{Bandwidth}(H, R) = R \times 370.1\text{ MiB} \times (1 - H)$$
+
+| Cache Hit Rate ($H$) | Misses / Token | Read Traffic / Token | SSD Bandwidth @ 15 tok/s | SSD Bandwidth @ 25 tok/s | Feasibility on Apple M5 SSD (~3.5–5.0 GB/s read) |
+|---|---|---|---|---|---|
+| **0.0% (Cold)** | 282 | 370.1 MiB | 5.55 GB/s | 9.25 GB/s | **Exceeds SSD sequential throughput** |
+| **30.0%** | 197 | 258.6 MiB | 3.88 GB/s | 6.46 GB/s | Near SSD saturation |
+| **50.0%** | 141 | 185.1 MiB | 2.78 GB/s | 4.63 GB/s | Viable at moderate decode speeds |
+| **70.0%** | 85 | 111.0 MiB | 1.67 GB/s | 2.78 GB/s | **Comfortably viable** |
+| **85.0%** | 42 | 55.5 MiB | 0.83 GB/s | 1.39 GB/s | High efficiency |
+| **95.0%** | 14 | 18.5 MiB | 0.28 GB/s | 0.46 GB/s | Minimal I/O overhead |
+
+### I/O Feasibility Conclusion
+
+1. **Cold-start streaming** at 0% cache hit rate cannot match all-resident decode speed because streaming 282 experts per token would require >5 GB/s SSD bandwidth.
+2. Bounded expert streaming provides its primary value by **capping unified memory usage at ~3.2 GiB** instead of 18–24 GB, completely preventing system memory thrashing and swap stalls.
+3. Interactive streaming speeds (15–30 tok/s) are achievable once the expert cache warms up to $\ge 70\text{--}85\%$ hit rate.

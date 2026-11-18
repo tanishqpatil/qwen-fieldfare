@@ -19,26 +19,40 @@
      - Hugging Face `transformers/models/flint/modeling_flint.py`: Verified learned attention sinks logic (concatenated extra logit in softmax denominator without value vector), sigmoid router with normalized scores, ungated shared expert.
      - `mlx_vlm/models/flint/`: Verified 14 full-attention layers without RoPE, 35 sliding-attention layers (window 513) with RoPE (`traditional=False`), dense MLPs on layers 0 and 1, sparse MoE on layers 2..48.
   6. Tested bit packing in MLX (Python): Proved exact bitstream layout for 3-bit quantization (32 elements per 3 uint32 words, 64 elements per 6 uint32 words).
-  7. Formulated Memory Plan:
-     - Resident weights: 1.28 GB.
-     - Expert cache (1024 slots): 1.31 GB.
-     - KV cache (8192 tokens): 0.26 GB.
-     - Total working set: ~3.2 GB. Proven highly viable on 32 GB M5.
-  8. Created all foundational Flint documentation under `docs/flint/`:
-     - `ARCHITECTURE.md`, `TODO.md`, `AGENT_MEMORY.md`, `DECISIONS.md`, `MODEL_SPEC.md`, `MODEL_PROVENANCE.md`, `NUMERICAL_CONTRACT.md`, `MEMORY_PLAN.md`, `PERFORMANCE_BASELINES.md`, `AGENT_INTEGRATION.md`, `RESEARCH_SOURCES.md`.
-- **Verdict on F0**: Audit and architectural design complete. All gates verified. Ready to proceed to F1 implementation.
+  7. Formulated Initial Memory Budget & Targets:
+     - Resident weights: 1.28 GB (estimated).
+     - Expert cache (1024 slots): 1.31 GB (budgeted).
+     - KV cache (8192 tokens): 0.26 GB (budgeted).
+     - Target working set: ~3.2 GB.
+  8. Created all foundational Flint documentation under `docs/flint/`.
+- **Verdict on F0**: Initial audit and architectural design completed.
 
-## 2026-11-18 — F1: Metadata & Validation Infrastructure Implementation
+---
 
-- **Implemented Components**:
-  1. `FlintInferenceLease.swift`: Dedicated POSIX non-blocking advisory file lock at `/tmp/flintfieldfare-inference-\(uid).lock`. Tested mutual exclusion and release. Completely decoupled from QwenFieldfare lock.
-  2. `FlintModelDirectory.swift`: Comprehensive validator for Flint checkpoint directories:
-     - Enforces presence and non-escaping symlinks for `config.json`, `model.safetensors.index.json`, `tokenizer.json`, `tokenizer_config.json`, `chat_template.jinja`.
-     - Bounded file reading (max 16 MB metadata bound).
-     - Validates `FlintForCausalLM`, 49 layers, 2048 hidden size, 6144 intermediate size, 513 sliding window, 256 experts, top-6 routing.
-     - Validates exact layer composition: 14 full-attention layers without RoPE, 35 sliding-attention layers with RoPE.
-     - Detects routed expert quantization (3-bit mixed vs 4-bit reference) and 8-bit embedding.
-     - Validates shard presence, safety, and critical tensor mappings in `weight_map`.
-  3. Integrated `FlintFieldfareCore` and `FlintFieldfareCoreTests` into `Package.swift`.
-  4. Executed `swift test --filter FlintFieldfareCoreTests`: 7 tests passed (0.005s), including real-checkpoint validation of `/Users/tanishq/models/flint-mixed-3-4bit`.
-- **Verdict on F1 Start**: F1-01, F1-02, and F1-05 are successfully implemented and verified. Ready for F1-03 (Safetensors reader) and F1-04 (Resident weights).
+## 2026-11-18 — Review #001 Response & F0 Revision / F1 Hardening
+
+- **Author**: Inference Systems Architect
+- **Actions Completed**:
+  1. **Repository Isolation Audit & Clone Setup**:
+     - Verified target paths: `qwen-fieldfare` (`/Users/tanishq/dev/product/qwen-fieldfare`) and symlink `flint-fieldfare` (`/Users/tanishq/dev/product/flint-fieldfare`).
+     - Established physically independent Git clone at `/Users/tanishq/dev/product/flint-fieldfare-isolated` checked out on `feature/recursive-flint-40b-a2p5b`.
+     - Left the existing symlink and `qwen-fieldfare` directory undisturbed pending user authorization.
+  2. **Empirical All-Resident M5 Benchmark (Task 2)**:
+     - Executed full MLX benchmark (`benchmark_flint_mlx.py`) using `mlx` 0.32.4 and `mlx_vlm` 0.7.12 on `/Users/tanishq/models/flint-mixed-3-4bit`.
+     - Measured load time: 4.39 s.
+     - Measured active memory: 16.61 GB. Peak memory: 16.68 GB (short prompt), 17.68 GB (8K context).
+     - Measured swap impact: Swap grew by +657.63 MB (from 767 MB to 1,425 MB), proving memory pressure on 32 GB RAM.
+     - Short prompt throughput: ~161.7 tok/s prefill, ~70.0 tok/s decode.
+     - 8K prompt throughput: ~1,316.9 tok/s prefill, ~60.2 tok/s decode.
+     - Derived SSD streaming bandwidth formula vs hit rate: 370.1 MiB/token at cold start down to 18.5 MiB/token at 95% hit rate.
+  3. **Hardened FlintModelDirectory (Task 3)**:
+     - Removed all silent fallback defaults for mandatory fields (`hidden_size`, `vocab_size`, `num_hidden_layers`, etc.).
+     - Strictly enforced `model_type == "flint"` and `layer_types` arrangement (14 full-attention, 35 sliding-attention).
+     - Implemented comprehensive quantization validation across all 141 routed-expert projections (47 layers $\times$ 3 projections), rejecting partial or inconsistent bit-depths.
+  4. **Improved Test Suite (Task 4)**:
+     - Added 5 new focused negative tests covering missing mandatory fields, invalid layer types, mismatched attention arrangements, incorrect expert counts, inconsistent quantization overrides, and unsafe shard path traversal.
+     - Updated live checkpoint test to use `FLINT_TEST_MODEL_DIR` with documented fallback `/Users/tanishq/models/flint-mixed-3-4bit`, explicitly recording an issue if absent.
+     - Executed `swift test`: **12 tests passed across 2 suites in 0.006s**.
+  5. **Updated Documentation (Task 5)**:
+     - Updated `MEMORY_PLAN.md`, `PERFORMANCE_BASELINES.md`, `DECISIONS.md` (ADR-F006), `MODEL_SPEC.md`, `ARCHITECTURE.md`.
+     - Clearly distinguished empirical measurements from theoretical streaming design estimates.

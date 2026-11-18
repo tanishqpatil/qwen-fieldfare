@@ -44,6 +44,10 @@ public struct FlintConfig: Equatable, Sendable {
     public let embeddingBits: Int
     public let groupSize: Int
 
+    public static let expectedFullAttentionIndices: Set<Int> = [
+        0, 1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 48
+    ]
+
     public var fullAttentionLayerIndices: [Int] {
         layerTypes.enumerated().compactMap { $0.element == "full_attention" ? $0.offset : nil }
     }
@@ -154,7 +158,8 @@ public enum FlintModelDirectory {
             "model.layers.2.self_attn.softmax_offset",
             "model.layers.2.mlp.gate.weight",
             "model.layers.2.mlp.shared_expert.gate_proj.weight",
-            "model.layers.2.mlp.switch_mlp.gate_proj.weight"
+            "model.layers.2.mlp.switch_mlp.gate_proj.weight",
+            "model.layers.48.mlp.switch_mlp.down_proj.weight"
         ]
         for tensor in requiredTensorSamples {
             guard weightMap[tensor] != nil else {
@@ -211,96 +216,171 @@ public enum FlintModelDirectory {
         }
 
         // Architecture check
-        if let architectures = dict["architectures"] as? [String] {
-            guard architectures.contains("FlintForCausalLM") else {
-                throw FlintModelDirectoryError.invalidMetadata("architectures must include FlintForCausalLM, got \(architectures)")
+        guard let architectures = dict["architectures"] as? [String],
+              architectures.contains("FlintForCausalLM") else {
+            throw FlintModelDirectoryError.invalidMetadata("architectures must include FlintForCausalLM")
+        }
+
+        // Model type check
+        if let modelType = dict["model_type"] as? String {
+            guard modelType == "flint" else {
+                throw FlintModelDirectoryError.invalidMetadata("unsupported model_type: \(modelType)")
             }
         }
 
-        let hiddenSize = dict["hidden_size"] as? Int ?? 2048
+        // Mandatory dimensions - NO SILENT FALLBACKS
+        guard let hiddenSize = dict["hidden_size"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: hidden_size")
+        }
         guard hiddenSize == 2048 else {
             throw FlintModelDirectoryError.invalidMetadata("hidden_size must be 2048, got \(hiddenSize)")
         }
 
-        let intermediateSize = dict["intermediate_size"] as? Int ?? 6144
+        guard let intermediateSize = dict["intermediate_size"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: intermediate_size")
+        }
         guard intermediateSize == 6144 else {
             throw FlintModelDirectoryError.invalidMetadata("intermediate_size must be 6144, got \(intermediateSize)")
         }
 
-        let numHiddenLayers = dict["num_hidden_layers"] as? Int ?? 49
+        guard let numHiddenLayers = dict["num_hidden_layers"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: num_hidden_layers")
+        }
         guard numHiddenLayers == 49 else {
             throw FlintModelDirectoryError.invalidMetadata("num_hidden_layers must be 49, got \(numHiddenLayers)")
         }
 
-        let numAttentionHeads = dict["num_attention_heads"] as? Int ?? 32
+        guard let numAttentionHeads = dict["num_attention_heads"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: num_attention_heads")
+        }
         guard numAttentionHeads == 32 else {
             throw FlintModelDirectoryError.invalidMetadata("num_attention_heads must be 32, got \(numAttentionHeads)")
         }
 
-        let numKeyValueHeads = dict["num_key_value_heads"] as? Int ?? 4
+        guard let numKeyValueHeads = dict["num_key_value_heads"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: num_key_value_heads")
+        }
         guard numKeyValueHeads == 4 else {
             throw FlintModelDirectoryError.invalidMetadata("num_key_value_heads must be 4, got \(numKeyValueHeads)")
         }
 
-        let headDim = dict["head_dim"] as? Int ?? 128
+        guard let headDim = dict["head_dim"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: head_dim")
+        }
         guard headDim == 128 else {
             throw FlintModelDirectoryError.invalidMetadata("head_dim must be 128, got \(headDim)")
         }
 
-        let vocabSize = dict["vocab_size"] as? Int ?? 150144
+        guard let vocabSize = dict["vocab_size"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: vocab_size")
+        }
         guard vocabSize == 150144 else {
             throw FlintModelDirectoryError.invalidMetadata("vocab_size must be 150144, got \(vocabSize)")
         }
 
-        let rmsNormEps = Float(dict["rms_norm_eps"] as? Double ?? 1e-6)
+        guard let eps = dict["rms_norm_eps"] as? Double, eps > 0 else {
+            throw FlintModelDirectoryError.invalidMetadata("missing or non-positive rms_norm_eps")
+        }
+        let rmsNormEps = Float(eps)
+
         let maxPosEmbeddings = dict["max_position_embeddings"] as? Int ?? 262144
-        let ropeTheta = Float(dict["rope_theta"] as? Double ?? 10000.0)
-        let slidingWindow = dict["sliding_window"] as? Int ?? 513
+        guard maxPosEmbeddings >= 4096 else {
+            throw FlintModelDirectoryError.invalidMetadata("max_position_embeddings too small: \(maxPosEmbeddings)")
+        }
+
+        let ropeThetaVal = dict["rope_theta"] as? Double ?? 10000.0
+        guard ropeThetaVal > 0 else {
+            throw FlintModelDirectoryError.invalidMetadata("rope_theta must be positive")
+        }
+        let ropeTheta = Float(ropeThetaVal)
+
+        guard let slidingWindow = dict["sliding_window"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: sliding_window")
+        }
         guard slidingWindow == 513 else {
             throw FlintModelDirectoryError.invalidMetadata("sliding_window must be 513, got \(slidingWindow)")
         }
 
-        guard let layerTypes = dict["layer_types"] as? [String], layerTypes.count == numHiddenLayers else {
-            throw FlintModelDirectoryError.invalidMetadata("layer_types must have 49 entries")
-        }
-        let fullIndices = layerTypes.enumerated().compactMap { $0.element == "full_attention" ? $0.offset : nil }
-        guard fullIndices.count == 14 else {
-            throw FlintModelDirectoryError.invalidMetadata("expected 14 full_attention layers, got \(fullIndices.count)")
+        if let hiddenAct = dict["hidden_act"] as? String {
+            guard hiddenAct == "silu" else {
+                throw FlintModelDirectoryError.invalidMetadata("hidden_act must be silu, got \(hiddenAct)")
+            }
         }
 
-        let noRopeIndices = dict["no_rope_layer_indices"] as? [Int] ?? fullIndices
-        guard noRopeIndices.sorted() == fullIndices.sorted() else {
-            throw FlintModelDirectoryError.invalidMetadata("no_rope_layer_indices must match full_attention layer indices")
+        // Layer types validation: exactly 49 entries, exact full-attention arrangement
+        guard let layerTypes = dict["layer_types"] as? [String] else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: layer_types")
+        }
+        guard layerTypes.count == numHiddenLayers else {
+            throw FlintModelDirectoryError.invalidMetadata("layer_types count must be \(numHiddenLayers), got \(layerTypes.count)")
+        }
+        for (idx, type) in layerTypes.enumerated() {
+            guard type == "full_attention" || type == "sliding_attention" else {
+                throw FlintModelDirectoryError.invalidMetadata("unsupported layer type at index \(idx): \(type)")
+            }
+        }
+        let fullIndices = Set(layerTypes.enumerated().compactMap { $0.element == "full_attention" ? $0.offset : nil })
+        guard fullIndices == FlintConfig.expectedFullAttentionIndices else {
+            throw FlintModelDirectoryError.invalidMetadata("layer_types full_attention arrangement mismatch: expected \(FlintConfig.expectedFullAttentionIndices.sorted()), got \(fullIndices.sorted())")
         }
 
-        let mlpOnlyLayers = dict["mlp_only_layers"] as? [Int] ?? [0, 1]
+        // No-RoPE layer indices validation
+        guard let noRopeIndices = dict["no_rope_layer_indices"] as? [Int] else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: no_rope_layer_indices")
+        }
+        guard Set(noRopeIndices) == FlintConfig.expectedFullAttentionIndices else {
+            throw FlintModelDirectoryError.invalidMetadata("no_rope_layer_indices must exactly match the 14 full-attention layers")
+        }
+
+        // Dense MLP layers validation
+        guard let mlpOnlyLayers = dict["mlp_only_layers"] as? [Int] else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: mlp_only_layers")
+        }
         guard mlpOnlyLayers == [0, 1] else {
             throw FlintModelDirectoryError.invalidMetadata("mlp_only_layers must be [0, 1], got \(mlpOnlyLayers)")
         }
 
-        let numExperts = dict["num_experts"] as? Int ?? 256
+        // MoE parameters
+        guard let numExperts = dict["num_experts"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: num_experts")
+        }
         guard numExperts == 256 else {
             throw FlintModelDirectoryError.invalidMetadata("num_experts must be 256, got \(numExperts)")
         }
 
-        let numExpertsPerTok = dict["num_experts_per_tok"] as? Int ?? 6
+        guard let numExpertsPerTok = dict["num_experts_per_tok"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: num_experts_per_tok")
+        }
         guard numExpertsPerTok == 6 else {
             throw FlintModelDirectoryError.invalidMetadata("num_experts_per_tok must be 6, got \(numExpertsPerTok)")
         }
 
-        let moeIntermediateSize = dict["moe_intermediate_size"] as? Int ?? 512
+        guard let moeIntermediateSize = dict["moe_intermediate_size"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: moe_intermediate_size")
+        }
         guard moeIntermediateSize == 512 else {
             throw FlintModelDirectoryError.invalidMetadata("moe_intermediate_size must be 512, got \(moeIntermediateSize)")
         }
 
-        let sharedExpertIntermediateSize = dict["shared_expert_intermediate_size"] as? Int ?? 1024
+        guard let sharedExpertIntermediateSize = dict["shared_expert_intermediate_size"] as? Int else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory field: shared_expert_intermediate_size")
+        }
         guard sharedExpertIntermediateSize == 1024 else {
             throw FlintModelDirectoryError.invalidMetadata("shared_expert_intermediate_size must be 1024, got \(sharedExpertIntermediateSize)")
         }
 
-        let routerScoreFunction = dict["router_score_function"] as? String ?? dict["scoring_func"] as? String ?? "sigmoid"
-        guard routerScoreFunction == "sigmoid" else {
-            throw FlintModelDirectoryError.invalidMetadata("router_score_function must be sigmoid, got \(routerScoreFunction)")
+        let routerScoreFunction = dict["router_score_function"] as? String ?? dict["scoring_func"] as? String
+        guard let rScoreFn = routerScoreFunction else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory router scoring function")
+        }
+        guard rScoreFn == "sigmoid" else {
+            throw FlintModelDirectoryError.invalidMetadata("router score function must be sigmoid, got \(rScoreFn)")
+        }
+
+        if let normTopk = dict["norm_topk_prob"] as? Bool {
+            guard normTopk == true else {
+                throw FlintModelDirectoryError.invalidMetadata("norm_topk_prob must be true")
+            }
         }
 
         let bosTokenId = dict["bos_token_id"] as? Int ?? 150000
@@ -313,31 +393,49 @@ public enum FlintModelDirectory {
             eosTokenIds = [150001, 150003, 150005, 150018]
         }
 
-        // Quantization detection
-        var routedBits = 4
+        // Comprehensive Quantization Validation
+        guard let quant = dict["quantization"] as? [String: Any] else {
+            throw FlintModelDirectoryError.invalidMetadata("missing mandatory quantization metadata")
+        }
+        guard let baseGroupSize = quant["group_size"] as? Int, baseGroupSize == 64 else {
+            throw FlintModelDirectoryError.invalidMetadata("quantization group_size must be 64")
+        }
+        guard let baseBits = quant["bits"] as? Int, baseBits == 4 else {
+            throw FlintModelDirectoryError.invalidMetadata("base quantization bits must be 4")
+        }
+
         var embeddingBits = 8
-        var groupSize = 64
-        if let quant = dict["quantization"] as? [String: Any] {
-            if let g = quant["group_size"] as? Int { groupSize = g }
-            if let b = quant["bits"] as? Int { routedBits = b }
-            // Check specific routed expert override (e.g. 3-bit mixed)
-            for (k, v) in quant {
-                if k.contains("switch_mlp") && k.contains("gate_proj"),
-                   let vDict = v as? [String: Any],
-                   let b = vDict["bits"] as? Int {
-                    routedBits = b
-                    break
+        if let embedQuant = quant["model.embed_tokens"] as? [String: Any] {
+            guard let eb = embedQuant["bits"] as? Int, eb == 8 else {
+                throw FlintModelDirectoryError.invalidMetadata("embedding bits must be 8")
+            }
+            embeddingBits = eb
+        }
+
+        // Validate EVERY required routed-expert projection across all 47 MoE layers
+        var detectedRoutedBits: Int? = nil
+        let projections = ["gate_proj", "up_proj", "down_proj"]
+        for layerIdx in 2..<numHiddenLayers {
+            for proj in projections {
+                let key = "model.layers.\(layerIdx).mlp.switch_mlp.\(proj)"
+                if let projQuant = quant[key] as? [String: Any] {
+                    guard let g = projQuant["group_size"] as? Int, g == 64 else {
+                        throw FlintModelDirectoryError.invalidMetadata("expert projection \(key) group_size must be 64")
+                    }
+                    guard let b = projQuant["bits"] as? Int, b == 3 || b == 4 else {
+                        throw FlintModelDirectoryError.invalidMetadata("expert projection \(key) bits must be 3 or 4, got \(String(describing: projQuant["bits"]))")
+                    }
+                    if let current = detectedRoutedBits {
+                        guard current == b else {
+                            throw FlintModelDirectoryError.invalidMetadata("inconsistent expert quantization: \(key) has bits=\(b) while other experts have bits=\(current)")
+                        }
+                    } else {
+                        detectedRoutedBits = b
+                    }
                 }
             }
-            if let embedQuant = quant["model.embed_tokens"] as? [String: Any],
-               let eb = embedQuant["bits"] as? Int {
-                embeddingBits = eb
-            }
         }
-        if let mlxExport = dict["mlx_export"] as? [String: Any] {
-            if let eb = mlxExport["embedding_bits"] as? Int { embeddingBits = eb }
-            if let rb = mlxExport["routed_expert_bits"] as? Int { routedBits = rb }
-        }
+        let routedBits = detectedRoutedBits ?? baseBits
 
         return FlintConfig(
             modelType: dict["model_type"] as? String ?? "flint",
@@ -359,12 +457,12 @@ public enum FlintModelDirectory {
             numExpertsPerTok: numExpertsPerTok,
             moeIntermediateSize: moeIntermediateSize,
             sharedExpertIntermediateSize: sharedExpertIntermediateSize,
-            routerScoreFunction: routerScoreFunction,
+            routerScoreFunction: rScoreFn,
             bosTokenId: bosTokenId,
             eosTokenIds: eosTokenIds,
             routedExpertBits: routedBits,
             embeddingBits: embeddingBits,
-            groupSize: groupSize
+            groupSize: baseGroupSize
         )
     }
 }

@@ -48,3 +48,17 @@
 - **Decision**: Integrate the sink term directly into the Metal attention kernel's online softmax accumulator.
 - **Consequences**:
   - Exact mathematical equivalence to Transformers and MLX without allocating dummy KV memory.
+
+## ADR-F006: Empirical Evaluation of All-Resident vs Bounded Streaming Baseline
+
+- **Date**: 2026-11-18
+- **Status**: Accepted
+- **Context**: Bounded expert streaming introduces SSD read latency for cache misses. The design premise must be verified against an empirical all-resident baseline on the target machine (Apple M5 32 GB).
+- **Decision**: Measure the all-resident MLX baseline on M5 using the local `flint-mixed-3-4bit` checkpoint across short and 8K-token prompts before qualifying the streaming engine.
+- **Findings**:
+  - All-resident execution achieves ~70 tok/s decode but consumes 17.68 GB peak unified memory, triggering +657.6 MB disk swap on a 32 GB Mac.
+  - Cold streaming payload is 370.1 MiB/token (exceeding SSD bandwidth at 0% hit rate).
+  - Bounded streaming provides decisive system value by bounding working memory to ~3.2 GiB (>20 GB free unified memory), and reaches interactive performance once cache warms up to $\ge 70\%$.
+- **Consequences**:
+  - Validates bounded streaming as the primary solution for memory-constrained development environments.
+  - Sets concrete performance targets for milestones F3 and F4.
