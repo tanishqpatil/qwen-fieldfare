@@ -1,5 +1,15 @@
 # Optimization analysis and priority order
 
+## S3-02b exact bitmap qualification
+
+Decision A. The bitmap clears the 5% gate on app-default sampled outputs.
+The five primary pairs show 11.82% reduction (95% CI 6.60–17.05%). The
+two sustained confirmations give 8.70% and 8.99%.
+The candidate changes active-streaming seen-token lookup only and preserves
+the original full-score traversal and exact sampling outputs. The
+[paired evidence](evidence/2026-11-18-s302b/README.md) separates the CPU
+microbenchmark, release headline runs and GPU-profiling diagnostics.
+
 ## S3-02a sampled selector attribution
 
 Decision A. Default sampled selection costs 3.124 ms on CPU per sustained
@@ -136,7 +146,7 @@ Every runtime experiment uses this gate unless a stricter one is documented:
 
 **Status.** S1a measured greedy and S1b promoted the exact-greedy fast path
 on 2026-08-30. S3-02a now measures the app-default selector separately.
-No sampled runtime candidate has been implemented.
+S3-02b qualifies the exact seen-token bitmap separately.
 
 Stage S1a reported the existing `cpuArgmaxMs` for 128- and 512-token greedy
 runs. The S3-02a default-sampled profile uses an explicit fixed seed while the

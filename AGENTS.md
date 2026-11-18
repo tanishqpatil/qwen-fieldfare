@@ -1,6 +1,12 @@
 # QwenFieldfare
 
-## Current milestone — S3-02a sampled selector measurement
+## Current milestone — S3-02b exact sampled-selection bitmap
+
+S3-02b qualifies one request-local bitmap on `feature/sampled-selector-profile`.
+The stable server remains at `2e5b993`. Preserve the 131/132 release blocker
+and the independently callable Set oracle. Stop at the promotion decision.
+
+## Historical milestone — S3-02a sampled selector measurement
 
 Use `feature/sampled-selector-profile` from the validated stable server
 tip `2e5b993`. S3-01a–c closed on the separate prefill branch at `e6ac9c3`.

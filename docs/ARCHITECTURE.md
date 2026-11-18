@@ -648,3 +648,16 @@ bounded by context, plus its normal allocation capacity. Health reports
 that capacity and aggregate timing and cache counters. See the
 [exact state contract](EXACT_PREFIX_STATE_CONTRACT.md) and
 [runtime controls](RUNTIME_CONTROLS.md).
+
+## Active-streaming sampled-token membership
+
+The active runner creates a sequence-local bitmap for the general selector.
+The existing 248,320-position vocabulary requires 3,880 UInt64 words
+(31,040 logical bytes). The runner seeds it with the full tokenized prompt.
+The shared generation loop marks published tokens after the callback and
+before a possible next prediction. The bitmap borrows read-only storage
+during selection. Request termination discards the bitmap, including on
+cancellation, clear followed by replay, and model replacement. Prefix
+reuse keeps its separate consumed-token ledger. Exact greedy, fallback
+generation and public Set-based direct forwards retain their paths.
+See the [qualification](evidence/2026-11-18-s302b/README.md).

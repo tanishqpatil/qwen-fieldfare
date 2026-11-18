@@ -1482,3 +1482,20 @@ The disposable probe passed 13 focused tests and the release build.
 The analyzer passed its five tests. The strict baseline is still 131/132
 at token 61, reused from checkpoint-verified evidence. See the
 [reproduction, raw timing and decision](evidence/2026-11-18-s302a/README.md).
+
+## S3-02b qualify exact sampled-token membership
+
+Verified both remote feature tips before editing. Ran the Set goldens first
+and added request-local bitmap membership in the default active-streaming
+runner. Model-free and release comparisons cover tied and non-finite logits,
+full vocabulary, sampled 128/512 IDs, hidden/logit and expert traces, the
+399-ID tool-prefix hit, replay, and cancellation recovery.
+
+Decision A. The five primary pairs cleared 5% at 11.82% mean latency
+reduction (95% CI 6.60–17.05%). The two sustained pairs gave 8.70% and
+8.99%. Sustained selector CPU wall time was 3.267 versus 0.211 ms/token.
+The candidate strict replay verifies the checkpoint and retains the original
+131/132 result at token 61. Focused tests (26), package tests (175 pass, four
+opt-in skips), release build, checker tests (six), documentation and diff
+checks passed. Qualification code and raw measurement aggregates are in the
+[evidence directory](evidence/2026-11-18-s302b/README.md).

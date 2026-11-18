@@ -255,3 +255,14 @@ The diagnostic code stays in the evidence archive. The production sampler
 and strict MLX fixture match the stable tip. The known 131/132 result stays
 a release blocker.
 See the [profile](evidence/2026-11-18-s302a/README.md).
+
+## ADR — S3-02b exact bitmap membership
+
+Decision A. Promote on the sampled-selector feature branch. Five primary
+pairs show an 11.82% mean reduction and positive 95% interval of 6.60–17.05%.
+Two sustained pairs confirm 8.70% and 8.99%.
+The change is limited to exact membership in the active-streaming selector.
+The independent Set entry point and frozen release comparison remain the
+reference. Top-K/Top-P, RNG, Metal, fallback and prefix contracts are
+preserved. The separate 131/132 numerical release blocker remains.
+See the [qualification](evidence/2026-11-18-s302b/README.md).

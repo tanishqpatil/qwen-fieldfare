@@ -1,0 +1,3 @@
+Reference checkpoint SHA-256 verified; versions: ["transformers": "5.22.2", "mlx-lm": "0.32.2", "mlx": "0.32.4"]
+Mismatch at reference token 61: expected 14988, got 10000
+Teacher-forced parity: 131/132 matched

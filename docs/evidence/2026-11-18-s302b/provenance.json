@@ -1,0 +1,61 @@
+{
+  "bitmapCommit": "5d687b18a2c1e59f5cce6f90ce3ac6c81b566116",
+  "evidenceSHA256": {
+    "BitmapModelQualification.swift": "133f4082c52426cd85b2ea1908eb7f7e64d52d964c772b34f9d92d71ab017b01",
+    "README.md": "125422cf504dbfbdb77bfcfcaf7a12cf291ed902929b18198dde269d7b43bc18",
+    "correctness-binaries.json": "fcb19792547bdd430c4f5b7b9552e3f54cbf85a016bfccb25e90caf5495f1a1b",
+    "correctness.json": "720eade36902eb8c455f09aef3ba794a22e1f04b0ffe10546564639ba4ef390a",
+    "diagnostics.json": "e9f1c2d8a71b83580c718f66ba8611f2152a77571c0b2cb7a760c6f460219344",
+    "diagnostics.py": "c529564eea27615556d092f140eadb52174cef6ca76481565a56884c36b44177",
+    "effect.json": "6fd616086019bba03d278ea969b89620e5a3304a49a32b94b969b474e06f1d23",
+    "measure_selector.py": "4c858dab66c2c3537c18887e95907fc0eb10e405101e22cfee755c5bdab28190",
+    "qualify.py": "1edcfba630c6d9963af17140c00baf78f993147e8cd52493b966c1c580656583",
+    "strict.txt": "33b9d7b4f5eabafe9b28a868f7faba7ae1a8e1a4e43d7015d82c601ac8b71922",
+    "thread-cpu.json": "f3e7542678de0fb21eea0056da9eeeb81553cabaa5181e1f3113aec01574fa4d",
+    "timing-binaries.json": "fcb19792547bdd430c4f5b7b9552e3f54cbf85a016bfccb25e90caf5495f1a1b",
+    "timing.json": "e4c9736c2cea422a89d1b174b6cc64b7530e097d22510c84e8f84cf77a3a5162"
+  },
+  "hardware": {
+    "chip": "Apple M5",
+    "gpuCores": 10,
+    "host": "MacBook Pro Mac17,2",
+    "macOS": "27.2.1 (26B131)",
+    "swift": "6.4.2",
+    "unifiedMemoryGiB": 32
+  },
+  "model": "Qwen3.6-35B-A3B-4bit",
+  "modelShardBytes": [
+    5288196018,
+    5368472749,
+    5368324139,
+    4377211365
+  ],
+  "setCommit": "f340b5718dd23687ca08044f839e23a111dd3ddf",
+  "settings": {
+    "context": 8192,
+    "expertSlots": 2183,
+    "memoryPlanGiB": 5,
+    "presencePenalty": 1.5,
+    "repetitionPenalty": 1,
+    "seed": 42,
+    "temperature": 1,
+    "topK": 20,
+    "topP": 0.95
+  },
+  "sourceSHA256": {
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenGenerationSupport.swift": {
+      "bitmap": "259d0f0a2a00175da9d4ed8c0c072eadbbabadb5f4b92b15ea1c563b8fbe1a09",
+      "set": "26bbb2a658ccd71f696bb67188ec5fbd1efc59a0fdb87355cfe1bb4819c1890b"
+    },
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift": {
+      "bitmap": "02af49a40038f1f6feeb36f4f24c6ac5b09d4ba2e73c43de311d0ebea7bd2901",
+      "set": "a9149556448f7e1a10ec34b47e243b49668c7b8c4b4b5c2236928c90af78650a"
+    },
+    "Tests/QwenFieldfareCore/QwenGenerationSupportTests.swift": {
+      "bitmap": "e11d18af89ca609377cdbad47cb354719a783631b9c8553bb28239f7ef183b4d",
+      "set": "fbb64095801665a7885466ccce59d02e32edcf85a191b23bba13b57472a79ef0"
+    }
+  },
+  "stableServerCommit": "2e5b9934a5a96b18d352f58e0fa4201319fb12e2",
+  "strictFixtureSHA256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747"
+}

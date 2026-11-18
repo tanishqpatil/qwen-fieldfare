@@ -90,3 +90,13 @@ Same-runtime qualification uses the original archived short tool cycle and
 the 512-output continuation over fixed router-order reduction. Agreement
 under these workloads leaves the independent MLX 131/132 release blocker
 in place. See the [numerical policy](NUMERICAL_NON_REGRESSION.md).
+
+## Sampling membership lifetime
+
+The active runner builds one current-request bitmap from every prompt ID
+before predicting at sample position zero. GPU prefix reuse can skip
+forwards. Membership still includes the full new prompt. During generation,
+the bitmap follows the same publish-then-mark order as the Set oracle. The
+terminal pending GPU token rule and cancellation/clear/replay rules stay
+independent of this request-local CPU state. Only consumed GPU state and
+its checked ledger can be reused across requests.

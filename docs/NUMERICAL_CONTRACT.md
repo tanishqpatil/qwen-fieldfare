@@ -147,3 +147,12 @@ The original router-order path is selected as the active-streaming baseline.
 Its measured stability is scoped to the tested same-runtime histories.
 This does not change the strict reference gate or qualify cross-request state
 reuse. [S3-00c decision](evidence/2026-11-18-s300c/README.md)
+
+## Sampled-selection membership
+
+The active-streaming bitmap replaces hash membership only. For each valid
+logit index, it returns the same result as the Set of full prompt IDs and
+already published generated IDs. Penalty arithmetic and order, Top-K
+retention/replacement, sorting, Top-P and seeded draw retain the same
+operation sequence. Exact greedy remains vDSP. See the
+[Set versus bitmap qualification](evidence/2026-11-18-s302b/README.md).

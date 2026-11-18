@@ -1,0 +1,10 @@
+{
+  "bitmap": {
+    "QwenFieldfareBench": "66799c2a2a5b29d4a0fc1db909799bb813e7c28393282ffdd55af1ff13b83fd4",
+    "QwenFieldfareServerTests.xctest": "2665a0ad4e1f6f3dd6f85b6618b72ea263f77818547bdb4a6cf209b3f2090957"
+  },
+  "set": {
+    "QwenFieldfareBench": "a6d8277e5a42e929a0168326e8649577fa5c4f3a6bffd2d61d27902e4e4ac958",
+    "QwenFieldfareServerTests.xctest": "1d090b5269cc1584a65f07238f5032eb66fcd1c1a3667c258097b7b029158075"
+  }
+}

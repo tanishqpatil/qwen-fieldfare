@@ -1,6 +1,18 @@
 # Agent recovery memory
 
-## Current milestone — S3-02a sampled selector measurement
+## Current milestone — S3-02b exact sampled-selection bitmap
+
+Decision A. Promote the active-streaming bitmap on the feature branch.
+Primary latency fell 11.82% (95% CI 6.60–17.05%), with sustained reductions
+of 8.70% and 8.99%. CPU selector time at 512 fell from 3.267 to 0.211 ms.
+The current request owns the bitmap and initializes it from all prompt IDs,
+including skipped prefix forwards. The generation loop still publishes a
+non-EOS token before marking it and only consumes it when another output is
+needed. The fallback runner and public direct forwards keep the Set API.
+The strict baseline remains 131/132 at token 61.
+See the [qualification evidence](evidence/2026-11-18-s302b/README.md).
+
+## Historical milestone — S3-02a sampled selector measurement
 
 On `feature/sampled-selector-profile` from `2e5b993`. S3-01a–c closed on
 the independent chunked-prefill branch at `e6ac9c3`. At 8K and 5 GiB,

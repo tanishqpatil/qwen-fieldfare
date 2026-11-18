@@ -1,5 +1,15 @@
 # Performance and correctness baselines
 
+## S3-02b matched default-sampled decode
+
+At 512 outputs, the Set and bitmap variants averaged 37.380 and 34.073
+ms/token and 26.75 and 29.35 tok/s. Selector timing fell from 3.267 to
+0.211 ms/token. Five primary pairs show an 11.82% latency reduction
+(95% CI 6.60–17.05%). The sustained pairs give 8.70% and 8.99%.
+On the M5/32 GiB system, both release variants use the 8K/5 GiB plan and
+the same seeded app-default output history. OS file-cache variance remains.
+See the [pairs and confidence interval](evidence/2026-11-18-s302b/README.md).
+
 ## S3-02a diagnostic sampled-decode baseline
 
 | Sampler and output target | Inter-token mean | Selector thread CPU | Selector elapsed share |

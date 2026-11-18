@@ -1,0 +1,105 @@
+{
+  "bitmap": {
+    "footer": [
+      "Loaded footprint: 0.996 GiB",
+      "Active-streaming budget: 5 GiB; planned 5.000 / 5.000 GiB",
+      "Expert cache slots: 2183",
+      "Prompt tokens: 65",
+      "Generated tokens: 512",
+      "Finish reason: Output limit",
+      "Prefill/TTFT: 2.430 s",
+      "Decode: 511 inter-token transitions in 17.454 s (29.28 tok/s)",
+      "Inter-token latency: mean 34.16 ms, p50 33.03 ms, p95 43.85 ms, min 26.55 ms, max 60.84 ms (511 samples)",
+      "CPU token selection: mean 0.211 ms, p50 0.213 ms, p95 0.218 ms (512 samples)",
+      "Decode-only cache: 124703 hits, 38817 misses, 76.26% hit rate, 76.0 misses/token, 63.968 GiB fetched",
+      "Final footprint: 4.802 GiB",
+      "Final Metal allocation: 4.928 GiB",
+      "At    1: first token produced during prefill; footprint 4.791 GiB, Metal 4.928 GiB",
+      "At   64:  32.94 tok/s,  57.6 misses/token, 97.2 MiB/token, step  28.18 ms, miss fetch   4.48 ms, GPU wait  22.83 ms (attn/router 14.22, MoE 0.00), footprint 4.793 GiB, Metal 4.928 GiB",
+      "exact GPU: 19.23 ms (attention/router 10.73, shared/hits 4.91, miss/tail/head 3.58)",
+      "At  128:  31.20 tok/s,  71.1 misses/token, 119.9 MiB/token, step  28.49 ms, miss fetch   4.85 ms, GPU wait  22.67 ms (attn/router 14.09, MoE 0.00), footprint 4.794 GiB, Metal 4.928 GiB",
+      "exact GPU: 19.78 ms (attention/router 10.79, shared/hits 5.05, miss/tail/head 3.94)",
+      "At  192:  28.28 tok/s,  83.3 misses/token, 140.6 MiB/token, step  38.87 ms, miss fetch  15.93 ms, GPU wait  22.10 ms (attn/router 13.71, MoE 0.00), footprint 4.795 GiB, Metal 4.928 GiB",
+      "exact GPU: 21.79 ms (attention/router 11.04, shared/hits 5.20, miss/tail/head 5.55)",
+      "At  256:  26.96 tok/s,  94.4 misses/token, 159.3 MiB/token, step  34.61 ms, miss fetch  11.54 ms, GPU wait  22.21 ms (attn/router 13.73, MoE 0.00), footprint 4.797 GiB, Metal 4.928 GiB",
+      "exact GPU: 21.19 ms (attention/router 11.12, shared/hits 5.10, miss/tail/head 4.97)",
+      "At  320:  28.02 tok/s,  94.5 misses/token, 159.5 MiB/token, step  36.29 ms, miss fetch  13.26 ms, GPU wait  22.15 ms (attn/router 13.71, MoE 0.00), footprint 4.798 GiB, Metal 4.928 GiB",
+      "exact GPU: 21.59 ms (attention/router 11.22, shared/hits 5.06, miss/tail/head 5.31)",
+      "At  384:  27.10 tok/s,  83.8 misses/token, 141.5 MiB/token, step  32.47 ms, miss fetch   8.11 ms, GPU wait  23.48 ms (attn/router 14.59, MoE 0.00), footprint 4.799 GiB, Metal 4.928 GiB",
+      "exact GPU: 20.36 ms (attention/router 11.22, shared/hits 5.00, miss/tail/head 4.14)",
+      "At  448:  31.33 tok/s,  58.6 misses/token, 98.9 MiB/token, step  28.68 ms, miss fetch   4.60 ms, GPU wait  23.20 ms (attn/router 14.37, MoE 0.00), footprint 4.801 GiB, Metal 4.928 GiB",
+      "exact GPU: 20.39 ms (attention/router 11.40, shared/hits 5.18, miss/tail/head 3.81)",
+      "At  512:  29.57 tok/s,  64.1 misses/token, 108.2 MiB/token, step  41.17 ms, miss fetch  17.39 ms, GPU wait  22.96 ms (attn/router 14.25, MoE 0.00), footprint 4.802 GiB, Metal 4.928 GiB",
+      "exact GPU: 22.25 ms (attention/router 11.57, shared/hits 5.23, miss/tail/head 5.45)",
+      "Cache including prefill: 2183/2183 occupied, 140465 hits, 43855 misses, 76.21% hit rate, 41672 evictions, 72.271 GiB fetched"
+    ],
+    "memory_after": {
+      "freePercent": 88,
+      "pressureLevel": 1,
+      "swapUsedMiB": 4135.81
+    },
+    "memory_before": {
+      "freePercent": 87,
+      "pressureLevel": 1,
+      "swapUsedMiB": 4143.81
+    }
+  },
+  "set": {
+    "footer": [
+      "Loaded footprint: 0.997 GiB",
+      "Active-streaming budget: 5 GiB; planned 5.000 / 5.000 GiB",
+      "Expert cache slots: 2183",
+      "Prompt tokens: 65",
+      "Generated tokens: 512",
+      "Finish reason: Output limit",
+      "Prefill/TTFT: 2.303 s",
+      "Decode: 511 inter-token transitions in 19.989 s (25.56 tok/s)",
+      "Inter-token latency: mean 39.12 ms, p50 37.06 ms, p95 53.47 ms, min 29.13 ms, max 87.57 ms (511 samples)",
+      "CPU token selection: mean 3.334 ms, p50 3.347 ms, p95 4.230 ms (512 samples)",
+      "Decode-only cache: 124703 hits, 38817 misses, 76.26% hit rate, 76.0 misses/token, 63.968 GiB fetched",
+      "Final footprint: 4.804 GiB",
+      "Final Metal allocation: 4.928 GiB",
+      "At    1: first token produced during prefill; footprint 4.791 GiB, Metal 4.928 GiB",
+      "At   64:  30.03 tok/s,  57.6 misses/token, 97.2 MiB/token, step  31.77 ms, miss fetch   4.29 ms, GPU wait  23.10 ms (attn/router 14.40, MoE 0.00), footprint 4.793 GiB, Metal 4.928 GiB",
+      "exact GPU: 19.51 ms (attention/router 10.99, shared/hits 4.96, miss/tail/head 3.56)",
+      "At  128:  28.23 tok/s,  71.1 misses/token, 119.9 MiB/token, step  32.47 ms, miss fetch   5.52 ms, GPU wait  23.08 ms (attn/router 14.40, MoE 0.00), footprint 4.794 GiB, Metal 4.928 GiB",
+      "exact GPU: 19.94 ms (attention/router 10.98, shared/hits 5.05, miss/tail/head 3.91)",
+      "At  192:  25.38 tok/s,  83.3 misses/token, 140.6 MiB/token, step  43.93 ms, miss fetch  16.88 ms, GPU wait  21.98 ms (attn/router 13.61, MoE 0.00), footprint 4.795 GiB, Metal 4.928 GiB",
+      "exact GPU: 21.59 ms (attention/router 10.92, shared/hits 5.20, miss/tail/head 5.46)",
+      "At  256:  23.66 tok/s,  94.4 misses/token, 159.3 MiB/token, step  38.80 ms, miss fetch  12.40 ms, GPU wait  21.98 ms (attn/router 13.61, MoE 0.00), footprint 4.797 GiB, Metal 4.928 GiB",
+      "exact GPU: 20.68 ms (attention/router 10.93, shared/hits 4.98, miss/tail/head 4.77)",
+      "At  320:  23.04 tok/s,  94.5 misses/token, 159.5 MiB/token, step  39.86 ms, miss fetch  13.82 ms, GPU wait  22.38 ms (attn/router 13.87, MoE 0.00), footprint 4.798 GiB, Metal 4.928 GiB",
+      "exact GPU: 21.34 ms (attention/router 11.16, shared/hits 4.88, miss/tail/head 5.30)",
+      "At  384:  22.01 tok/s,  83.8 misses/token, 141.5 MiB/token, step  39.26 ms, miss fetch  12.72 ms, GPU wait  22.72 ms (attn/router 14.12, MoE 0.00), footprint 4.801 GiB, Metal 4.928 GiB",
+      "exact GPU: 19.76 ms (attention/router 11.06, shared/hits 4.81, miss/tail/head 3.89)",
+      "At  448:  27.32 tok/s,  58.6 misses/token, 98.9 MiB/token, step  32.77 ms, miss fetch   5.43 ms, GPU wait  23.30 ms (attn/router 14.52, MoE 0.00), footprint 4.802 GiB, Metal 4.928 GiB",
+      "exact GPU: 19.86 ms (attention/router 11.28, shared/hits 4.94, miss/tail/head 3.65)",
+      "At  512:  27.01 tok/s,  64.1 misses/token, 108.2 MiB/token, step  46.11 ms, miss fetch  18.87 ms, GPU wait  23.18 ms (attn/router 14.41, MoE 0.00), footprint 4.804 GiB, Metal 4.928 GiB",
+      "exact GPU: 21.82 ms (attention/router 11.44, shared/hits 4.93, miss/tail/head 5.45)",
+      "Cache including prefill: 2183/2183 occupied, 140465 hits, 43855 misses, 76.21% hit rate, 41672 evictions, 72.271 GiB fetched"
+    ],
+    "memory_after": {
+      "freePercent": 87,
+      "pressureLevel": 1,
+      "swapUsedMiB": 4143.81
+    },
+    "memory_before": {
+      "freePercent": 89,
+      "pressureLevel": 1,
+      "swapUsedMiB": 4143.81
+    }
+  },
+  "strict": {
+    "exit": 1,
+    "memory_after": {
+      "freePercent": 88,
+      "pressureLevel": 1,
+      "swapUsedMiB": 4143.81
+    },
+    "memory_before": {
+      "freePercent": 88,
+      "pressureLevel": 1,
+      "swapUsedMiB": 4143.81
+    }
+  }
+}

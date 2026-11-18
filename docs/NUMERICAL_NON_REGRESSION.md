@@ -116,3 +116,13 @@ forwards) passed. It is IO/state smoke evidence, not MLX parity or a new numeric
 acceptance policy. [Validation](evidence/2026-11-17-s101d/validation.json) records
 the exact scope and limitations. No source-inventory baseline or strict test is
 weakened to accommodate the migration.
+
+## S3-02b exact sampled membership
+
+The original Set selector remains callable. Model-free goldens and the
+bitmap matrix check exact selected IDs, including signed penalties,
+infinities, signed zero, ties and NaN. Frozen Set and bitmap release runs
+match raw outputs, finish reasons, sampled full-logit/hidden SHA-256 and
+expert traces on identical inputs. The independent checkpoint-verified
+strict replay retains the only known token-61 mismatch (131/132, exit 1).
+See the [evidence](evidence/2026-11-18-s302b/README.md).

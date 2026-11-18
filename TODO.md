@@ -1,6 +1,19 @@
 # Authoritative implementation backlog
 
-## Current milestone — S3-02a sampled selector measurement
+## Current milestone — S3-02b exact sampled-selection bitmap
+
+- [x] Establish the original Set selector's exact behavior.
+- [x] Replace membership only in active-streaming sequence generation.
+- [x] Match sampled, prefix-tool, replay and cancellation outputs against Set.
+- [x] Measure five primary and two sustained alternating release pairs.
+- [x] Validate and publish the scoped feature branch.
+
+Decision A. Promote the bitmap on the feature branch. The primary latency
+reduction is 11.82% (95% CI 6.60–17.05%) and both 512-output confirmations
+clear 5%. The change is eligible for separate integration review.
+See the [S3-02b record](docs/evidence/2026-11-18-s302b/README.md).
+
+## Historical milestone — S3-02a sampled selector measurement
 
 - [x] Branch from the verified stable inference tip.
 - [x] Split selector CPU time from GPU waits, buffer access, seen bookkeeping and callbacks.
