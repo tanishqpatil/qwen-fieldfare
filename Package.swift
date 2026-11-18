@@ -128,6 +128,10 @@ let package = Package(
                 "Infrastructure/ModelIO/FlintInferenceLease.swift",
                 "Infrastructure/ModelIO/FlintModelDirectory.swift",
                 "Infrastructure/ModelIO/FlintSafetensorsFile.swift",
+                "Infrastructure/ModelIO/FlintResidentBuffer.swift",
+                "Infrastructure/ModelIO/FlintResidentLoader.swift",
+                "Infrastructure/ModelIO/FlintResidentManifest.swift",
+                "Infrastructure/ModelIO/FlintResidentWeights.swift",
             ]
         ),
         .testTarget(
@@ -138,6 +142,7 @@ let package = Package(
                 "FlintInferenceLeaseTests.swift",
                 "FlintModelDirectoryTests.swift",
                 "FlintSafetensorsFileTests.swift",
+                "FlintResidentLoaderTests.swift",
             ]
         ),
     ]

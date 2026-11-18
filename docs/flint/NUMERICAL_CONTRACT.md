@@ -81,3 +81,28 @@ Before numerical arithmetic is evaluated, the raw byte storage is verified again
 | `model.layers.2.mlp.switch_mlp.gate_proj.biases` (Prefix) | `0..<64` | `4629cee3a9d13041dafcf227f7ac56e5c2388a2619ed197595e176a1fd1bab2d` | MATCH |
 | `model.layers.2.mlp.switch_mlp.gate_proj.biases` (Expert 0 Full) | `0..<32768` | `86e7916072ec4e247330d049e2712cce082873727610bfaa9007f74256f4373e` | MATCH |
 
+---
+
+## 5. Permanently Resident Weight Ground Truth (F1-04)
+
+Permanently resident weights loaded into Metal shared memory (`MTLBuffer` with `.storageModeShared`) are verified against independent Python/Safetensors SHA-256 digests across early, middle, and final layers:
+
+| Layer Level | Tensor Identifier | Byte Extent | Target SHA-256 Digest | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Global** | `model.embed_tokens.weight` | `0..<128` | `ef0768498be4264c846d1a62c667875d4b5ed9711bf7fa72fa704f04d391d20f` | MATCH |
+| **Global** | `lm_head.weight` | `0..<128` | `201e7d45820db8a313367c551ef61352a7394f5efba3560e10a5466f244f932a` | MATCH |
+| **Global** | `model.norm.weight` (Full Tensor) | `0..<4096` | `b254961d001bbee273daa00efeef34e4351b783074fcce83b01146d7a5d90f76` | MATCH |
+| **Early (L0)** | `model.layers.0.input_layernorm.weight` (Full Tensor) | `0..<4096` | `a47a5d39863526d5a24983779dda01852c4ea1f6d6989b695da57f18aa7b24a0` | MATCH |
+| **Early (L0)** | `model.layers.0.self_attn.softmax_offset` (Full Tensor) | `0..<64` | `47fac1a49ccf7fe080e87522368e90e9246c6d8b5d4d9a84a202858d4160188a` | MATCH |
+| **Early (L0)** | `model.layers.0.mlp.gate_proj.weight` | `0..<128` | `f483f5e873a8bef9c125f27fd10224b187474a33096a889621a859f2ee2cb0c3` | MATCH |
+| **Early (L1)** | `model.layers.1.mlp.down_proj.scales` | `0..<64` | `55661f4a958e53a0230ad7a65299cd13643c54b5a114ad64d450881c18a0c87b` | MATCH |
+| **Middle (L20)** | `model.layers.20.input_layernorm.weight` (Full Tensor) | `0..<4096` | `728d0d938132958627ac3a399711084deac01d73fd6cfd7912b10f054136367d` | MATCH |
+| **Middle (L20)** | `model.layers.20.self_attn.q_proj.weight` | `0..<128` | `b72b37ce3d6e60dfad8ad92462d9a26dd54c12a1dbace3e6b226acc329a76d0a` | MATCH |
+| **Middle (L20)** | `model.layers.20.mlp.gate.weight` (Prefix) | `0..<128` | `a5daf73c87a5381296e830e461d5b2aa29506b54f8a7a3ba1d3fe11b93073fca` | MATCH |
+| **Middle (L20)** | `model.layers.20.mlp.gate.weight` (Full 1MB Router) | `0..<1048576` | `edbf9c3b24e0ca035058b9eceba36ee56f634a82325a0608e2018316f0c2a03b` | MATCH |
+| **Middle (L24)** | `model.layers.24.mlp.shared_expert.gate_proj.weight` | `0..<128` | `e265ca6a81ea69368b00517677e35eb361f3c02dd3801ca8c457d8be80672f4a` | MATCH |
+| **Final (L48)** | `model.layers.48.post_attention_layernorm.weight` (Full Tensor) | `0..<4096` | `640bc5225fae549b69b5a62c25551a1837e0afab300972c89951f2c2c8c01de4` | MATCH |
+| **Final (L48)** | `model.layers.48.self_attn.o_proj.scales` | `0..<64` | `6c876aa5c7744296d504573762df1b8398804fc650d76854576e67017c534fa3` | MATCH |
+| **Final (L48)** | `model.layers.48.mlp.shared_expert.down_proj.weight` | `0..<128` | `281d309d2d9a3efa0e0aa7a97f12d9f7d6504f76937086a93e28cf0c9cdf0f51` | MATCH |
+
+

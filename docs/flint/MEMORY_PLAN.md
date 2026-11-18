@@ -51,7 +51,7 @@ During the benchmark run, `vm.swapusage` increased from an initial `767.56 MB` t
 
 | Component | Status | Breakdown / Formula | Footprint |
 |---|---|---|---|
-| **1. Explicit Resident Weights** | Theoretical Estimate | Embeddings (326.7 MB) + LM Head (173.0 MB) + 49 Attention Projections & Norms (520.9 MB) + 2 Dense MLPs (42.5 MB) + 47 Routers (49.4 MB) + 47 Shared Experts (166.4 MB) | **1.28 GiB** |
+| **1. Explicit Resident Weights** | **Empirically Measured (F1-04)** | 1,328 tensors: Embeddings (326.7 MB) + LM Head (173.0 MB) + 49 Attention Projections & Norms (520.7 MB) + 2 Dense MLPs (42.5 MB) + 47 Routers (49.3 MB) + 47 Shared Experts (166.3 MB). Zero temporary staging (0 B). Load time: 0.41s. | **1.19 GiB**<br>(1,278,418,496 B) |
 | **2. Expert Cache Allocation** | Configurable Budget | $N_{\text{slots}} \times 1,376,256\text{ bytes}$ (3-bit) or $1,769,472\text{ bytes}$ (4-bit). For 1,024 slots: | **1.31 GiB** (3-bit)<br>**1.69 GiB** (4-bit) |
 | **3. Attention KV Cache** | Theoretical Estimate | 35 sliding layers (max $513 \times 2,048\text{ B} = 36.8\text{ MB}$) + 14 full layers ($14 \times 2,048\text{ B/token}$). At 8,192 context: | **0.26 GiB** |
 | **4. Metal Activation & Scratch** | Engineering Estimate | Batch 1 decode activations, router scores, and $6 \times 2,048$ intermediate reduction buffers | **~0.15 GiB** |

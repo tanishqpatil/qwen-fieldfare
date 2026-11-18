@@ -77,7 +77,62 @@ public struct FlintTensorInfo: Equatable, Sendable {
         shape: [Int],
         dtype: String,
         byteWidth: Int,
+        dataOffsets: [Int]
+    ) throws {
+        guard dataOffsets.count == 2 else {
+            throw FlintSafetensorsError.invalidTensor(
+                name: name,
+                reason: "dataOffsets must contain exactly 2 elements, got \(dataOffsets.count)"
+            )
+        }
+        guard dataOffsets[0] >= 0, dataOffsets[1] >= 0 else {
+            throw FlintSafetensorsError.invalidTensor(
+                name: name,
+                reason: "dataOffsets elements must be non-negative: [\(dataOffsets[0]), \(dataOffsets[1])]"
+            )
+        }
+        guard dataOffsets[0] <= dataOffsets[1] else {
+            throw FlintSafetensorsError.invalidTensor(
+                name: name,
+                reason: "dataOffsets start (\(dataOffsets[0])) > end (\(dataOffsets[1]))"
+            )
+        }
+        guard byteWidth > 0 else {
+            throw FlintSafetensorsError.invalidTensor(
+                name: name,
+                reason: "byteWidth must be positive, got \(byteWidth)"
+            )
+        }
+
+        let elementCount = try FlintSafetensorsHeader.validatedElementCount(shape: shape, name: name)
+        let (expectedBytes, bytesOverflow) = elementCount.multipliedReportingOverflow(by: byteWidth)
+        guard !bytesOverflow else {
+            throw FlintSafetensorsError.arithmeticOverflow(name: "\(name) byte size")
+        }
+        let byteCount = dataOffsets[1] - dataOffsets[0]
+        guard expectedBytes == byteCount else {
+            throw FlintSafetensorsError.invalidTensor(
+                name: name,
+                reason: "shape/dtype byte size (\(expectedBytes)) != payload range (\(byteCount))"
+            )
+        }
+
+        self.name = name
+        self.shape = shape
+        self.dtype = dtype
+        self.byteWidth = byteWidth
+        self.dataOffsets = dataOffsets
+        self.byteCount = byteCount
+        self.elementCount = elementCount
+    }
+
+    internal init(
+        trustedName name: String,
+        shape: [Int],
+        dtype: String,
+        byteWidth: Int,
         dataOffsets: [Int],
+        byteCount: Int,
         elementCount: Int
     ) {
         self.name = name
@@ -85,20 +140,8 @@ public struct FlintTensorInfo: Equatable, Sendable {
         self.dtype = dtype
         self.byteWidth = byteWidth
         self.dataOffsets = dataOffsets
-        self.byteCount = dataOffsets.count >= 2 ? (dataOffsets[1] - dataOffsets[0]) : 0
+        self.byteCount = byteCount
         self.elementCount = elementCount
-    }
-
-    public init(name: String, shape: [Int], dtype: String, byteWidth: Int, dataOffsets: [Int]) {
-        let count = (try? FlintSafetensorsHeader.validatedElementCount(shape: shape, name: name)) ?? 0
-        self.init(
-            name: name,
-            shape: shape,
-            dtype: dtype,
-            byteWidth: byteWidth,
-            dataOffsets: dataOffsets,
-            elementCount: count
-        )
     }
 }
 
@@ -264,11 +307,12 @@ public struct FlintSafetensorsHeader: Equatable, Sendable {
             }
 
             tensors[name] = FlintTensorInfo(
-                name: name,
+                trustedName: name,
                 shape: shape,
                 dtype: dtype,
                 byteWidth: byteWidth,
                 dataOffsets: offsets,
+                byteCount: actualBytes,
                 elementCount: elements
             )
         }
@@ -321,11 +365,13 @@ public struct FlintSafetensorsHeader: Equatable, Sendable {
 /// Thread-safe for concurrent read operations via pread.
 public final class FlintSafetensorsFile: @unchecked Sendable {
     public static let defaultMaxAllocatedBytes = 64 * 1024 * 1024 // 64 MiB default cap for Data allocations
+    public static let defaultMaxChunkSize = 16 * 1024 * 1024      // 16 MiB default safe max chunk allocation
 
     public let path: String
     internal let descriptor: Int32
     public let header: FlintSafetensorsHeader
     public let maxAllocatedBytes: Int
+    public let maxChunkSize: Int
     private let identity: Identity
 
     public struct Identity: Equatable, Sendable {
@@ -358,7 +404,11 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
         }
     }
 
-    public init(url: URL, maxAllocatedBytes: Int = defaultMaxAllocatedBytes) throws {
+    public init(
+        url: URL,
+        maxAllocatedBytes: Int = defaultMaxAllocatedBytes,
+        maxChunkSize: Int = defaultMaxChunkSize
+    ) throws {
         let filePath = url.path
         let fd = open(filePath, O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC)
         guard fd >= 0 else {
@@ -389,6 +439,7 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
             self.descriptor = fd
             self.header = header
             self.maxAllocatedBytes = maxAllocatedBytes
+            self.maxChunkSize = maxChunkSize
             self.identity = identity
         } catch {
             close(fd)
@@ -551,6 +602,8 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
     }
 
     /// Reads a named tensor in bounded chunks without loading the entire tensor into memory.
+    /// The chunkSize is validated to ensure it does not exceed the safe maxChunkSize limit (default 16 MiB),
+    /// preventing unbounded allocations.
     public func readTensorChunks(
         _ name: String,
         chunkSize: Int = 1024 * 1024,
@@ -561,6 +614,9 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
         }
         guard chunkSize > 0 else {
             throw FlintSafetensorsError.bufferCapacityInsufficient(required: 1, available: chunkSize)
+        }
+        guard chunkSize <= maxChunkSize else {
+            throw FlintSafetensorsError.requestedAllocationExceedsLimit(requested: chunkSize, limit: maxChunkSize)
         }
         let totalBytes = info.byteCount
         if totalBytes == 0 {

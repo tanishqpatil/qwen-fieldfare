@@ -24,7 +24,7 @@ FlintFieldfare applies the **bounded expert streaming** architecture:
 | **FlintInferenceLease** | Implemented (F1-02) | Single-process POSIX lock at `/tmp/flintfieldfare-inference-\(uid).lock` |
 | **FlintSafetensorsFile** | Implemented (F1-03) | Bounded reader, POSIX pread, 8-byte LE validation, zero-trap shape validation, capacity-checked buffers, 64 MB Data cap, chunked streaming |
 | **Physical Tensor Inventory** | Implemented (F1-03) | 4 shards, 1,751 tensors, 17.84 GB, 1.3125 MiB per-expert record, closed-form offset formula |
-| **FlintResidentLoader** | Proposed (F1-04) | Safe binary loader for permanently resident weights (~1.28 GiB) |
+| **FlintResidentLoader** | Implemented (F1-04) | Single-copy Metal shared buffers (`MTLBuffer` with `.storageModeShared`), zero temporary staging (0 B), zero routed experts, loads 1,328 resident tensors (1,278,418,496 B) in 0.41s |
 | **Flint Metal Attention** | Proposed (F2) | Q/K RMSNorm, learned sink `softmax_offset`, sliding window 513 |
 | **Flint Metal MoE** | Proposed (F2) | FP32 sigmoid top-6 router, fixed router-order position reduction |
 | **Flint Forward Runner** | Proposed (F3) | 49-layer forward evaluation and greedy generation |

@@ -183,3 +183,66 @@
      - Full test suite: **50 tests passed across 3 suites in 0.019 seconds**.
   6. **Strict Workspace Isolation Maintained**:
      - Verified `/Users/tanishq/dev/product/qwen-fieldfare` remained completely untouched (0 uncommitted changes).
+
+
+---
+
+## 2026-11-18 — F1-04: Resident Weight Extraction & Storage, Opening Safeguards Closure
+
+- **Author**: Inference Systems Architect
+- **Branch**: `feature/recursive-flint-40b-a2p5b`
+- **Authorized Directory**: `/Users/tanishq/dev/product/flint-fieldfare-isolated`
+- **Actions Completed**:
+  1. **Mandatory Opening Safeguards (F1-03 Closure)**:
+     - **Bounded Chunk Allocation**: Enforced `maxChunkSize` (default 16 MiB, `16,777,216` bytes) in `FlintSafetensorsFile.readTensorChunks`. Any requested `chunkSize` exceeding `maxChunkSize` is rejected with `FlintSafetensorsError.requestedAllocationExceedsLimit`. Added tests verifying rejection of oversized requests (e.g. 32 MiB) and custom clamp limits (e.g. 8 KiB).
+     - **Safe Tensor Descriptor Construction**: Replaced silent fallback `(try? ...) ?? 0` in `FlintTensorInfo` with a fully throwing public initializer enforcing: exactly 2 offsets, non-negative offsets, strictly non-reversed ranges (`offsets[0] <= offsets[1]`), positive `byteWidth`, safe overflow-checked element count calculation, and exact equality between shape/dtype byte size and `dataOffsets` range count. Added 10 negative regression tests.
+  2. **Memory Ownership & Buffer Layer (`FlintResidentBuffer.swift`)**:
+     - Single authoritative memory allocation container.
+     - Dual-backend strategy: Allocates page-aligned Metal shared buffers (`MTLBuffer` with `.storageModeShared`) on Apple Silicon unified memory, providing unified zero-copy memory between CPU (for POSIX `pread`) and GPU (for Metal compute kernels in F2). Falls back to 64-byte aligned heap memory when Metal is unavailable.
+     - Deterministic deallocation: ARC cleans up `MTLBuffer`; raw heap buffers call `deallocate()` on deinit.
+  3. **Programmatic Resident Manifest (`FlintResidentManifest.swift`)**:
+     - Programmatically derives all 1,328 permanently resident tensors from validated model configuration:
+       - Global (7): `model.embed_tokens.{weight, scales, biases}` (326,713,344 B), `lm_head.{weight, scales, biases}` (172,965,888 B), `model.norm.weight` (4,096 B).
+       - Per-Layer Attention (833): All 49 layers have 12 attention projections (520,224,768 B), 2 layer norms (401,408 B), and 3 attention sinks/QK norms (28,224 B). Note: `o_proj.weight` shape is `[2048, 512]` U32 (4,194,304 B) with `[2048, 64]` scales/biases.
+       - Dense MLP (18): Layers 0 and 1 have dense SwiGLU MLP projections (42,467,328 B).
+       - MoE Layers (470): Layers 2..48 have 1 router gate (`mlp.gate.weight`, 49,283,072 B) and 9 shared expert projections (166,330,368 B).
+       - Total Resident Tensors: **1,328 tensors**, **1,278,418,496 bytes** (1.1906 GiB / ~1.28 GB).
+       - Routed Experts: 423 tensors (15.4219 GiB) strictly excluded from permanent resident memory.
+       - Bidirectional validation against open Safetensors shards.
+  4. **Resident Weights & Structured Accessors (`FlintResidentWeights.swift`)**:
+     - Immutable, thread-safe container owning single authoritative resident tensor buffers.
+     - Provides structured accessors for F2 kernels: `attentionWeights(forLayer:)`, `denseMLPWeights(forLayer:)`, `moeResidentWeights(forLayer:)`, `embeddings`, `lmHead`, `outputNorm`.
+  5. **Resident Loader & Direct Zero-Copy I/O (`FlintResidentLoader.swift`)**:
+     - Reads directly from file descriptors into `buffer.pointer` using `pread`.
+     - **Peak Temporary Staging Allocation: 0 bytes**.
+     - **Zero Routed Expert Bytes Loaded: 0 bytes**.
+     - Partial-load cleanup: On any error, partially allocated buffers are immediately discarded and freed.
+  6. **Apple M5 32 GB Qualification & Independent Byte Verification**:
+     - Verified live checkpoint loading on Apple M5:
+       - Resident Tensors Loaded: 1,328
+       - Total Resident Bytes: 1,278,418,496 B (1.1906 GiB)
+       - Routed Expert Bytes: 0 B (strictly 0)
+       - Load Duration: ~0.404s – 0.428s
+       - Peak Temporary Staging Memory: 0 B
+       - Metal Shared Memory Used: true
+       - Process RSS Before: 60 MiB -> After Load: ~400–600 MiB
+     - Verified 15 independent reference SHA-256 digests across early, middle, and final layers:
+       - `model.embed_tokens.weight` [0..128]: `ef0768498be4264c846d1a62c667875d4b5ed9711bf7fa72fa704f04d391d20f`
+       - `model.norm.weight` [0..4096]: `b254961d001bbee273daa00efeef34e4351b783074fcce83b01146d7a5d90f76`
+       - `model.layers.0.input_layernorm.weight` [0..4096]: `a47a5d39863526d5a24983779dda01852c4ea1f6d6989b695da57f18aa7b24a0`
+       - `model.layers.0.self_attn.softmax_offset` [0..64]: `47fac1a49ccf7fe080e87522368e90e9246c6d8b5d4d9a84a202858d4160188a`
+       - `model.layers.0.mlp.gate_proj.weight` [0..128]: `f483f5e873a8bef9c125f27fd10224b187474a33096a889621a859f2ee2cb0c3`
+       - `model.layers.1.mlp.down_proj.scales` [0..64]: `55661f4a958e53a0230ad7a65299cd13643c54b5a114ad64d450881c18a0c87b`
+       - `model.layers.20.input_layernorm.weight` [0..4096]: `728d0d938132958627ac3a399711084deac01d73fd6cfd7912b10f054136367d`
+       - `model.layers.20.self_attn.q_proj.weight` [0..128]: `b72b37ce3d6e60dfad8ad92462d9a26dd54c12a1dbace3e6b226acc329a76d0a`
+       - `model.layers.20.mlp.gate.weight` [0..128]: `a5daf73c87a5381296e830e461d5b2aa29506b54f8a7a3ba1d3fe11b93073fca`
+       - `model.layers.20.mlp.gate.weight` [0..1048576] (full 1MB gate): `edbf9c3b24e0ca035058b9eceba36ee56f634a82325a0608e2018316f0c2a03b`
+       - `model.layers.24.mlp.shared_expert.gate_proj.weight` [0..128]: `e265ca6a81ea69368b00517677e35eb361f3c02dd3801ca8c457d8be80672f4a`
+       - `model.layers.48.post_attention_layernorm.weight` [0..4096]: `640bc5225fae549b69b5a62c25551a1837e0afab300972c89951f2c2c8c01de4`
+       - `model.layers.48.self_attn.o_proj.scales` [0..64]: `6c876aa5c7744296d504573762df1b8398804fc650d76854576e67017c534fa3`
+       - `model.layers.48.mlp.shared_expert.down_proj.weight` [0..128]: `281d309d2d9a3efa0e0aa7a97f12d9f7d6504f76937086a93e28cf0c9cdf0f51`
+       - `lm_head.weight` [0..128]: `201e7d45820db8a313367c551ef61352a7394f5efba3560e10a5466f244f932a`
+     - Verified packed U32 weights are intact and not cast to floats.
+     - Regression test suite: **55 tests passing across 4 suites in 0.519s**.
+  7. **Strict Repository Isolation**:
+     - `/Users/tanishq/dev/product/qwen-fieldfare` verified strictly untouched.

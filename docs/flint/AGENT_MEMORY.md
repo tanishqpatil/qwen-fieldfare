@@ -17,7 +17,7 @@ This document is the authoritative recovery guide for agents operating on FlintF
   - Derived SSD streaming bandwidth formula vs hit rate (370.125 MiB/tok cold).
   - Clearly separated empirical measurements from theoretical streaming design targets (~3.2 GiB).
   - Architecture decisions ADR-F001 through ADR-F007 recorded in `docs/flint/DECISIONS.md`.
-- **F1 (Metadata & Weight Loading Infrastructure)**: **F1-01, F1-02, F1-03 COMPLETED**.
+- **F1 (Metadata & Weight Loading Infrastructure)**: **F1-01, F1-02, F1-03, F1-04 COMPLETED**.
   - `FlintModelDirectory` (F1-01): Strict Case A (INT4) & Case B (141 overrides) validation, safe pread contiguous buffers.
   - `FlintInferenceLease` (F1-02): Dedicated lock at `/tmp/flintfieldfare-inference-\(uid).lock`.
   - `FlintSafetensorsFile` & Cross-Validation (F1-03):
@@ -27,12 +27,20 @@ This document is the authoritative recovery guide for agents operating on FlintF
     - Safe random-access `preadExact` using contiguous memory buffers.
     - Identity verification via `stat`/`fstat` and mutation detection via `verifyUnchanged()`.
     - Cross-validation against config metadata (`mlx_export` vs `quantization` vs Safetensors shapes/dtypes).
-    - Empirical validation of live checkpoint `/Users/tanishq/models/flint-mixed-3-4bit` (4 shards, 1,751 tensors, 17.84 GB).
+    - Opening safeguards resolved: bounded chunk allocations (16 MiB max) in `readTensorChunks`, safe throwing `FlintTensorInfo` construction.
     - Bitwise SHA-256 match against independent Python/MLX ground truth across 8 empirical tensors.
     - Physical tensor inventory report: `docs/flint/PHYSICAL_TENSOR_INVENTORY.md` ($1,376,256\text{ B} = 1.3125\text{ MiB}$ per 3-bit expert, closed-form offset formula).
-  - Test Suite: **50 tests passing across 3 suites in 0.019 seconds**.
-- **F1-04 (Resident Weight Extraction & Storage)**: Pending authorization.
-- **F2 (Mathematical Primitives & Metal Kernels)**: Pending.
+  - `FlintResidentLoader` & `FlintResidentWeights` (F1-04):
+    - Single authoritative copy per tensor via Metal shared buffers (`MTLBuffer` with `.storageModeShared`).
+    - Programmatic `FlintResidentManifest`: All 1,328 permanently resident tensors across all 49 layers. Total resident payload: 1,278,418,496 B (1.1906 GiB / ~1.28 GB).
+    - Direct zero-copy I/O: 0 bytes peak temporary staging allocation.
+    - Strictly 0 bytes of routed expert weights (`switch_mlp`) loaded into resident memory.
+    - Partial-failure immediate buffer cleanup and deterministic teardown deallocation.
+    - 15 independent reference SHA-256 digests verified across early, middle, and final layers.
+    - Packed U32 weights verified intact without float conversion.
+    - Measured on Apple M5 32 GB: 0.404s – 0.428s load duration, 60 MiB -> ~400-600 MiB process RSS.
+  - Test Suite: **55 tests passing across 4 suites in 0.519 seconds**.
+- **F2 (Mathematical Primitives & Metal Kernels)**: Next active milestone.
 - **F3 (First Real Flint Token Forward)**: Pending.
 - **F4 (Bounded Expert Streaming)**: Pending.
 
@@ -49,5 +57,5 @@ This document is the authoritative recovery guide for agents operating on FlintF
 5. **Never Commit Weights**: Checkpoint files remain strictly external.
 
 ## Immediate Next Steps
-1. Submit Review #004 Safety Closure completion report.
-2. Await authorization for F1-04 (`FlintResidentLoader.swift`).
+1. Submit Review #005 Completion Report (F1-04 Resident Weight Extraction & Storage).
+2. Recommend progression to Milestone F2 (Core Numerical Primitives: RMSNorm, Attention Sinks/SDPA, Sigmoid Router, Dequantization).

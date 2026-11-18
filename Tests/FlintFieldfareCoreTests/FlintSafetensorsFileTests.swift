@@ -191,28 +191,67 @@ import Testing
         }
     }
 
-    @Test func zeroDimensionOverflowPathSafelyRejectedWithoutCrash() throws {
+    @Test func safeTensorDescriptorConstructionEnforcesAllInvariants() throws {
         // [Int.max, Int.max, 0] must not crash unchecked reduce
         #expect(throws: FlintSafetensorsError.self) {
             _ = try FlintSafetensorsHeader.validatedElementCount(shape: [Int.max, Int.max, 0], name: "overflow")
         }
 
-        // Public descriptor initialization does not trap on overflow
-        let info = FlintTensorInfo(name: "overflow", shape: [Int.max, Int.max, 0], dtype: "BF16", byteWidth: 2, dataOffsets: [0, 0])
-        #expect(info.elementCount == 0)
+        // 1. Arithmetic overflow in shape element count throws without silent fallback to 0
+        #expect(throws: FlintSafetensorsError.self) {
+            _ = try FlintTensorInfo(name: "overflow", shape: [Int.max, Int.max, 0], dtype: "BF16", byteWidth: 2, dataOffsets: [0, 0])
+        }
 
-        // Scalar tensor [] has 1 element
+        // 2. Negative dimensions throw
+        #expect(throws: FlintSafetensorsError.self) {
+            _ = try FlintTensorInfo(name: "negDim", shape: [-1, 10], dtype: "BF16", byteWidth: 2, dataOffsets: [0, 20])
+        }
+
+        // 3. Invalid dataOffsets element count throws
+        #expect(throws: FlintSafetensorsError.self) {
+            _ = try FlintTensorInfo(name: "badOffsetsCount", shape: [10], dtype: "BF16", byteWidth: 2, dataOffsets: [0])
+        }
+        #expect(throws: FlintSafetensorsError.self) {
+            _ = try FlintTensorInfo(name: "badOffsetsCount3", shape: [10], dtype: "BF16", byteWidth: 2, dataOffsets: [0, 10, 20])
+        }
+
+        // 4. Negative offsets throw
+        #expect(throws: FlintSafetensorsError.self) {
+            _ = try FlintTensorInfo(name: "negOffset", shape: [10], dtype: "BF16", byteWidth: 2, dataOffsets: [-5, 15])
+        }
+
+        // 5. Reversed offsets throw
+        #expect(throws: FlintSafetensorsError.self) {
+            _ = try FlintTensorInfo(name: "reversedOffset", shape: [10], dtype: "BF16", byteWidth: 2, dataOffsets: [20, 10])
+        }
+
+        // 6. Invalid byteWidth throws
+        #expect(throws: FlintSafetensorsError.self) {
+            _ = try FlintTensorInfo(name: "zeroByteWidth", shape: [10], dtype: "BF16", byteWidth: 0, dataOffsets: [0, 0])
+        }
+
+        // 7. Shape byte size mismatch with dataOffsets throws
+        #expect(throws: FlintSafetensorsError.self) {
+            _ = try FlintTensorInfo(name: "byteSizeMismatch", shape: [10], dtype: "BF16", byteWidth: 2, dataOffsets: [0, 10]) // expected 20 bytes, got 10
+        }
+
+        // 8. Scalar tensor [] has 1 element
         let scalarCount = try FlintSafetensorsHeader.validatedElementCount(shape: [], name: "scalar")
         #expect(scalarCount == 1)
 
-        // Valid zero-dim [10, 0, 5] has 0 elements
+        // 9. Valid zero-dim [10, 0, 5] has 0 elements
         let zeroCount = try FlintSafetensorsHeader.validatedElementCount(shape: [10, 0, 5], name: "zero")
         #expect(zeroCount == 0)
 
-        // Negative dimensions throw invalidTensor
-        #expect(throws: FlintSafetensorsError.self) {
-            _ = try FlintSafetensorsHeader.validatedElementCount(shape: [-1, 10], name: "neg")
-        }
+        // 10. Valid descriptor construction succeeds and sets all properties correctly
+        let validInfo = try FlintTensorInfo(name: "valid", shape: [4, 4], dtype: "BF16", byteWidth: 2, dataOffsets: [0, 32])
+        #expect(validInfo.name == "valid")
+        #expect(validInfo.shape == [4, 4])
+        #expect(validInfo.dtype == "BF16")
+        #expect(validInfo.byteWidth == 2)
+        #expect(validInfo.dataOffsets == [0, 32])
+        #expect(validInfo.byteCount == 32)
+        #expect(validInfo.elementCount == 16)
     }
 
     @Test func rejectsInvertedOffsets() throws {
@@ -419,6 +458,7 @@ import Testing
         defer { try? FileManager.default.removeItem(at: url) }
         let shard = try FlintSafetensorsFile(url: url)
 
+        // Valid bounded chunked streaming succeeds and preserves exact bytes
         var accumulated = [UInt8]()
         var lastOffset = 0
         try shard.readTensorChunks("large.tensor", chunkSize: 4096) { chunk, offset in
@@ -427,6 +467,26 @@ import Testing
             lastOffset += chunk.count
         }
         #expect(accumulated == rawBytes)
+
+        // Safeguard A: chunkSize exceeding default maxChunkSize (16 MiB) is rejected
+        #expect(throws: FlintSafetensorsError.self) {
+            try shard.readTensorChunks("large.tensor", chunkSize: 32 * 1024 * 1024) { _, _ in }
+        }
+
+        // Negative or zero chunk size is rejected
+        #expect(throws: FlintSafetensorsError.self) {
+            try shard.readTensorChunks("large.tensor", chunkSize: 0) { _, _ in }
+        }
+        #expect(throws: FlintSafetensorsError.self) {
+            try shard.readTensorChunks("large.tensor", chunkSize: -1) { _, _ in }
+        }
+
+        // Custom tight maxChunkSize clamps and rejects requests exceeding limit
+        let tightShard = try FlintSafetensorsFile(url: url, maxChunkSize: 8192)
+        #expect(tightShard.maxChunkSize == 8192)
+        #expect(throws: FlintSafetensorsError.self) {
+            try tightShard.readTensorChunks("large.tensor", chunkSize: 16384) { _, _ in }
+        }
     }
 
     @Test func dataReturningReadsEnforceAllocationLimit() throws {
