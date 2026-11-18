@@ -1,0 +1,11 @@
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ExpertResidencyProbeTests started.
+◇ Test cancellationSentinelsPreserveGrouping() started.
+Actual Metal original [0.0, 0.0, 0.0, 1.0], grouped [1.0, -1.0, 0.0, 1.0]
+✔ Test cancellationSentinelsPreserveGrouping() passed after 0.031 seconds.
+◇ Test captureGroupedReference() started.
+✔ Test captureGroupedReference() passed after 105.711 seconds.
+✔ Suite ExpertResidencyProbeTests passed after 105.743 seconds.
+✔ Test run with 2 tests in 1 suite passed after 105.743 seconds.

@@ -206,3 +206,21 @@ router-order accumulation and evaluates `residual + (routed + shared)`.
 Reuse the current matched comparisons. Attempt S3-00 again only after a
 reduction passes that review. See the
 [qualification report](evidence/2026-11-18-s300b/README.md).
+
+## ADR-015 — Select fixed router order as the S3-00 replay control
+
+The final combine-only comparison distinguishes both arithmetic groupings
+on the compiled Metal pipelines and retains bitwise cold/warm logits with
+either. The grouped tail gives nearly the same aggregate reference fidelity
+and moves the disputed output-465 signed margin farther from MLX. Two short
+and one sustained performance pair show no consistent advantage. Keep the
+original router-order implementation. This ends the reduction-order search.
+
+The legacy path retains a cache-dependent choice at that boundary. The
+accepted path selects the same token under both histories, with
+mean sustained error within the legacy range and near-identical strict error. The strict 131/132 discrepancy
+remains a release blocker. Production uses per-router weighted scratch
+with no new cache policy, release mode or precision representation. Use this
+implementation as the full-replay control for opt-in exact prefix reuse and
+separately requalify the known long continuation. See
+[S3-00c evidence](evidence/2026-11-18-s300c/README.md).

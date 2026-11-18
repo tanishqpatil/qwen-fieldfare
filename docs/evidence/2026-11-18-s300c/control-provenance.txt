@@ -1,0 +1,1 @@
+Verified 168 original raw array digests against S3-00b evidence

@@ -1,6 +1,22 @@
 # Authoritative implementation backlog
 
-## Current milestone — S3-00b deterministic expert reduction
+## Current milestone — S3-00c reduction decision
+
+S3-00c selects the original fixed router-order expert reduction as the
+production full-replay baseline. The grouped-tail experiment is closed.
+The strict MLX 131/132 blocker remains. Stop here. The next authorized
+S3-00 iteration should qualify opt-in exact-prefix reuse against this baseline.
+
+- [x] Verify the two combine groupings on actual Metal sentinels.
+- [x] Compare saved MLX and Swift controls with the grouped variant's two histories.
+- [x] Choose original router order and integrate one bounded scratch buffer.
+- [x] Verify production against matched captures and run package/release/strict checks.
+- [ ] Future S3-00: restore the off-by-default prefix controls and requalify
+  512-output continuation, restart/cancellation and repeated-turn latency.
+
+See [S3-00c decision and handoff](docs/evidence/2026-11-18-s300c/README.md).
+
+## Historical milestone — S3-00b deterministic expert reduction
 
 S3-00b ended with Outcome B (revise). Router order eliminates the measured
 residency variance and preserves similar aggregate MLX fidelity, but selects
@@ -12,7 +28,7 @@ S3-00 prefix reuse stays blocked pending a qualified reduction.
 - [x] Compare both teacher histories with native and tokenwise MLX.
 - [x] Check bitwise router-order warm/cold agreement and strict non-regression.
 - [x] Record the revision outcome and retain the exact probe and metrics.
-- [ ] Evaluate only the explicit `residual + (routed + shared)` combine variant.
+- [x] Evaluate only the explicit `residual + (routed + shared)` combine variant in S3-00c.
 
 See [S3-00b report](docs/evidence/2026-11-18-s300b/README.md).
 

@@ -1365,3 +1365,48 @@ Restored tree: 153 passes, three opt-in skips, release 42.54s, checker 6/6,
 archived strict non-regression, exact production and reference identity, and
 documentation and diff checks. Publish qualification evidence and leave the
 S3-00 work blocked on the feature branch.
+
+## S3-00c final combine-only experiment
+
+Reused the 168 raw S3-00b control arrays after SHA-256 verification against
+their published digests. Read upstream TurboFieldfare at de9d1b4: cached and
+fetched expert setup joins at one fixed top-eight reduction. Its Gemma layer
+tail only informs the scheduling boundary. The experiment keeps Qwen's
+projections and routed accumulation, with scoped Metal compiler controls on
+the final two additions only. The runtime-compiled GPU sentinels return
+[0, 0, 0, 1] for router order and [1, -1, 0, 1] for the proposed grouping.
+The standalone offline Metal toolchain was not installed. The sentinel and
+sampled checkpoint tests use the runtime compiler from the real app path.
+
+The grouped variant matched all 57,344 sampled layer-coordinate FP32 results
+and preserved layer-0 weighted contributions across both histories. It kept
+bitwise cold/warm logit agreement at 152 and 941 positions. At the key
+margin, grouped +0.01535 is farther from native and sequential MLX −0.125
+than original router order +0.01194. Its mean sustained native-reference
+L2 falls only from 7.613% to 7.607%. Both deterministic variants predict
+1031 at that position and retain strict token 61 as the sole mismatch.
+Grouped relative throughput changed +2.53% and −0.89% in two short pairs
+and −1.80% in one sustained pair. Chose the original router-order path and
+closed the reduction-order search.
+
+Integrated one 64 KiB router-position allocation replacing two 8 KiB
+buffers. Focused GPU tests pass all-cold, all-warm and mixed partitions,
+router slot indirection, exact weighted projections and cancellation.
+The first planner test with a simple fixed-scratch increase changed the 8K
+capacity. Charge the net 48 KiB to the existing reserve instead. Existing
+slot counts and 3/4/5 GiB checks pass. The temporary production replay
+harness initially failed compilation due to optional digest formatting.
+After correcting it, the cold sustained replay matched all seven archived
+hidden and logit pairs bitwise and all 512 forced predictions. It observed
+5,291,294,720 additional Metal bytes and retained 2,183 slots. The test-only
+capture hooks were removed from the working source after that run.
+
+Final production gate passed: 155 package tests, three opt-in skips,
+43.42-second release build, and all six numerical checker tests. Bench
+verified the original checkpoint files and exited 1 with the exact
+expected strict baseline 131/132 (token 61 expected 14988, got 10000).
+The separate non-regression checker passes. Source, test and evidence
+review excludes temporary capture hooks, raw arrays and checkpoint files.
+Publish production and documentation in separate commits on the feature
+branch. The experiment ends here. S3-00 can resume as a separate opt-in
+experiment against this full-replay path.

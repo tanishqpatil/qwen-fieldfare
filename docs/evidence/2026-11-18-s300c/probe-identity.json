@@ -1,0 +1,12 @@
+{
+  "base": "d821f21ef1974a61fc9fbd8cb1b66e6422ca63de",
+  "patch_sha256": "ba8f032e6d3034252df325cb3b6518a01eb39dbc7a18c90a4a68d52c5a5b9663",
+  "uncompressed_sha256": "37e9a0e437e3b6ffd5090391b8b9a1de546d02c54ad585e39e260968d2b25606",
+  "source_sha256": {
+    "Sources/QwenFieldfareCore/Metal/LinearAttention/deltanet.metal": "1af89c03c12ea447eda633d49cc9bbdd6f9c1049995a4082c8e4cd609be001a1",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift": "ea63c2f9cc55fc5966e1a5e65f74f48c57077d6ad79c914089dc7d3c7f1c24a2",
+    "Tests/QwenFieldfareServerTests/ExpertResidencyProbeTests.swift": "b67632b31177ffcfa6abd6092ca94a8f935cb20cff96c395079aa802f642d998"
+  },
+  "upstream_design_revision": "de9d1b4d195a17c76a952d32c54c0b91d2605697",
+  "scope": "Temporary two-mode Metal/Swift probe and capture test."
+}

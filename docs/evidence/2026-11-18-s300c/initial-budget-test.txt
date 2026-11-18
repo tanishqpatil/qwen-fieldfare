@@ -1,0 +1,94 @@
+Building for debugging...
+[Computing dependencies]
+[Pre-planning 1 / 1453]
+[Planning deferred tasks]
+[41 / 195]
+[65 / 199] CNIOLLHTTP
+[83 / 200] NIOConcurrencyHelpers
+[99 / 204] NIOConcurrencyHelpers
+[105 / 195] Crypto
+[114 / 190] DequeModule
+[119 / 185] NIOCore
+[127 / 196] NIOCore
+[128 / 196] yyjson
+[131 / 196]
+[131 / 196] NIOCore
+[131 / 196] CNIOAtomics
+[132 / 195] NIOCore
+[147 / 220] EventSource
+[154 / 238]
+[163 / 238] NIOEmbedded
+[163 / 234] HuggingFace
+[168 / 245] HuggingFace
+[172 / 245] HuggingFace
+[174 / 245] HuggingFace
+[175 / 245] HuggingFace
+[176 / 245] HuggingFace
+[180 / 241] HuggingFace
+[183 / 246] NIO
+[189 / 251] HuggingFace
+[190 / 263]
+[197 / 263] NIOHTTP1
+[201 / 263] NIOHTTP1
+[203 / 259] NIOHTTP1
+[208 / 261] Hub
+[216 / 269] Hub
+[219 / 272] Hub
+[219 / 273] Tokenizers
+[228 / 283] Tokenizers
+[231 / 282] Tokenizers
+[235 / 286] Tokenizers
+[238 / 302] NIOPosix
+[250 / 299] QwenFieldfareCore
+[257 / 304] QwenFieldfareCore
+[261 / 308] QwenFieldfareServerSupport
+[267 / 324] QwenFieldfareBench-product
+[275 / 324] QwenFieldfareServerSupport
+[278 / 324] QwenFieldfareServerSupport
+[282 / 331] QwenFieldfareServerSupport
+[290 / 338] QwenFieldfareServer-product
+[290 / 338] QwenFieldfareBench-product
+[297 / 340] QwenFieldfareCore
+[311 / 337] QwenFieldfareMac-product
+[316 / 348] QwenFieldfareMac-product
+[320 / 362] QwenFieldfareServerManagementTests-product
+[325 / 375] QwenFieldfareBench-product
+[328 / 375] QwenFieldfareServerManagementTests-product
+[335 / 374] QwenFieldfareServerTests-product
+[341 / 373] QwenFieldfareCoreTests-product
+[348 / 373] QwenFieldfareCoreTests-product
+[351 / 373] QwenFieldfareCoreTests-product
+[354 / 373] QwenFieldfareCoreTests-product
+[360 / 373] QwenFieldfareServerManagementTests-product
+[362 / 374] QwenFieldfareCoreTests-product
+[364 / 374] QwenFieldfareServerTests-product
+[366 / 374] QwenFieldfareServerManagementTests-product
+[374 / 378] QwenFieldfareServer-product
+[375 / 381] QwenFieldfareMac-product
+[375 / 381] QwenFieldfareCoreTests-product
+[377 / 381] QwenFieldfareCoreTests-product
+Build complete! (11.89 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenActiveStreamingMemoryConfigurationTests started.
+◇ Test eightKProfilesRetainExpectedSlotBudgets() started.
+✘ Test eightKProfilesRetainExpectedSlotBudgets() recorded an issue at QwenActiveStreamingMemoryConfigurationTests.swift:9:9: Expectation failed: try QwenActiveStreamingMemoryConfiguration.make(budget: .fiveGiB, contextLength: 8_192).expertCacheSlots == 2_183
+↳ try QwenActiveStreamingMemoryConfiguration.make(budget: .fiveGiB, contextLength: 8_192).expertCacheSlots == 2_183 → <not evaluated>
+✘ Test eightKProfilesRetainExpectedSlotBudgets() failed after 0.001 seconds with 1 issue.
+◇ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() started.
+✔ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() passed after 0.001 seconds.
+◇ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() started.
+✔ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() passed after 0.001 seconds.
+◇ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() started.
+✔ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() passed after 0.001 seconds.
+✘ Suite QwenActiveStreamingMemoryConfigurationTests failed after 0.001 seconds with 1 issue.
+◇ Suite QwenExpertReductionTests started.
+◇ Test cachePartitionsWriteTheSameRouterOrderedContributions() started.
+✔ Test cachePartitionsWriteTheSameRouterOrderedContributions() passed after 0.195 seconds.
+◇ Test chosenCombinePreservesRouterOrderAndResidualGrouping() started.
+✔ Test chosenCombinePreservesRouterOrderAndResidualGrouping() passed after 0.002 seconds.
+✔ Suite QwenExpertReductionTests passed after 0.198 seconds.
+✘ Test run with 6 tests in 2 suites failed after 0.199 seconds with 1 issue.
+Note: Some test targets reported failures:
+  - QwenFieldfareCoreTests (Swift Testing)

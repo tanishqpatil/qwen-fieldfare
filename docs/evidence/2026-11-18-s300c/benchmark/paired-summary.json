@@ -1,0 +1,77 @@
+[
+  {
+    "workload": 128,
+    "pair": 1,
+    "modes": {
+      "router-order": {
+        "decode_toks_s": 34.05,
+        "prefill_s": 1.584,
+        "decode_hits": 32744.0,
+        "decode_misses": 7896.0,
+        "decode_logical_gib": 13.012,
+        "metal_gib": 4.928,
+        "footprint_gib": 4.795
+      },
+      "grouped": {
+        "decode_toks_s": 34.91,
+        "prefill_s": 1.543,
+        "decode_hits": 32733.0,
+        "decode_misses": 7907.0,
+        "decode_logical_gib": 13.03,
+        "metal_gib": 4.928,
+        "footprint_gib": 4.794
+      }
+    },
+    "grouped_decode_change_pct": 2.525697503671065
+  },
+  {
+    "workload": 128,
+    "pair": 2,
+    "modes": {
+      "grouped": {
+        "decode_toks_s": 34.46,
+        "prefill_s": 1.552,
+        "decode_hits": 32733.0,
+        "decode_misses": 7907.0,
+        "decode_logical_gib": 13.03,
+        "metal_gib": 4.928,
+        "footprint_gib": 4.81
+      },
+      "router-order": {
+        "decode_toks_s": 34.77,
+        "prefill_s": 1.531,
+        "decode_hits": 32744.0,
+        "decode_misses": 7896.0,
+        "decode_logical_gib": 13.012,
+        "metal_gib": 4.928,
+        "footprint_gib": 4.809
+      }
+    },
+    "grouped_decode_change_pct": -0.8915731952833017
+  },
+  {
+    "workload": 512,
+    "pair": 1,
+    "modes": {
+      "router-order": {
+        "decode_toks_s": 29.37,
+        "prefill_s": 1.944,
+        "decode_hits": 125244.0,
+        "decode_misses": 38276.0,
+        "decode_logical_gib": 63.077,
+        "metal_gib": 4.928,
+        "footprint_gib": 4.803
+      },
+      "grouped": {
+        "decode_toks_s": 28.84,
+        "prefill_s": 1.97,
+        "decode_hits": 125219.0,
+        "decode_misses": 38301.0,
+        "decode_logical_gib": 63.118,
+        "metal_gib": 4.928,
+        "footprint_gib": 4.803
+      }
+    },
+    "grouped_decode_change_pct": -1.8045624787197845
+  }
+]

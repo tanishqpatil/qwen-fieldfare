@@ -1,0 +1,1 @@
+checked 33 Markdown files; all local links and anchors resolve

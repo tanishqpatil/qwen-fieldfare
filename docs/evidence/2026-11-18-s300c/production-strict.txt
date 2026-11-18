@@ -1,0 +1,24 @@
+error: Teacher-forced parity failed
+
+Usage:
+  QwenFieldfareBench [--model <directory>] [--prompt <text>]
+    [--context <tokens>] [--max-new <tokens>] [--memory-gib 3|4|5]
+    [--cache-slots <count>]
+    [--warmup-runs <count>] [--runs <count>]
+    [--load-only] [--metrics-only] [--packed-experts] [--analyze-cache]
+    [--gpu-profile] [--subcomponent-profile] [--teacher-reference <json>]
+    [--sampler greedy|app-seeded] [--seed <integer>]
+Reference checkpoint SHA-256 verified; versions: ["mlx-lm": "0.32.2", "transformers": "5.22.2", "mlx": "0.32.4"]
+Load: 0.249 s
+Loaded footprint: 0.997 GiB
+Loaded Metal allocation: 4.928 GiB
+Context: 8192
+Active-streaming budget: 5 GiB; planned 5.000 / 5.000 GiB
+Expert cache slots: 2183
+Expert storage: raw-safetensors
+GPU profiling: disabled
+Warmup runs: 0
+Measured runs: 1
+Sampler: greedy, seed: 42
+Mismatch at reference token 61: expected 14988, got 10000
+Teacher-forced parity: 131/132 matched

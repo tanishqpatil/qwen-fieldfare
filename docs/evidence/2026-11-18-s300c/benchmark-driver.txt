@@ -1,0 +1,6 @@
+128-1-router-order 128 15.64s
+128-1-grouped 128 11.82s
+128-2-grouped 128 11.45s
+128-2-router-order 128 11.43s
+512-1-router-order 512 39.15s
+512-1-grouped 512 40.58s

@@ -597,5 +597,28 @@ See [measured results](evidence/2026-11-18-s300a/README.md).
 The experimental combine uses one 65,536-byte runner scratch buffer. Hit and
 miss kernels write disjoint router rows. The same serialized Metal queue orders
 both producers, the final combine, and the next layer's reuse of the buffer.
-This preserves CPU/GPU overlap and the expert-weight cache policy. The experiment
-is archived. Production continues the legacy reduction and full prompt replay.
+This preserves CPU/GPU overlap and the expert-weight cache policy. S3-00a
+archived the experiment and left production on the legacy reduction. S3-00c
+superseded that choice while retaining full prompt replay.
+
+## S3-00c production router-order expert sum
+
+The active streaming runner preserves hit-side GPU and CPU refill overlap.
+Both subsets now write their weighted down projections to disjoint
+router-position rows of one shared scratch buffer. The existing serialized
+Metal queue orders both producers, the final combine, and reuse of scratch
+by the next layer. The final kernel folds the eight positions in fixed order
+and combines the attention residual and shared expert as in the selected
+original router-order prototype. Cache occupancy no longer partitions the
+sum. Controller/fallback paths, cache policy and sequence reset are unchanged.
+
+This replaces two 8 KiB subset accumulators with one 64 KiB allocation.
+The plan charges 48 KiB to its existing safety reserve without changing
+slot counts or 3/4/5 GiB target limits. Scratch is per runner, reused across
+layers. No other buffers are retained for conversation reuse.
+
+The alternate `residual + (routed + shared)` grouping survived compiler
+reassociation tests but did not improve the important boundary margins.
+The selected path is the new full-replay control for S3-00. Its documented
+local MLX fidelity limits and the original strict 131/132 gate still apply.
+See the [S3-00c decision and requalification handoff](evidence/2026-11-18-s300c/README.md).

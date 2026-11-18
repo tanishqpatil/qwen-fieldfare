@@ -1,0 +1,30 @@
+{
+  "decision": "Promote original router-order reduction. Reject grouped tail. Replace legacy subset sums.",
+  "temporary_grouped_validation": {
+    "cold_warm_strict_identical_positions": 152,
+    "cold_warm_sustained_identical_positions": 941,
+    "sampled_exact_layer_coordinates": 57344,
+    "saved_control_arrays_verified": 168
+  },
+  "integrated_production": {
+    "sustained_exact_sampled_hidden_and_logits": 7,
+    "teacher_predictions": 512,
+    "observed_metal_allocation_delta_bytes": 5291294720,
+    "expert_cache_slots": 2183,
+    "planned_net_scratch_bytes": 49152,
+    "known_strict_result": "131/132",
+    "strict_exit": 1,
+    "sole_strict_mismatch": [
+      61,
+      14988,
+      10000
+    ]
+  },
+  "strict_fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "package_tests_passed": 155,
+  "opt_in_skips": 3,
+  "release_seconds": 43.42,
+  "checker_tests_passed": 6,
+  "production_replay_patch_sha256": "2ba97bca610540333dca6b734c4974aec8aad8ac761f18b64e31a88416e8fe0a",
+  "prefix_reuse": "S3-00 separate opt-in qualification pending"
+}

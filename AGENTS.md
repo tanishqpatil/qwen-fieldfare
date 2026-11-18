@@ -1,6 +1,13 @@
 # QwenFieldfare
 
-## Current milestone — S3-00b deterministic expert reduction
+## Current milestone — S3-00c reduction decision
+
+S3-00c selects the original fixed router-order expert reduction as the
+production full-replay baseline. The grouped-tail experiment is closed.
+The strict MLX 131/132 blocker remains. Stop here. The next S3-00 iteration should qualify
+opt-in exact-prefix reuse against this baseline.
+
+## Historical milestone — S3-00b deterministic expert reduction
 
 S3-00b ended with Outcome B (revise). Router order eliminates the measured
 residency variance and preserves similar aggregate MLX fidelity, but selects

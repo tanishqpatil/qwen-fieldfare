@@ -1,0 +1,4 @@
+The system has 34359738368 (2097152 pages with a page size of 16384).
+System-wide memory free percentage: 85%
+kern.memorystatus_vm_pressure_level: 1
+vm.swapusage: total = 4096.00M  used = 2387.44M  free = 1708.56M  (encrypted)

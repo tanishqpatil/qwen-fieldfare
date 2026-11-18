@@ -1,0 +1,15 @@
+d821f21ef1974a61fc9fbd8cb1b66e6422ca63de
+ProductName:		macOS
+ProductVersion:		27.2.1
+BuildVersion:		26B131
+Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)
+Target: arm64-apple-macosx27.2.0
+34359738368
+Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk3s5   926Gi   769Gi   128Gi    86%    4.9M  1.3G    0%   /System/Volumes/Data
+Now drawing from 'AC Power'
+ -InternalBattery-0 (id=22872163)	80%; AC attached; not charging present: true
+The system has 34359738368 (2097152 pages with a page size of 16384).
+System-wide memory free percentage: 86%
+kern.memorystatus_vm_pressure_level: 1
+vm.swapusage: total = 4096.00M  used = 2395.44M  free = 1700.56M  (encrypted)

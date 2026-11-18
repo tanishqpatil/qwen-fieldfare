@@ -1,0 +1,63 @@
+Building for production...
+[Computing dependencies]
+[7 / 86]
+[19 / 72] NIOConcurrencyHelpers
+[26 / 78] _NIOBase64
+[28 / 78] _NIODataStructures
+[50 / 90] _NIODataStructures
+[56 / 96] ContainersPreview
+[69 / 107] QwenFieldfarePresentationTests-product
+[70 / 108] Atomics
+[76 / 109] QwenFieldfarePresentationTests-product
+[76 / 109] OrderedCollections
+[89 / 119] NIOCore
+[91 / 120] NIOCore
+[103 / 133] NIOPosix
+[109 / 138] EventSource
+[114 / 142] HuggingFace
+[116 / 143] Jinja
+[121 / 145] NIOEmbedded
+[126 / 147] NIOPosix
+[134 / 153] NIO
+[142 / 159] HuggingFace
+[148 / 164] Hub
+[151 / 166] Hub
+[157 / 171] Tokenizers
+[159 / 172] NIOHTTP1
+[164 / 174] Tokenizers
+[170 / 179] QwenFieldfareCore
+[173 / 181] QwenFieldfareCore
+[183 / 194] QwenFieldfareBench-product
+[194 / 204] QwenFieldfarePack-product
+[196 / 204] QwenFieldfarePack-product
+[196 / 204] QwenFieldfareBench-product
+[198 / 204] QwenFieldfareBench-product
+[198 / 204] QwenFieldfareServerSupport
+[207 / 223] QwenFieldfareServerManagement
+[211 / 226] QwenFieldfareServer-product
+[213 / 226] QwenFieldfareServer-product
+[215 / 227] QwenFieldfareCoreTests-product
+[223 / 235] QwenFieldfareMac-product
+[225 / 237] QwenFieldfareServerManagementTests-product
+[227 / 237] QwenFieldfareServerManagementTests-product
+[227 / 237] QwenFieldfareServerTests-product
+[234 / 239] QwenFieldfareMac-product
+[239 / 241] QwenFieldfareMac-product
+[239 / 241] QwenFieldfareServerTests-product
+[244 / 246] QwenFieldfareServerManagementTests-product
+[252 / 254] QwenFieldfareCoreTests-product
+[253 / 253] QwenFieldfareServer-product
+[257 / 258] QwenFieldfareMac-product
+[259 / 259] QwenFieldfareBench-product
+[262 / 262] QwenFieldfarePack-product
+Build complete! (45.38 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ExpertResidencyProbeTests started.
+◇ Test cancellationSentinelsPreserveGrouping() started.
+Actual Metal original [0.0, 0.0, 0.0, 1.0], grouped [1.0, -1.0, 0.0, 1.0]
+✔ Test cancellationSentinelsPreserveGrouping() passed after 0.182 seconds.
+➜ Test captureGroupedReference() skipped.
+✔ Suite ExpertResidencyProbeTests passed after 0.183 seconds.
+✔ Test run with 2 tests in 1 suite passed after 0.183 seconds.

@@ -1,0 +1,9 @@
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenProductionReductionReplayTests started.
+◇ Test productionColdReplayMatchesQualifiedRouterOrder() started.
+Production acceptance: 7/7 exact captured hidden/logit pairs, 512 teacher predictions, metal allocation delta 5291294720 bytes, 2183 slots.
+✔ Test productionColdReplayMatchesQualifiedRouterOrder() passed after 36.289 seconds.
+✔ Suite QwenProductionReductionReplayTests passed after 36.289 seconds.
+✔ Test run with 1 test in 1 suite passed after 36.289 seconds.

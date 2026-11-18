@@ -134,3 +134,16 @@ shared expert added to routed contributions before the attention residual.
 Require exact warm/cold consistency again and inspect the saved matched
 reference scores before deciding whether to keep it. See
 [S3-00b metrics and decision](evidence/2026-11-18-s300b/README.md).
+
+## S3-00c: selected active-streaming reduction
+
+The final combine experiment used matched prior captures and a compiler
+sentinel to verify `residual + (routed + shared)`. Both deterministic
+implementations agree within each cold/warm replay. The grouped form improves
+mean sustained logit relative L2 only from 7.613% to 7.607% against native
+MLX. Its disputed 1031−285 margin moves from +0.01194 to +0.01535, away from
+MLX's −0.125. The strict token-61 rank and 131/132 result remain the same.
+The original router-order path is selected as the active-streaming baseline.
+Its measured stability is scoped to the tested same-runtime histories.
+This does not change the strict reference gate or qualify cross-request state
+reuse. [S3-00c decision](evidence/2026-11-18-s300c/README.md)

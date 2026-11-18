@@ -1,0 +1,79 @@
+Building for debugging...
+[Computing dependencies]
+[Using on-disk description]
+[54 / 175]
+[73 / 187] swift-crypto_Crypto
+[81 / 188] NIOConcurrencyHelpers
+[100 / 175] DequeModule
+[103 / 168] NIOConcurrencyHelpers
+[109 / 165] yyjson
+[118 / 176] yyjson
+[121 / 176] NIOCore
+[121 / 176] CNIOAtomics
+[122 / 175] NIOCore
+[137 / 200] EventSource
+[144 / 218] NIOEmbedded
+[154 / 214] NIOEmbedded
+[158 / 225] NIOPosix
+[163 / 225] HuggingFace
+[164 / 225] HuggingFace
+[165 / 225] HuggingFace
+[171 / 227] HuggingFace
+[173 / 226] HuggingFace
+[179 / 231] HuggingFace
+[180 / 243]
+[188 / 243] NIOHTTP1
+[191 / 243] NIOHTTP1
+[196 / 242] NIOHTTP1
+[199 / 249]
+[206 / 249] Hub
+[209 / 252] Hub
+[218 / 263] Tokenizers
+[221 / 262] Tokenizers
+[224 / 265] Tokenizers
+[227 / 276]
+[238 / 276] QwenFieldfareCore
+[244 / 282] QwenFieldfareCore
+[244 / 282] QwenFieldfarePack-product
+[253 / 302]
+[262 / 302] QwenFieldfareServerSupport
+[263 / 302] QwenFieldfareServerSupport
+[269 / 306] QwenFieldfareServerSupport
+[284 / 307] QwenFieldfareServer-product
+[284 / 307] QwenFieldfareServerManagement
+[293 / 324] QwenFieldfareServerManagement
+[297 / 325] QwenFieldfareBench-product
+[301 / 325] QwenFieldfareServerTests-product
+[302 / 325] QwenFieldfareServerManagement
+[309 / 329] QwenFieldfareCoreTests-product
+[311 / 329] QwenFieldfareCoreTests-product
+[314 / 341] QwenFieldfareCoreTests-product
+[320 / 341] QwenFieldfareMac-product
+[323 / 343] QwenFieldfareServerTests-product
+[328 / 343] QwenFieldfareMac-product
+[329 / 340] QwenFieldfareMac-product
+[335 / 345] QwenFieldfareServerManagementTests-product
+[342 / 348] QwenFieldfareMac-product
+[348 / 352] QwenFieldfareServerManagementTests-product
+[354 / 354] QwenFieldfareBench-product
+Build complete! (10.31 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenActiveStreamingMemoryConfigurationTests started.
+◇ Test eightKProfilesRetainExpectedSlotBudgets() started.
+✔ Test eightKProfilesRetainExpectedSlotBudgets() passed after 0.001 seconds.
+◇ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() started.
+✔ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() passed after 0.001 seconds.
+◇ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() started.
+✔ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() passed after 0.001 seconds.
+◇ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() started.
+✔ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() passed after 0.001 seconds.
+✔ Suite QwenActiveStreamingMemoryConfigurationTests passed after 0.001 seconds.
+◇ Suite QwenExpertReductionTests started.
+◇ Test cachePartitionsWriteTheSameRouterOrderedContributions() started.
+✔ Test cachePartitionsWriteTheSameRouterOrderedContributions() passed after 0.055 seconds.
+◇ Test chosenCombinePreservesRouterOrderAndResidualGrouping() started.
+✔ Test chosenCombinePreservesRouterOrderAndResidualGrouping() passed after 0.002 seconds.
+✔ Suite QwenExpertReductionTests passed after 0.057 seconds.
+✔ Test run with 6 tests in 2 suites passed after 0.058 seconds.

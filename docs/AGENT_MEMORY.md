@@ -1,6 +1,27 @@
 # Agent recovery memory
 
-## Current milestone — S3-00b deterministic expert reduction
+## Current milestone — S3-00c reduction decision
+
+S3-00c selects the original fixed router-order expert reduction as the
+production full-replay baseline. The grouped-tail experiment is closed.
+The strict MLX 131/132 blocker remains. Stop here. The next authorized
+S3-00 iteration should qualify opt-in exact-prefix reuse against this baseline.
+
+Grouped Metal sentinels [1,-1,0,1] vs original [0,0,0,1]. All real weighted
+inputs at the 14 recorded layer-0 samples match S3-00b. Both candidates have
+bitwise warm/cold final logits on 152/941 positions and the same known strict
+mismatch. Grouped slightly lowers mean raw error but makes output-465 margin
+1031−285 +0.01535 vs original +0.01194 and MLX −0.125 in both schedules.
+Choose original. The two diagnostic short pairs and one sustained pair show
+no consistent performance benefit for grouped. Production replaces the two
+8 KiB subset sums with one 64 KiB scratch, a net 48 KiB charged to the existing
+reserve. All 3/4/5 GiB cache plans remain fixed. The integrated runner matched
+7/7 archived hidden/logit pairs and 512/512 sustained teacher IDs. Release
+43.42s, 155 package passes and 3 skips, checker 6/6, fresh strict 131/132
+with the original mismatch. Report and archived patches:
+[evidence](evidence/2026-11-18-s300c/README.md).
+
+## Historical milestone — S3-00b deterministic expert reduction
 
 S3-00b ended with Outcome B (revise). Router order eliminates the measured
 residency variance and preserves similar aggregate MLX fidelity, but selects

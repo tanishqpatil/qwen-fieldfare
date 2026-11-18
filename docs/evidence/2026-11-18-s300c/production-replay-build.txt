@@ -1,0 +1,60 @@
+Building for production...
+[Computing dependencies]
+[Using on-disk description]
+[33 / 154]
+[57 / 157] CNIOLinux
+[77 / 172]
+[81 / 173] Crypto
+[85 / 172] _NIODataStructures
+[86 / 171] NIOConcurrencyHelpers
+[98 / 180] ContainersPreview
+[112 / 178] Atomics
+[114 / 174] OrderedCollections
+[122 / 179] NIOCore
+[124 / 180] yyjson
+[125 / 180] NIOCore
+[134 / 196] NIOPosix
+[140 / 201] EventSource
+[143 / 203] HuggingFace
+[145 / 204] Jinja
+[147 / 200] NIOEmbedded
+[149 / 196] NIOPosix
+[157 / 201] NIO
+[165 / 207]
+[166 / 207] Hub
+[169 / 210] Tokenizers
+[171 / 210] NIOHTTP1
+[173 / 206] Tokenizers
+[176 / 208] QwenFieldfareCore
+[179 / 210] QwenFieldfareCore
+[186 / 218] QwenFieldfarePack-product
+[197 / 228] QwenFieldfarePack-product
+[199 / 228] QwenFieldfarePack-product
+[199 / 228] QwenFieldfareBench-product
+[201 / 228] QwenFieldfareBench-product
+[201 / 228] QwenFieldfareServerSupport
+[206 / 226] QwenFieldfareServer-product
+[210 / 229] QwenFieldfareServer-product
+[212 / 229] QwenFieldfareServer-product
+[212 / 229] QwenFieldfareServerManagement
+[217 / 231] QwenFieldfareMac-product
+[219 / 233] QwenFieldfareCoreTests-product
+[223 / 233] QwenFieldfareCoreTests-product
+[223 / 233] QwenFieldfareServerTests-product
+[230 / 235] QwenFieldfareServerTests-product
+[232 / 235] QwenFieldfareMac-product
+[235 / 237] QwenFieldfareMac-product
+[240 / 242] QwenFieldfareServerManagementTests-product
+[247 / 249] QwenFieldfareCoreTests-product
+[248 / 248] QwenFieldfareServer-product
+[252 / 253] QwenFieldfareMac-product
+[254 / 254] QwenFieldfareBench-product
+[257 / 257] QwenFieldfarePack-product
+Build complete! (40.18 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenProductionReductionReplayTests started.
+➜ Test productionColdReplayMatchesQualifiedRouterOrder() skipped.
+✔ Suite QwenProductionReductionReplayTests passed after 0.001 seconds.
+✔ Test run with 1 test in 1 suite passed after 0.001 seconds.
