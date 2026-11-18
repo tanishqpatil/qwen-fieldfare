@@ -13,8 +13,9 @@ public enum FlintAttentionReference {
     ///   - sinks: Shape `[32]` (per-head learned scalar sink)
     ///   - batch: Batch size (typically 1)
     ///   - T_q: Number of queries
-    ///   - T_kv: Number of keys/values
+    ///   - T_kv: Number of physically retained keys/values
     ///   - cacheOffset: Absolute starting position of queries
+    ///   - retainedKVStart: Absolute starting position of physical KV index 0
     ///   - isSliding: True if sliding window (513 tokens), false if full causal attention
     ///   - scale: Attention scaling factor (1.0 / sqrt(128.0))
     /// - Returns: Output array of shape `[batch, 32, T_q, 128]`
@@ -27,6 +28,7 @@ public enum FlintAttentionReference {
         T_q: Int,
         T_kv: Int,
         cacheOffset: Int = 0,
+        retainedKVStart: Int = 0,
         isSliding: Bool,
         scale: Float = 1.0 / sqrt(128.0)
     ) -> [Float] {
@@ -54,19 +56,31 @@ public enum FlintAttentionReference {
 
                 for t in 0..<T_q {
                     let qOffset = qHeadOffset + t * headDim
-                    let absPos = cacheOffset + t
-                    let endKV = min(absPos + 1, T_kv)
-                    let startKV = (isSliding && absPos >= 512) ? (absPos - 512) : 0
+                    let p = cacheOffset + t
 
-                    // Calculate dot product scores for all attended keys
+                    let kStartAbs = (isSliding && p >= 512) ? (p - 512) : 0
+                    let kEndAbs = p
+                    let kvEndAbs = retainedKVStart + T_kv - 1
+
+                    let effStart = max(kStartAbs, retainedKVStart)
+                    let effEnd = min(kEndAbs, kvEndAbs)
+
+                    var physStart = 0
+                    var physEnd = 0
+                    if effStart <= effEnd && effStart >= retainedKVStart {
+                        physStart = effStart - retainedKVStart
+                        physEnd = effEnd - retainedKVStart + 1
+                    }
+
+                    // Calculate dot product scores for all attended physical keys
                     var scores = [Float]()
                     var validKeys = [Int]()
 
-                    if startKV < endKV {
-                        scores.reserveCapacity(endKV - startKV)
-                        validKeys.reserveCapacity(endKV - startKV)
+                    if physStart < physEnd {
+                        scores.reserveCapacity(physEnd - physStart)
+                        validKeys.reserveCapacity(physEnd - physStart)
 
-                        for j in startKV..<endKV {
+                        for j in physStart..<physEnd {
                             let kOffset = kvHeadOffset + j * headDim
                             var dot: Float = 0.0
                             for d in 0..<headDim {
@@ -108,7 +122,7 @@ public enum FlintAttentionReference {
         return output
     }
 
-    /// Evaluates single-token decode attention on host CPU in FP32.
+    /// Evaluates single-token decode attention on host CPU in FP32 with bounded-KV indexing.
     public static func evaluateDecodeFP32(
         queries: [Float],
         keys: [Float],
@@ -116,10 +130,13 @@ public enum FlintAttentionReference {
         sinks: [Float],
         batch: Int = 1,
         T_kv: Int,
+        queryAbsPos: Int? = nil,
+        retainedKVStart: Int = 0,
         isSliding: Bool,
         scale: Float = 1.0 / sqrt(128.0)
     ) -> [Float] {
-        evaluatePrefillFP32(
+        let absPos = queryAbsPos ?? (retainedKVStart + T_kv - 1)
+        return evaluatePrefillFP32(
             queries: queries,
             keys: keys,
             values: values,
@@ -127,7 +144,8 @@ public enum FlintAttentionReference {
             batch: batch,
             T_q: 1,
             T_kv: T_kv,
-            cacheOffset: T_kv - 1,
+            cacheOffset: absPos,
+            retainedKVStart: retainedKVStart,
             isSliding: isSliding,
             scale: scale
         )

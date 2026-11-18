@@ -139,6 +139,8 @@ let package = Package(
                 "Kernels/FlintRoPEReference.swift",
                 "Kernels/FlintAttentionKernel.swift",
                 "Kernels/FlintAttentionReference.swift",
+                "Kernels/FlintRouterKernel.swift",
+                "Kernels/FlintRouterReference.swift",
             ],
             resources: [.copy("Metal")]
         ),
@@ -153,6 +155,7 @@ let package = Package(
                 "FlintResidentLoaderTests.swift",
                 "FlintRMSNormKernelTests.swift",
                 "FlintAttentionKernelTests.swift",
+                "FlintRouterKernelTests.swift",
             ],
             resources: [.copy("Fixtures")]
         ),

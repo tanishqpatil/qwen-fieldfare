@@ -189,6 +189,111 @@ def main():
             "out_hex": to_hex(out)
         })
 
+    # =========================================================================
+    # 4. Bounded-KV Evicted Cache Cases (retained_kv_start > 0)
+    # =========================================================================
+    # Case A: Reproduce exact Review #007 scenario (pos 1024, retained interval 512..1024, phys 0..512)
+    for dtype_str, dtype_mx, sinks_mx in [("float32", mx.float32, l2_sinks_f32), ("bfloat16", mx.bfloat16, l2_sinks_bf16)]:
+        T_kv = 513
+        query_abs_pos = 1024
+        retained_kv_start = 512
+
+        q = mx.random.normal(shape=(1, 32, 1, 128)).astype(dtype_mx)
+        k = mx.random.normal(shape=(1, 4, T_kv, 128)).astype(dtype_mx)
+        v = mx.random.normal(shape=(1, 4, T_kv, 128)).astype(dtype_mx)
+
+        # In sliding window of 513 for pos 1024: attended window is [1024 - 512, 1024] = [512, 1024].
+        # Physical buffer holds exactly positions [512, 1024], so all 513 physical keys are attended.
+        out = mx.fast.scaled_dot_product_attention(q, k, v, scale=scale, mask=None, sinks=sinks_mx, stream=mx.cpu)
+        mx.eval(q, k, v, out)
+
+        cases.append({
+            "kind": "attention_decode_bounded",
+            "name": f"l2_sliding_decode_evicted_pos1024_{dtype_str}",
+            "is_sliding": True,
+            "layer_idx": 2,
+            "T_kv": T_kv,
+            "query_abs_pos": query_abs_pos,
+            "retained_kv_start": retained_kv_start,
+            "dtype": dtype_str,
+            "q_hex": to_hex(q),
+            "k_hex": to_hex(k),
+            "v_hex": to_hex(v),
+            "sinks_hex": to_hex(sinks_mx),
+            "out_hex": to_hex(out)
+        })
+
+    # Case B: Partial intersection with retained buffer (retained 450..1049, pos 1024, attended 512..1024 -> phys 62..574)
+    for dtype_str, dtype_mx, sinks_mx in [("float32", mx.float32, l2_sinks_f32), ("bfloat16", mx.bfloat16, l2_sinks_bf16)]:
+        T_kv = 600
+        query_abs_pos = 1024
+        retained_kv_start = 450
+
+        q = mx.random.normal(shape=(1, 32, 1, 128)).astype(dtype_mx)
+        k = mx.random.normal(shape=(1, 4, T_kv, 128)).astype(dtype_mx)
+        v = mx.random.normal(shape=(1, 4, T_kv, 128)).astype(dtype_mx)
+
+        # Attended absolute: [512, 1024] -> physical: [512 - 450, 1024 - 450] = [62, 574] (indices 62..574 inclusive)
+        indices = mx.arange(T_kv)
+        mask = (indices >= 62) & (indices <= 574)
+        additive_mask = mx.where(mask, 0.0, -1e9)[None, None, None, :].astype(dtype_mx)
+
+        out = mx.fast.scaled_dot_product_attention(q, k, v, scale=scale, mask=additive_mask, sinks=sinks_mx, stream=mx.cpu)
+        mx.eval(q, k, v, out)
+
+        cases.append({
+            "kind": "attention_decode_bounded",
+            "name": f"l2_sliding_decode_evicted_partial_pos1024_{dtype_str}",
+            "is_sliding": True,
+            "layer_idx": 2,
+            "T_kv": T_kv,
+            "query_abs_pos": query_abs_pos,
+            "retained_kv_start": retained_kv_start,
+            "dtype": dtype_str,
+            "q_hex": to_hex(q),
+            "k_hex": to_hex(k),
+            "v_hex": to_hex(v),
+            "sinks_hex": to_hex(sinks_mx),
+            "out_hex": to_hex(out)
+        })
+
+    # =========================================================================
+    # 5. Combined RoPE + Attention Qualification (beyond 513 tokens)
+    # =========================================================================
+    for dtype_str, dtype_mx, sinks_mx in [("float32", mx.float32, l2_sinks_f32), ("bfloat16", mx.bfloat16, l2_sinks_bf16)]:
+        pos = 600
+        retained_start = 88 # 600 - 512 = 88
+        T_kv = 513
+
+        q_raw = mx.random.normal(shape=(1, 32, 1, 128)).astype(dtype_mx)
+        k_raw = mx.random.normal(shape=(1, 4, T_kv, 128)).astype(dtype_mx)
+        v = mx.random.normal(shape=(1, 4, T_kv, 128)).astype(dtype_mx)
+
+        # Apply split-half RoPE to Q at pos 600 and K at positions 88..600
+        q_rot = rope(q_raw, offset=pos)
+        k_rot = rope(k_raw, offset=retained_start)
+
+        out = mx.fast.scaled_dot_product_attention(q_rot, k_rot, v, scale=scale, mask=None, sinks=sinks_mx, stream=mx.cpu)
+        mx.eval(q_raw, k_raw, q_rot, k_rot, v, out)
+
+        cases.append({
+            "kind": "combined_rope_attention",
+            "name": f"combined_rope_attn_pos600_{dtype_str}",
+            "is_sliding": True,
+            "layer_idx": 2,
+            "T_kv": T_kv,
+            "query_abs_pos": pos,
+            "retained_kv_start": retained_start,
+            "dtype": dtype_str,
+            "q_raw_hex": to_hex(q_raw),
+            "k_raw_hex": to_hex(k_raw),
+            "q_rot_hex": to_hex(q_rot),
+            "k_rot_hex": to_hex(k_rot),
+            "v_hex": to_hex(v),
+            "sinks_hex": to_hex(sinks_mx),
+            "out_hex": to_hex(out)
+        })
+
     payload = {
         "metadata": {
             "source": "MLX 0.32.4 / mlx_vlm 0.7.12",

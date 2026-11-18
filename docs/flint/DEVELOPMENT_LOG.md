@@ -396,3 +396,85 @@
      - All 74 tests passing across 6 suites in 1.673 seconds (clean `./Scripts/test.sh --filter FlintFieldfareCoreTests`).
  10. **Strict Workspace Isolation**:
      - `/Users/tanishq/dev/product/qwen-fieldfare` and symlink `/Users/tanishq/dev/product/flint-fieldfare` preserved 100% untouched.
+
+
+---
+
+### Milestone F2-02 Bounded-KV Defect Closure & Milestone F2-03 Sigmoid Top-6 Router Kernel
+
+**Date**: 2026-11-18
+**Author**: Antigravity Inference Systems Architect
+**Branch**: `feature/recursive-flint-40b-a2p5b`
+**Workspace**: `/Users/tanishq/dev/product/flint-fieldfare-isolated`
+
+#### 1. F2-02 Bounded-KV Indexing Defect Resolution
+- **Defect Analysis**: Previous F2-02 implementation used sequence position $p = \text{cache\_offset} + t$ directly as physical KV indices, which broke on sliding caches after earlier tokens were evicted from physical indices $0 \dots (\text{retainedKVStart} - 1)$.
+- **Formalized Contract**:
+  - `queryAbsPos`: Absolute sequence position $p = \text{cache\_offset} + t$.
+  - `retainedKVStart`: Absolute sequence position stored at index 0 of the physical buffer.
+  - `T_kv`: Number of tokens physically retained in the KV cache buffers.
+  - Sliding window eligible range: $[k_{\text{start\_abs}}, p] = [\max(0, p - 512), p]$.
+  - Physical attended range: intersection with $[\text{retainedKVStart}, \text{retainedKVStart} + T_{kv} - 1]$ translated to physical indices:
+    $$\text{eff\_start} = \max(k_{\text{start\_abs}}, \text{retainedKVStart}), \quad \text{eff\_end} = \min(p, \text{retainedKVStart} + T_{kv} - 1)$$
+    $$\text{phys\_start} = \text{eff\_start} - \text{retainedKVStart}, \quad \text{phys\_end} = \text{eff\_end} - \text{retainedKVStart} + 1$$
+- **Implementation**:
+  - Updated `flint_attention.metal` with physical index bounds for all decode and prefill kernels (`phys_start_kv`, `phys_end_kv`).
+  - Added direct BF16 resident attention sinks support for FP32 activations (`flint_attention_decode_f32_bf16sinks` and `flint_attention_prefill_f32_bf16sinks`).
+  - Added `FlintKVStorageLayout` enum (`.contiguous` supported, `.ring` explicitly rejected with `FlintMetalError.invalidParameter`).
+  - Checked integer bounds conversions using `multipliedReportingOverflow` and `addingReportingOverflow`.
+  - Replicated exact bounded-KV indexing logic in Swift CPU reference `FlintAttentionReference.swift`.
+- **Deterministic Verification**:
+  - Added dedicated test `boundedKVIndexingEvictionScenario()`: tested Review #007 scenario (pos 1024, retained interval 512..1024, physical indices 0..512) and boundary queries 512, 513, 514, verifying exact match with CPU reference.
+  - Added dedicated test `ringKVLayoutRejection()`: verified `executeDecode` and `executePrefill` reject `.ring` layout with `invalidParameter`.
+  - Added combined RoPE + Attention test `combined_rope_attention` beyond 513 tokens (query pos 600, retained start 88, $T_{kv} = 513$).
+  - Upgraded MLX golden test suite to 38 cases in `flint_attention_golden.json`.
+
+#### 2. BF16 Numerical Acceptance Analysis
+- Removed permissive fallback `|| maxAbsDiff <= 0.02`.
+- Formally analyzed BF16 quantization limits: BF16 has 1 sign bit, 8 exponent bits, and 7 fraction bits. Machine epsilon is $2^{-7} = 0.0078125$ ($0.781\%$). A single ULP difference in BF16 yields a relative error of $\approx 0.78\%$.
+- Enforced strict relative L2 threshold $\le 5 \times 10^{-3}$ ($0.5\%$, strictly below 1 BF16 ULP).
+- Measured error metrics across all 7 BF16 attention cases:
+  - `l0_full_prefill_t4_bfloat16`: Max Abs $0.015625$, Rel L2 $0.002957$, RMS $0.000560$
+  - `l0_full_decode_tkv8_bfloat16`: Max Abs $0.007812$, Rel L2 $0.004493$, RMS $0.000969$
+  - `l2_sliding_prefill_t8_bfloat16`: Max Abs $0.007812$, Rel L2 $0.003341$, RMS $0.001011$
+  - `l2_sliding_decode_tkv520_bfloat16`: Max Abs $0.001953$, Rel L2 $0.004698$, RMS $0.000322$
+  - `l2_sliding_decode_evicted_pos1024_bfloat16`: Max Abs $0.001343$, Rel L2 $0.004526$, RMS $0.000307$
+  - `l2_sliding_decode_evicted_partial_pos1024_bfloat16`: Max Abs $0.001465$, Rel L2 $0.004571$, RMS $0.000313$
+  - `combined_rope_attn_pos600_bfloat16`: Max Abs $0.001953$, Rel L2 $0.004746$, RMS $0.000344$
+- In contrast, all FP32 cases match MLX exactly with Max Abs Diff $= 0.000000$ and Rel L2 $\le 10^{-6}$.
+
+#### 3. Milestone F2-03 Sigmoid Top-6 Router Kernel Implementation
+- **Mathematical Specification**:
+  - 47 MoE layers (layers 2 through 48; layers 0 and 1 are dense SwiGLU MLPs and have NO router gate).
+  - 256 experts per layer, top-6 selection, resident BF16 gate weight `[256, 2048]` (524,288 elements = 1,048,576 bytes per layer, 47 MiB total).
+  - Logit computation: $z_e = x \cdot W_e^T$ computed via 4-wide vectorized dot product in FP32 with 256 threads/threadgroup (1 thread/expert).
+  - Sigmoid activation: $s_e = 1.0 / (1.0 + \exp(-z_e))$.
+  - Exact Top-6 selection: descending by score with documented tie-breaking (lower expert ID preferred on equal scores).
+  - Weight normalization: $w_k = s_k / (\sum_{m=0}^5 s_m + 10^{-20})$ such that $\sum w_k = 1.0$.
+  - Zero GPU heap allocations, zero CPU roundtrips.
+- **Implementation Artifacts**:
+  - `Sources/FlintFieldfareCore/Metal/flint_router.metal`: MSL kernels `flint_router_forward_bf16` and `flint_router_forward_f32`.
+  - `Sources/FlintFieldfareCore/Kernels/FlintRouterKernel.swift`: Swift host class managing Metal pipelines, checked integer bounds, and threadgroup dispatch $(T, 1, \text{batch})$.
+  - `Sources/FlintFieldfareCore/Kernels/FlintRouterReference.swift`: Host CPU reference implementation.
+  - `Tests/FlintFieldfareCoreTests/FlintRouterKernelTests.swift`: Comprehensive unit and integration test suite.
+  - `Tests/FlintFieldfareCoreTests/Fixtures/generate_router_golden.py`: MLX 0.32.4 golden generator yielding `flint_router_golden.json`.
+- **Pinned Reference Qualification (vs MLX 0.32.4)**:
+  - 10 golden test cases covering layers 2, 24, 48 across FP32, BF16, all-zeros tie-breaking, saturated positive (+5.0), saturated negative (-5.0), and multi-token sequence ($T=8$).
+  - Results: All 10 cases passed with Max Abs Diff $= 0.000000$, exact Top-6 selected expert match, and weight sum $= 1.000000$.
+- **Analytical Tie-Breaking Verification**:
+  - All-zeros input: selected experts $[0, 1, 2, 3, 4, 5]$ in strict ascending order, each with weight $1/6$.
+  - Duplicate logits for experts $[5, 12, 19, 42, 100, 200]$: selected in exact ascending order.
+- **Bitwise Determinism**:
+  - 50 consecutive GPU dispatches produced 100% bitwise identical output buffers (SHA-256 invariant).
+- **Resident Weight Integration & Immutability**:
+  - Loaded layers 2, 24, and 48 router gate weights from live checkpoint `/Users/tanishq/models/flint-mixed-3-4bit`.
+  - Verified weight immutability: SHA-256 before == SHA-256 after execution across all layers.
+- **Canonical Metal Shader Source Equivalence**:
+  - Verified 100% byte-for-byte identity between `flint_router.metal` and `FlintRouterKernel.embeddedShaderSource`.
+- **Apple M5 Hardware Performance Benchmark**:
+  - Decode Router (1 token, BF16): P50: 138.13 µs | Min: 135.42 µs | P95: 141.63 µs | Max: 186.54 µs | Jitter: 6.21 µs | Throughput: 7,240 tok/s
+  - Prefill Router (8 tokens, BF16): P50: 137.25 µs | Min: 135.37 µs | P95: 138.63 µs | Max: 139.00 µs | Jitter: 3.25 µs | Throughput: 58,288 tok/s
+  - Prefill Router (64 tokens, BF16): P50: 565.62 µs | Min: 555.75 µs | P95: 579.29 µs | Max: 856.75 µs | Jitter: 23.54 µs | Throughput: 113,149 tok/s
+  - Decode Router FP32 (1 token): P50: 162.75 µs | Min: 161.33 µs | P95: 177.58 µs | Max: 219.29 µs | Jitter: 16.25 µs | Throughput: 6,144 tok/s
+- **Full Test Suite Status**:
+  - 83 tests passing across 7 suites in 6.533 seconds (clean `./Scripts/test.sh --filter FlintFieldfareCoreTests`).

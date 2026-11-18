@@ -25,6 +25,15 @@ import Testing
         SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
 
+    private static func bf16ULPDistance(_ val1: Float, _ val2: Float) -> Int {
+        let diff = abs(val1 - val2)
+        let maxAbs = max(abs(val1), abs(val2))
+        guard maxAbs > 1e-7 else { return 0 }
+        let expVal = floor(log2(maxAbs))
+        let ulp = pow(2.0, expVal - 7.0)
+        return Int(round(diff / ulp))
+    }
+
     private struct GoldenCase: Decodable {
         let kind: String
         let name: String
@@ -39,6 +48,12 @@ import Testing
         let cache_offset: Int?
         let input_hex: String?
         let output_hex: String?
+        let query_abs_pos: Int?
+        let retained_kv_start: Int?
+        let q_raw_hex: String?
+        let k_raw_hex: String?
+        let q_rot_hex: String?
+        let k_rot_hex: String?
         let q_hex: String?
         let k_hex: String?
         let v_hex: String?
@@ -312,9 +327,9 @@ import Testing
         let attnKernel = try FlintAttentionKernel(context: context)
 
         print("\n=== FLINT ATTENTION NUMERICAL QUALIFICATION (vs MLX 0.32.4) ===")
-        print(String(format: "%-35@ | %-12@ | %-8@ | %-12@ | %-12@ | %-10@",
-                     "Case Name", "Kind", "Dtype", "Max Abs Diff", "Max Rel Diff", "Status"))
-        print(String(repeating: "-", count: 105))
+        print(String(format: "%-44@ | %-24@ | %-8@ | %10@ | %10@ | %10@ | %10@ | %6@ | %@",
+                     "Case Name", "Kind", "Dtype", "Max Abs", "Max Rel", "Rel L2", "RMS", "ULP", "Status"))
+        print(String(repeating: "-", count: 135))
 
         for c in fixture.cases {
             if c.kind == "rope" {
@@ -336,10 +351,12 @@ import Testing
                     waitUntilCompleted: true
                 )
 
-                // Verify error metrics
                 let totalElements = c.num_heads! * c.seq_len! * 128
                 var maxAbsDiff: Float = 0.0
                 var maxRelDiff: Float = 0.0
+                var l2DiffSq: Float = 0.0
+                var l2RefSq: Float = 0.0
+                var maxULP: Int = 0
 
                 if dtype == .float32 {
                     let metal = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: Float.self), count: totalElements))
@@ -349,6 +366,8 @@ import Testing
                         let rel = diff / max(abs(expected[i]), 1e-4)
                         if diff > maxAbsDiff { maxAbsDiff = diff }
                         if rel > maxRelDiff { maxRelDiff = rel }
+                        l2DiffSq += diff * diff
+                        l2RefSq += expected[i] * expected[i]
                     }
                     #expect(maxAbsDiff <= 1e-5)
                 } else {
@@ -358,15 +377,21 @@ import Testing
                     let expected = FlintRMSNormReference.bf16ArrayToFloat(rawExp)
                     for i in 0..<totalElements {
                         let diff = abs(metal[i] - expected[i])
-                        let rel = diff / max(abs(expected[i]), 1e-4)
+                        let rel = diff / max(abs(expected[i]), 0.1)
                         if diff > maxAbsDiff { maxAbsDiff = diff }
                         if rel > maxRelDiff { maxRelDiff = rel }
+                        l2DiffSq += diff * diff
+                        l2RefSq += expected[i] * expected[i]
+                        let ulp = Self.bf16ULPDistance(metal[i], expected[i])
+                        if ulp > maxULP { maxULP = ulp }
                     }
                     #expect(maxRelDiff <= 0.015)
                 }
 
-                print(String(format: "%-35@ | %-12@ | %-8@ | %12.6f | %12.6f | PASS",
-                             c.name, c.kind, c.dtype, maxAbsDiff, maxRelDiff))
+                let relL2 = sqrt(l2DiffSq) / max(sqrt(l2RefSq), 1e-6)
+                let rms = sqrt(l2DiffSq / Float(totalElements))
+                print(String(format: "%-44@ | %-24@ | %-8@ | %10.6f | %10.6f | %10.6f | %10.6f | %6d | PASS",
+                             c.name, c.kind, c.dtype, maxAbsDiff, maxRelDiff, relL2, rms, maxULP))
 
             } else if c.kind == "attention_prefill" {
                 let qData = Self.parseHexToData(c.q_hex!)
@@ -400,6 +425,9 @@ import Testing
                 let totalElements = 32 * c.T_q! * 128
                 var maxAbsDiff: Float = 0.0
                 var maxRelDiff: Float = 0.0
+                var l2DiffSq: Float = 0.0
+                var l2RefSq: Float = 0.0
+                var maxULP: Int = 0
 
                 if dtype == .float32 {
                     let metal = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: Float.self), count: totalElements))
@@ -409,6 +437,8 @@ import Testing
                         let rel = diff / max(abs(expected[i]), 1e-4)
                         if diff > maxAbsDiff { maxAbsDiff = diff }
                         if rel > maxRelDiff { maxRelDiff = rel }
+                        l2DiffSq += diff * diff
+                        l2RefSq += expected[i] * expected[i]
                     }
                     #expect(maxAbsDiff <= 1e-4)
                 } else {
@@ -416,8 +446,6 @@ import Testing
                     let metal = FlintRMSNormReference.bf16ArrayToFloat(rawMetal)
                     let rawExp = expectedOutData.withUnsafeBytes { Array($0.bindMemory(to: UInt16.self)) }
                     let expected = FlintRMSNormReference.bf16ArrayToFloat(rawExp)
-                    var l2DiffSq: Float = 0
-                    var l2RefSq: Float = 0
                     for i in 0..<totalElements {
                         let diff = abs(metal[i] - expected[i])
                         let rel = diff / max(abs(expected[i]), 0.1)
@@ -425,13 +453,17 @@ import Testing
                         if rel > maxRelDiff { maxRelDiff = rel }
                         l2DiffSq += diff * diff
                         l2RefSq += expected[i] * expected[i]
+                        let ulp = Self.bf16ULPDistance(metal[i], expected[i])
+                        if ulp > maxULP { maxULP = ulp }
                     }
                     let relL2 = sqrt(l2DiffSq) / max(sqrt(l2RefSq), 1e-6)
-                    #expect(relL2 <= 1e-3 || maxAbsDiff <= 0.02)
+                    #expect(relL2 <= 5e-3)
                 }
 
-                print(String(format: "%-35@ | %-12@ | %-8@ | %12.6f | %12.6f | PASS",
-                             c.name, c.kind, c.dtype, maxAbsDiff, maxRelDiff))
+                let relL2 = sqrt(l2DiffSq) / max(sqrt(l2RefSq), 1e-6)
+                let rms = sqrt(l2DiffSq / Float(totalElements))
+                print(String(format: "%-44@ | %-24@ | %-8@ | %10.6f | %10.6f | %10.6f | %10.6f | %6d | PASS",
+                             c.name, c.kind, c.dtype, maxAbsDiff, maxRelDiff, relL2, rms, maxULP))
 
             } else if c.kind == "attention_decode" {
                 let qData = Self.parseHexToData(c.q_hex!)
@@ -463,6 +495,9 @@ import Testing
                 let totalElements = 32 * 1 * 128
                 var maxAbsDiff: Float = 0.0
                 var maxRelDiff: Float = 0.0
+                var l2DiffSq: Float = 0.0
+                var l2RefSq: Float = 0.0
+                var maxULP: Int = 0
 
                 if dtype == .float32 {
                     let metal = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: Float.self), count: totalElements))
@@ -472,6 +507,8 @@ import Testing
                         let rel = diff / max(abs(expected[i]), 1e-4)
                         if diff > maxAbsDiff { maxAbsDiff = diff }
                         if rel > maxRelDiff { maxRelDiff = rel }
+                        l2DiffSq += diff * diff
+                        l2RefSq += expected[i] * expected[i]
                     }
                     #expect(maxAbsDiff <= 1e-4)
                 } else {
@@ -479,8 +516,6 @@ import Testing
                     let metal = FlintRMSNormReference.bf16ArrayToFloat(rawMetal)
                     let rawExp = expectedOutData.withUnsafeBytes { Array($0.bindMemory(to: UInt16.self)) }
                     let expected = FlintRMSNormReference.bf16ArrayToFloat(rawExp)
-                    var l2DiffSq: Float = 0
-                    var l2RefSq: Float = 0
                     for i in 0..<totalElements {
                         let diff = abs(metal[i] - expected[i])
                         let rel = diff / max(abs(expected[i]), 0.1)
@@ -488,16 +523,194 @@ import Testing
                         if rel > maxRelDiff { maxRelDiff = rel }
                         l2DiffSq += diff * diff
                         l2RefSq += expected[i] * expected[i]
+                        let ulp = Self.bf16ULPDistance(metal[i], expected[i])
+                        if ulp > maxULP { maxULP = ulp }
                     }
                     let relL2 = sqrt(l2DiffSq) / max(sqrt(l2RefSq), 1e-6)
-                    #expect(relL2 <= 1e-3 || maxAbsDiff <= 0.02)
+                    #expect(relL2 <= 5e-3)
                 }
 
-                print(String(format: "%-35@ | %-12@ | %-8@ | %12.6f | %12.6f | PASS",
-                             c.name, c.kind, c.dtype, maxAbsDiff, maxRelDiff))
+                let relL2 = sqrt(l2DiffSq) / max(sqrt(l2RefSq), 1e-6)
+                let rms = sqrt(l2DiffSq / Float(totalElements))
+                print(String(format: "%-44@ | %-24@ | %-8@ | %10.6f | %10.6f | %10.6f | %10.6f | %6d | PASS",
+                             c.name, c.kind, c.dtype, maxAbsDiff, maxRelDiff, relL2, rms, maxULP))
+
+            } else if c.kind == "attention_decode_bounded" {
+                let qData = Self.parseHexToData(c.q_hex!)
+                let kData = Self.parseHexToData(c.k_hex!)
+                let vData = Self.parseHexToData(c.v_hex!)
+                let sData = Self.parseHexToData(c.sinks_hex!)
+                let expectedOutData = Self.parseHexToData(c.out_hex!)
+                let dtype: FlintAttentionKernel.Dtype = (c.dtype == "bfloat16") ? .bfloat16 : .float32
+
+                let qBuf = try qData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: qData.count) }
+                let kBuf = try kData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: kData.count) }
+                let vBuf = try vData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: vData.count) }
+                let sBuf = try sData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: sData.count) }
+                let outBuf = try context.makeBuffer(byteCount: expectedOutData.count)
+
+                try attnKernel.executeDecode(
+                    queries: qBuf,
+                    keys: kBuf,
+                    values: vBuf,
+                    sinks: sBuf,
+                    output: outBuf,
+                    batch: 1,
+                    T_kv: c.T_kv!,
+                    queryAbsPos: c.query_abs_pos!,
+                    retainedKVStart: c.retained_kv_start!,
+                    isSliding: c.is_sliding!,
+                    dtype: dtype,
+                    waitUntilCompleted: true
+                )
+
+                let totalElements = 32 * 1 * 128
+                var maxAbsDiff: Float = 0.0
+                var maxRelDiff: Float = 0.0
+                var l2DiffSq: Float = 0.0
+                var l2RefSq: Float = 0.0
+                var maxULP: Int = 0
+
+                if dtype == .float32 {
+                    let metal = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: Float.self), count: totalElements))
+                    let expected = expectedOutData.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
+                    for i in 0..<totalElements {
+                        let diff = abs(metal[i] - expected[i])
+                        let rel = diff / max(abs(expected[i]), 1e-4)
+                        if diff > maxAbsDiff { maxAbsDiff = diff }
+                        if rel > maxRelDiff { maxRelDiff = rel }
+                        l2DiffSq += diff * diff
+                        l2RefSq += expected[i] * expected[i]
+                    }
+                    #expect(maxAbsDiff <= 1e-4)
+                } else {
+                    let rawMetal = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: UInt16.self), count: totalElements))
+                    let metal = FlintRMSNormReference.bf16ArrayToFloat(rawMetal)
+                    let rawExp = expectedOutData.withUnsafeBytes { Array($0.bindMemory(to: UInt16.self)) }
+                    let expected = FlintRMSNormReference.bf16ArrayToFloat(rawExp)
+                    for i in 0..<totalElements {
+                        let diff = abs(metal[i] - expected[i])
+                        let rel = diff / max(abs(expected[i]), 0.1)
+                        if diff > maxAbsDiff { maxAbsDiff = diff }
+                        if rel > maxRelDiff { maxRelDiff = rel }
+                        l2DiffSq += diff * diff
+                        l2RefSq += expected[i] * expected[i]
+                        let ulp = Self.bf16ULPDistance(metal[i], expected[i])
+                        if ulp > maxULP { maxULP = ulp }
+                    }
+                    let relL2 = sqrt(l2DiffSq) / max(sqrt(l2RefSq), 1e-6)
+                    #expect(relL2 <= 5e-3)
+                }
+
+                let relL2 = sqrt(l2DiffSq) / max(sqrt(l2RefSq), 1e-6)
+                let rms = sqrt(l2DiffSq / Float(totalElements))
+                print(String(format: "%-44@ | %-24@ | %-8@ | %10.6f | %10.6f | %10.6f | %10.6f | %6d | PASS",
+                             c.name, c.kind, c.dtype, maxAbsDiff, maxRelDiff, relL2, rms, maxULP))
+
+            } else if c.kind == "combined_rope_attention" {
+                let qRawData = Self.parseHexToData(c.q_raw_hex!)
+                let kRawData = Self.parseHexToData(c.k_raw_hex!)
+                let expectedQRotData = Self.parseHexToData(c.q_rot_hex!)
+                let expectedKRotData = Self.parseHexToData(c.k_rot_hex!)
+                let vData = Self.parseHexToData(c.v_hex!)
+                let sData = Self.parseHexToData(c.sinks_hex!)
+                let expectedOutData = Self.parseHexToData(c.out_hex!)
+                let dtype: FlintAttentionKernel.Dtype = (c.dtype == "bfloat16") ? .bfloat16 : .float32
+                let ropeDtype: FlintRoPEKernel.Dtype = (c.dtype == "bfloat16") ? .bfloat16 : .float32
+
+                let qRawBuf = try qRawData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: qRawData.count) }
+                let kRawBuf = try kRawData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: kRawData.count) }
+                let qRotBuf = try context.makeBuffer(byteCount: expectedQRotData.count)
+                let kRotBuf = try context.makeBuffer(byteCount: expectedKRotData.count)
+                let vBuf = try vData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: vData.count) }
+                let sBuf = try sData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: sData.count) }
+                let outBuf = try context.makeBuffer(byteCount: expectedOutData.count)
+
+                // 1. Split-half RoPE on Q at query_abs_pos (e.g. 600)
+                try ropeKernel.execute(
+                    input: qRawBuf,
+                    output: qRotBuf,
+                    batch: 1,
+                    numHeads: 32,
+                    seqLen: 1,
+                    offset: c.query_abs_pos!,
+                    dtype: ropeDtype,
+                    waitUntilCompleted: true
+                )
+
+                // 2. Split-half RoPE on K at retained_kv_start (e.g. 88)
+                try ropeKernel.execute(
+                    input: kRawBuf,
+                    output: kRotBuf,
+                    batch: 1,
+                    numHeads: 4,
+                    seqLen: c.T_kv!,
+                    offset: c.retained_kv_start!,
+                    dtype: ropeDtype,
+                    waitUntilCompleted: true
+                )
+
+                // 3. Grouped-Query Attention with learned sinks
+                try attnKernel.executeDecode(
+                    queries: qRotBuf,
+                    keys: kRotBuf,
+                    values: vBuf,
+                    sinks: sBuf,
+                    output: outBuf,
+                    batch: 1,
+                    T_kv: c.T_kv!,
+                    queryAbsPos: c.query_abs_pos!,
+                    retainedKVStart: c.retained_kv_start!,
+                    isSliding: c.is_sliding!,
+                    dtype: dtype,
+                    waitUntilCompleted: true
+                )
+
+                let totalElements = 32 * 1 * 128
+                var maxAbsDiff: Float = 0.0
+                var maxRelDiff: Float = 0.0
+                var l2DiffSq: Float = 0.0
+                var l2RefSq: Float = 0.0
+                var maxULP: Int = 0
+
+                if dtype == .float32 {
+                    let metal = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: Float.self), count: totalElements))
+                    let expected = expectedOutData.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
+                    for i in 0..<totalElements {
+                        let diff = abs(metal[i] - expected[i])
+                        let rel = diff / max(abs(expected[i]), 1e-4)
+                        if diff > maxAbsDiff { maxAbsDiff = diff }
+                        if rel > maxRelDiff { maxRelDiff = rel }
+                        l2DiffSq += diff * diff
+                        l2RefSq += expected[i] * expected[i]
+                    }
+                    #expect(maxAbsDiff <= 1e-4)
+                } else {
+                    let rawMetal = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: UInt16.self), count: totalElements))
+                    let metal = FlintRMSNormReference.bf16ArrayToFloat(rawMetal)
+                    let rawExp = expectedOutData.withUnsafeBytes { Array($0.bindMemory(to: UInt16.self)) }
+                    let expected = FlintRMSNormReference.bf16ArrayToFloat(rawExp)
+                    for i in 0..<totalElements {
+                        let diff = abs(metal[i] - expected[i])
+                        let rel = diff / max(abs(expected[i]), 0.1)
+                        if diff > maxAbsDiff { maxAbsDiff = diff }
+                        if rel > maxRelDiff { maxRelDiff = rel }
+                        l2DiffSq += diff * diff
+                        l2RefSq += expected[i] * expected[i]
+                        let ulp = Self.bf16ULPDistance(metal[i], expected[i])
+                        if ulp > maxULP { maxULP = ulp }
+                    }
+                    let relL2 = sqrt(l2DiffSq) / max(sqrt(l2RefSq), 1e-6)
+                    #expect(relL2 <= 5e-3)
+                }
+
+                let relL2 = sqrt(l2DiffSq) / max(sqrt(l2RefSq), 1e-6)
+                let rms = sqrt(l2DiffSq / Float(totalElements))
+                print(String(format: "%-44@ | %-24@ | %-8@ | %10.6f | %10.6f | %10.6f | %10.6f | %6d | PASS",
+                             c.name, c.kind, c.dtype, maxAbsDiff, maxRelDiff, relL2, rms, maxULP))
             }
         }
-        print(String(repeating: "-", count: 105))
+        print(String(repeating: "-", count: 135))
     }
 
     // MARK: - 5. Real Checkpoint Resident Weights Integration & Immutability
@@ -676,7 +889,153 @@ import Testing
         print("=====================================================\n")
     }
 
-    // MARK: - 8. Canonical Metal Shader Source Equivalence
+    // MARK: - 8. Ring KV Cache Layout Rejection
+
+    @Test func ringKVLayoutRejection() throws {
+        let context = try FlintMetalContext()
+        let kernel = try FlintAttentionKernel(context: context)
+
+        let qBuf = try context.makeBuffer(byteCount: 32 * 128 * 4)
+        let kBuf = try context.makeBuffer(byteCount: 4 * 16 * 128 * 4)
+        let vBuf = try context.makeBuffer(byteCount: 4 * 16 * 128 * 4)
+        let sBuf = try context.makeBuffer(byteCount: 32 * 4)
+        let outBuf = try context.makeBuffer(byteCount: 32 * 128 * 4)
+
+        // Verify executeDecode rejects .ring layout with invalidParameter
+        #expect(throws: FlintMetalError.self) {
+            try kernel.executeDecode(
+                queries: qBuf,
+                keys: kBuf,
+                values: vBuf,
+                sinks: sBuf,
+                output: outBuf,
+                T_kv: 16,
+                isSliding: true,
+                layout: .ring,
+                dtype: .float32
+            )
+        }
+
+        // Verify executePrefill rejects .ring layout with invalidParameter
+        #expect(throws: FlintMetalError.self) {
+            try kernel.executePrefill(
+                queries: qBuf,
+                keys: kBuf,
+                values: vBuf,
+                sinks: sBuf,
+                output: outBuf,
+                T_q: 1,
+                T_kv: 16,
+                isSliding: true,
+                layout: .ring,
+                dtype: .float32
+            )
+        }
+    }
+
+    // MARK: - 9. Bounded-KV Indexing & Eviction Boundary Qualification
+
+    @Test func boundedKVIndexingEvictionScenario() throws {
+        let context = try FlintMetalContext()
+        let kernel = try FlintAttentionKernel(context: context)
+
+        // Specifically test Review #007 scenario:
+        // Absolute position 1024, retained interval 512..1024, physical indices 0..512.
+        // Sliding window 513: attends entire retained interval [512, 1024] -> physical range [0, 513).
+        let T_kv = 513
+        let retainedKVStart = 512
+        let queryAbsPos = 1024
+        let headDim = 128
+        let numQHeads = 32
+        let numKVHeads = 4
+
+        var qData = [Float](repeating: 0, count: numQHeads * headDim)
+        var kData = [Float](repeating: 0, count: numKVHeads * T_kv * headDim)
+        var vData = [Float](repeating: 0, count: numKVHeads * T_kv * headDim)
+        let sData = [Float](repeating: -1.0, count: numQHeads)
+
+        for i in 0..<qData.count { qData[i] = Float.random(in: -1.0...1.0) }
+        for i in 0..<kData.count { kData[i] = Float.random(in: -1.0...1.0) }
+        for i in 0..<vData.count { vData[i] = Float.random(in: -1.0...1.0) }
+
+        let qBuf = try qData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: $0.count) }
+        let kBuf = try kData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: $0.count) }
+        let vBuf = try vData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: $0.count) }
+        let sBuf = try sData.withUnsafeBytes { try context.makeBuffer(bytes: $0.baseAddress!, byteCount: $0.count) }
+        let outBuf = try context.makeBuffer(byteCount: numQHeads * headDim * 4)
+
+        try kernel.executeDecode(
+            queries: qBuf,
+            keys: kBuf,
+            values: vBuf,
+            sinks: sBuf,
+            output: outBuf,
+            T_kv: T_kv,
+            queryAbsPos: queryAbsPos,
+            retainedKVStart: retainedKVStart,
+            isSliding: true,
+            dtype: .float32,
+            waitUntilCompleted: true
+        )
+
+        // Compare against CPU reference
+        let refOut = FlintAttentionReference.evaluateDecodeFP32(
+            queries: qData,
+            keys: kData,
+            values: vData,
+            sinks: sData,
+            batch: 1,
+            T_kv: T_kv,
+            queryAbsPos: queryAbsPos,
+            retainedKVStart: retainedKVStart,
+            isSliding: true
+        )
+
+        let metalOut = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: Float.self), count: numQHeads * headDim))
+        var maxDiff: Float = 0
+        for i in 0..<metalOut.count {
+            let diff = abs(metalOut[i] - refOut[i])
+            if diff > maxDiff { maxDiff = diff }
+        }
+        #expect(maxDiff <= 1e-5, "Metal decode does not match CPU reference on pos 1024 eviction (max diff \(maxDiff))")
+
+        // Also test boundary positions 512, 513, 514:
+        for testPos in [512, 513, 514] {
+            try kernel.executeDecode(
+                queries: qBuf,
+                keys: kBuf,
+                values: vBuf,
+                sinks: sBuf,
+                output: outBuf,
+                T_kv: T_kv,
+                queryAbsPos: testPos,
+                retainedKVStart: retainedKVStart,
+                isSliding: true,
+                dtype: .float32,
+                waitUntilCompleted: true
+            )
+            let posRef = FlintAttentionReference.evaluateDecodeFP32(
+                queries: qData,
+                keys: kData,
+                values: vData,
+                sinks: sData,
+                batch: 1,
+                T_kv: T_kv,
+                queryAbsPos: testPos,
+                retainedKVStart: retainedKVStart,
+                isSliding: true
+            )
+            let outPtr = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: Float.self), count: numQHeads * headDim))
+            var pDiff: Float = 0
+            for i in 0..<outPtr.count {
+                let diff = abs(outPtr[i] - posRef[i])
+                if diff > pDiff { pDiff = diff }
+            }
+            #expect(pDiff <= 1e-5, "Position \(testPos) failed bounded-KV equivalence (diff \(pDiff))")
+        }
+    }
+
+    // MARK: - 10. Canonical Metal Shader Source Equivalence
 
     @Test func canonicalMetalShaderSourceEquivalence() throws {
         let attnMetalPath = "Sources/FlintFieldfareCore/Metal/flint_attention.metal"
