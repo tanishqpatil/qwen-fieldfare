@@ -1,0 +1,42 @@
+Build complete! (12.66 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenActiveStreamingMemoryConfigurationTests started.
+◇ Test eightKProfilesRetainExpectedSlotBudgets() started.
+✔ Test eightKProfilesRetainExpectedSlotBudgets() passed after 0.001 seconds.
+◇ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() started.
+✔ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() passed after 0.001 seconds.
+◇ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() started.
+✔ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() passed after 0.001 seconds.
+◇ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() started.
+✔ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() passed after 0.001 seconds.
+✔ Suite QwenActiveStreamingMemoryConfigurationTests passed after 0.001 seconds.
+◇ Suite QwenExpertReductionTests started.
+◇ Test cachePartitionsWriteTheSameRouterOrderedContributions() started.
+✔ Test cachePartitionsWriteTheSameRouterOrderedContributions() passed after 0.056 seconds.
+◇ Test chosenCombinePreservesRouterOrderAndResidualGrouping() started.
+✔ Test chosenCombinePreservesRouterOrderAndResidualGrouping() passed after 0.004 seconds.
+✔ Suite QwenExpertReductionTests passed after 0.061 seconds.
+◇ Suite QwenPrefixStateTests started.
+◇ Test strictPrefixInPlaceAndNoUnsupportedRewind() started.
+✔ Test strictPrefixInPlaceAndNoUnsupportedRewind() passed after 0.001 seconds.
+◇ Test emptySuffixAheadAndSchemaChangesReplay() started.
+✔ Test emptySuffixAheadAndSchemaChangesReplay() passed after 0.001 seconds.
+◇ Test disabledLimitAndClearCannotPublishPendingState() started.
+✔ Test disabledLimitAndClearCannotPublishPendingState() passed after 0.001 seconds.
+◇ Test incorrectPositionsAndOversizedInputsAreRecoverable() started.
+✔ Test incorrectPositionsAndOversizedInputsAreRecoverable() passed after 0.001 seconds.
+◇ Test failedOrInvalidatedTransactionsCannotBeCommitted() started.
+✔ Test failedOrInvalidatedTransactionsCannotBeCommitted() passed after 0.001 seconds.
+◇ Test pendingFinalTokensAndModeChangesNeverPublish() started.
+✔ Test pendingFinalTokensAndModeChangesNeverPublish() passed after 0.001 seconds.
+◇ Test clearBeforePrefillRejectsStaleRequestEpoch() started.
+✔ Test clearBeforePrefillRejectsStaleRequestEpoch() passed after 0.001 seconds.
+◇ Test actualSamplingConfigurationMustMatchButOutputLimitMayChange() started.
+✔ Test actualSamplingConfigurationMustMatchButOutputLimitMayChange() passed after 0.001 seconds.
+✔ Suite QwenPrefixStateTests passed after 0.001 seconds.
+◇ Suite QwenRouterReadbackProbeTests started.
+➜ Test measureRouterReadbackCriticalPath() skipped.
+✔ Suite QwenRouterReadbackProbeTests passed after 0.001 seconds.
+✔ Test run with 15 tests in 4 suites passed after 0.062 seconds.

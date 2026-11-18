@@ -670,3 +670,18 @@ See the [contract](BOUNDED_PREFILL_CONTRACT.md) and
 S3-01a rejects deployment of this projection-only schedule on performance
 grounds. The runtime returns to S3-00d. The code and measurements remain
 available in the isolated investigation branch.
+
+
+## S3-01b bounded router-readback feasibility
+
+A layer-major chunk can collect row-specific router outputs in one GPU
+completion without changing recurrence or causal positions. The
+tokenwise wait also orders prior expert readers. Removing it still
+requires retirement before rewriting an expert slot or its bound
+metadata. The baseline launches shared/hit GPU work before reading
+missing weights and reuses its scratch across layers and tokens.
+
+The measured 1K router wake was 1.909 s inside 34.314 s traced prefill.
+After preserving GPU work and ideally overlapping row-local miss service,
+the estimate leaves 19.52%. The milestone stops before a scheduler
+prototype. See the [dependency and lifetime plan](evidence/2026-11-18-s301b/README.md).

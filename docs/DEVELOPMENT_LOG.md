@@ -1483,3 +1483,19 @@ matched at every size, observed Metal 4.928/4.929 GiB. The separately
 profiled short pair reduced GPU time by about 5% without improving wall
 time. Decision C. Archive the exact source, restore S3-00d, finish final
 checks and stop at the evidence checkpoint on the isolated feature branch.
+
+
+## S3-01b bounded router-readback feasibility stop
+
+On the isolated branch at `335e4d9`, audit the archived layer-major
+candidate and the restored scheduler. One attention/router completion per
+layer/chunk is structurally feasible. Preserve ordered per-layer cache
+access and wait before overwriting any live expert reader or its metadata.
+
+Add a temporary timing observer only. The real 214, 1,010 and 89-fresh-ID
+cases matched traced/untraced first output, hidden state, logits and cache
+demand. At 1K, 20.856 s of CPU router waits contain real GPU work. Wake
+after GPU router completion is 1.909 s of 34.314 s traced prefill. The
+optimistic row-local model reaches 19.52% and still credits mandatory host
+work. Decision D. Do not build a scheduler or run large benchmarks.
+Archive the timing probe, restore the S3-00d sources and publish evidence.

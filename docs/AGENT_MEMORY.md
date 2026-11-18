@@ -1,6 +1,21 @@
 # Agent recovery memory
 
-## Current milestone — S3-01a bounded chunked prefill
+## Current milestone — S3-01b bounded router readback
+
+Base `335e4d9` on the isolated prefill branch. A layer can collect eight actual
+router packets before CPU service while preserving row order. The prior
+router wait also retired preceding MoE readers. Keep an explicit
+retirement boundary before an expert slot or its metadata can be overwritten.
+Decision D. At 1,010 tokens the probe measured 34.314 s prefill,
+20.856 s total CPU router waits and 1.909 s from GPU router completion
+to host return. The optimistic row-local model gives 19.52% headroom
+and credits away required host work, so no prototype or 4K/6K run.
+The short and 89-fresh-ID traced/untraced controls matched first
+prediction, logits, hidden state and expert demand. The timing patch
+is archived and sources match `2e5b993`. Strict 131/132 remains open.
+See the [feasibility evidence](evidence/2026-11-18-s301b/README.md).
+
+## Historical milestone — S3-01a bounded chunked prefill
 
 Branch `feature/bounded-chunked-prefill` at validated server tip `2e5b993`.
 Initial candidate batches per-layer input RMSNorm and Q4 projections over

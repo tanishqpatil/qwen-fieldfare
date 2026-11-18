@@ -1,0 +1,2 @@
+Source patch gzip SHA-256 ace198dddd935a72627d6d47d7819893b6d97918c99f897c530529d5a132e525
+Release Core tests executable SHA-256 0cdc8b227ed6c1b79c9d24dcbd15bf3ce0781da5314305c5c0d31bb9c0d2cd86

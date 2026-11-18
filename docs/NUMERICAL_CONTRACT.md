@@ -147,3 +147,10 @@ The original router-order path is selected as the active-streaming baseline.
 Its measured stability is scoped to the tested same-runtime histories.
 This does not change the strict reference gate or qualify cross-request state
 reuse. [S3-00c decision](evidence/2026-11-18-s300c/README.md)
+
+
+The S3-01b timing probe preserved the existing execution schedule. The
+layer-major design would retain ascending per-layer Conv, DeltaNet and KV
+positions and per-row fixed-order expert reduction. No batch implementation
+or change to this contract was adopted.
+See the [feasibility report](evidence/2026-11-18-s301b/README.md).

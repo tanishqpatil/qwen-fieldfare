@@ -1,5 +1,14 @@
 # Optimization analysis and priority order
 
+## S3-01b router-readback feasibility stop
+
+Trace the unchanged tokenwise path before redesigning the scheduler.
+Its 1K timing shows limited removable handoff cost after preserving
+the current expert service. The optimistic estimate reaches 19.52% and
+there is still host retirement and dispatch cost. No scheduler prototype
+or long benchmark was justified. See the
+[feasibility evidence](evidence/2026-11-18-s301b/README.md).
+
 ## S3-01a fresh-token prefill candidate
 
 Start from qualified exact-prefix reuse and fixed router order. Evaluate

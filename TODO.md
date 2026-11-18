@@ -1,6 +1,17 @@
 # Authoritative implementation backlog
 
-## Current milestone — S3-01a bounded chunked prefill
+## Current milestone — S3-01b bounded router readback
+
+- [x] Establish layer-major ordering, packet lifetimes and safe slot retirement.
+- [x] Bound the available savings with short, 1K and suffix diagnostics.
+- [x] Select the feasibility outcome and review the evidence-only checkpoint.
+
+Decision D. The bounded schedule is possible, but the optimistic 1K
+estimate of 19.52% excludes remaining host work and misses the 20% gate.
+No prototype or larger benchmark was justified.
+See the [feasibility evidence](docs/evidence/2026-11-18-s301b/README.md).
+
+## Historical milestone — S3-01a bounded chunked prefill
 
 - [x] Isolate development from the published S3-00d tip and define the execution contract.
 - [x] Implement and test one eight-row layer-major projection candidate.

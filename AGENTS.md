@@ -1,6 +1,16 @@
 # QwenFieldfare
 
-## Current milestone — S3-01a bounded chunked prefill
+## Current milestone — S3-01b bounded router readback
+
+Use the existing isolated branch at `335e4d9` and preserve S3-00d
+tokenwise source. Inspect dependencies and measure exposed router readback.
+Decision D closes the milestone. The 1K timing probe gave insufficient
+headroom for router-readback batching with ordered expert service.
+Preserve the diagnostic archive and keep S3-00d exact-prefix semantics,
+fixed reduction, SLRU and the strict fixture. Further runtime work requires
+its own milestone.
+
+## Historical milestone — S3-01a bounded chunked prefill
 
 Work on `feature/bounded-chunked-prefill` from verified S3-00d tip `2e5b993`.
 Qualify one bounded opt-in candidate. Preserve the tokenwise default and

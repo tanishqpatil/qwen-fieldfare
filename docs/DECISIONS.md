@@ -251,3 +251,13 @@ suffix took longer, and a host swap change limits the long result.
 Restore S3-00d and archive the source. The remaining per-token router
 readback warrants a separate bounded scheduling experiment.
 See the [decision record](evidence/2026-11-18-s301a/README.md).
+
+## ADR — S3-01b stop at router-readback feasibility
+
+Retain the stable tokenwise scheduler. The eight-row dependency graph
+permits one router readback per layer, but removing readbacks removes an
+implicit expert-slot retirement boundary. Retaining ordered expert
+service leaves at most 19.52% modeled headroom at 1K under deliberately
+optimistic assumptions. The probe is archived. No runtime batching mode
+or longer benchmark was introduced.
+See the [feasibility evidence](evidence/2026-11-18-s301b/README.md).

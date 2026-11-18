@@ -127,3 +127,14 @@ independent S3-00d digest at output 465 also matched. The original fixture
 and required checkpoint verification both ran on the candidate. Its
 strict result remains 131/132 with the sole original mismatch. See the
 [qualification record](evidence/2026-11-18-s301a/README.md).
+
+
+## S3-01b router-readback timing scope
+
+S3-01b used a temporary observer on the tokenwise schedule. Instrumented
+and uninstrumented short, 1K and exact-prefix suffix cases had identical
+first output, full logits, hidden state and cache demand. The observer
+was removed and no batch scheduler was implemented. The stable source
+and strict fixture match the baseline. Archived checkpoint-verified
+131/132 is still the release blocker at token 61.
+See the [timing qualification](evidence/2026-11-18-s301b/README.md).

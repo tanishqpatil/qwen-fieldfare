@@ -1,0 +1,12 @@
+Build complete! (46.72 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenRouterReadbackProbeTests started.
+◇ Test measureRouterReadbackCriticalPath() started.
+short: 8483.49392414093 ms (traced false), 7000.486969947815 ms (traced true).
+1k: 34313.785910606384 ms (traced true), 35015.506982803345 ms (traced false).
+suffix: 3229.1300296783447 ms (traced false), 2680.233955383301 ms (traced true).
+✔ Test measureRouterReadbackCriticalPath() passed after 93.762 seconds.
+✔ Suite QwenRouterReadbackProbeTests passed after 93.762 seconds.
+✔ Test run with 1 test in 1 suite passed after 93.762 seconds.

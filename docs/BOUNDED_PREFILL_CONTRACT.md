@@ -50,3 +50,9 @@ known strict 131/132 mismatch remains independent. Production promotion
 requires at least 20% TTFT improvement on representative fresh prompts.
 Preserve a diagnostic checkpoint if the candidate is useful but falls
 short. See [numerical policy](NUMERICAL_NON_REGRESSION.md).
+
+
+S3-01b measured the next proposed router-readback change separately.
+See the [feasibility report](evidence/2026-11-18-s301b/README.md) for
+dependencies, lifetimes, wait counts and the decision to retain tokenwise
+execution.
