@@ -1265,3 +1265,63 @@ when archiving the patch as text. Store exact bytes as deterministicgzip instead
 uncompressed SHA remains unchanged,decompression verified,no patch content edit
 or diff-check exclusion. Re-run full staged diff/Markdown checks after this
 container-only correction. The candidate failure remains visible in text logs.
+
+## S3-00a expert-cache residency investigation
+
+Start at clean c1ff7c9. The S3-00 archive and original strict MLX fixture are
+read-only inputs. Scope is one matched-input layer-0/token-0 probe and one
+teacher-forced 430+512-token replay at the archived divergence. Vary resident
+experts without changing the token history. Compare exact slot bytes, router
+outputs, activations, per-expert projections and layer/final outputs. Test a
+diagnostic-only router-position accumulator with one 65,536-byte shared Metal
+buffer, then decide whether promotion evidence is warranted. Prefix reuse stays
+absent throughout. Treat H1 reduction order, H2 weight/synchronization defects,
+and H3 other model operations as separate hypotheses.
+
+Layer-0 cold/all-warm/mixed masks agree on exact slot record hashes, routing IDs
+and scores, 4096 gate/up values and 16384 weighted contributions. Legacy mixed
+output differs at 195 coordinates (maximum 7.45058e-9, relative L2 1.26507e-8).
+Repeated identical mask is bitwise stable. A literal left-to-right CPU final
+combine did not match the Metal output even in the cold control, so we make no
+claim about the compiler's exact reassociation. The router-order probe matches
+its own cold result for every mask. Initial runtime shader compilation rejected
+a missing bias-offset argument in the probe clone. Corrected the argument and
+preserved the failure log. The corrected real probe passed in 190.121 seconds.
+
+Matched 430+512 teacher replay reproduces original legacy winners 1031 versus
+285 at output 465 under the same input IDs. Legacy logit digest differs at all
+941 input positions and hidden relative L2 is 1.452% at the boundary. The two
+router-order histories agree exactly at every logit position and on all 512
+predictions. The new sum still changes logits relative to legacy warm (1.358%
+relative L2 at the boundary). The local strict candidate test verifies all
+checkpoint hashes and shows the unchanged 131/132 result with the original
+61/14988/10000 triple. Initial shell wrapper used zsh's reserved status variable
+after the benchmark finished. Strict error output and the Bench catch's exit(1)
+remain visible, and the archived-output checker was rerun separately. No hash
+or model replay was repeated to repair the wrapper bookkeeping.
+
+The release A/B used the same binary in both modes, a public 52-token coding
+prompt, one retained-runner warmup, fixed seed, context 8192 and 2183 slots.
+Five 128-output pairs measured mean −2.76% decode rate (95% interval −7.58%
+to +2.07%) and +3.43% prefill time. Two 512-output pairs measured −1.60%
+and +0.64% decode rate and +0.27% mean prefill time. Both paths completed
+all output counts. CPU time, device-level disk counters, model logical fetches
+and end footprints are retained per run. Separate 128 profiling measures
+3652.134 ms vs 3614.822 ms in summed GPU model command duration. One profile
+pair does not change the performance conclusion. Memory stayed within the
+measured operating plan with one additional 65536-byte buffer.
+
+S3-00a outcome B. Both temporary probes were archived and reversed. The local
+mask experiments and sustained replay support H1. No evidence of wrong or
+stale contributions was observed in the tested scenarios, and changing the
+sum path alone eliminates the observed history effect. Review a small matched
+MLX state/logit sample before any production transition, then separately
+qualify prefix reuse against a canonical full-replay control. S3-00 remains
+blocked. No product change, commit, push or merge was made for S3-00a.
+
+Restored tree validation passed with 153 package tests, three opt-in skips,
+a 40.00-second release build, 6/6 checker tests, archived-log stability,
+Markdown link and diff checks. Sources, Tests, Package.swift, dependency
+pins and the strict MLX fixture match c1ff7c9. Postflight pressure was 1,
+free memory 81%, swap 271.69 MiB, with no remaining model owner. Full
+reproduction and evidence are in docs/evidence/2026-11-18-s300a.

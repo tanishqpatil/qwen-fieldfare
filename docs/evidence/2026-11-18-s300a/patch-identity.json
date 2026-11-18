@@ -1,0 +1,7 @@
+{
+  "base": "c1ff7c907309b81e67f9b03925b127bdf48f323b",
+  "compressed_sha256": "a50383aa83da55f1b29a8786fe00e3ce718f2d0ad9e70730b524c45218a4dcc2",
+  "uncompressed_sha256": "c7926ca98c5ab3b6638b292b64e51fa69e5b66c944cf533d4c058d1acc949f31",
+  "scope": "Diagnostic only. The benchmark opt-in was added after the forced replay build. Compare log and executable hashes separately.",
+  "gpu_totals_patch_sha256": "7255eb8b2c0a3dbc24bd6d66047ad55bd8f0c40395d6e19d193d47e881a5138c"
+}

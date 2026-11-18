@@ -1,6 +1,25 @@
 # Authoritative implementation backlog
 
-## Current milestone — S3-00 exact-prefix state reuse
+## Current milestone — S3-00a expert-cache residency
+
+S3-00a characterized residency-dependent MoE accumulation. The experiment is
+archived and production uses full replay with the original sum. S3-00 remains
+blocked. Preserve the strict MLX fixture and the 131/132 release blocker.
+The next gate is review of matched logits and hidden values before promoting
+a router-order path. Stop at the S3-00a report.
+
+### S3-00a — characterized, experiment only
+
+- [x] Isolate reduction-order changes with identical per-expert weights and outputs.
+- [x] Reproduce output 465 under identical teacher history and inspect logits.
+- [x] Confirm exact router-order output across the tested cache histories.
+- [x] Preserve original strict MLX fixture and record the prototype's existing 131/132.
+- [x] Complete 128/512 performance comparisons and restored-tree validation.
+- [ ] Separate review of candidate scores against a matched MLX reference before promotion.
+
+S3-00 remains blocked. See [S3-00a evidence](docs/evidence/2026-11-18-s300a/README.md).
+
+## Historical milestone — S3-00 exact-prefix state reuse
 
 Explicit authorization supersedes S2-03 stop. Measure replay baselines first,
 then one bounded in-place exact consumed-token prefix per active runner,default

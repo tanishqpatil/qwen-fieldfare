@@ -583,3 +583,19 @@ measurements and reproduction. Any future cache implementation needs a separatel
 scoped numerical/history-invariance contract and relevant reference gates;no
 recurrent rewind or weakened expected tokens is accepted. MLX131/132 is independent
 and remains a release blocker. S3-00 is blocked,not delivered or promoted.
+
+## S3-00a expert-cache residency
+
+The legacy active streaming MoE scheduler submits hit-only work while the CPU
+loads missing expert records into distinct slots. Both paths compute gate/up
+and weighted down projections using the same SIMD functions. The down projections
+reduce each subset separately, so hit/miss placement can influence FP32 output
+even when the contributing values are identical. S3-00a reproduced the effect
+with controlled masks and isolated it using an alternate router-order combine.
+See [measured results](evidence/2026-11-18-s300a/README.md).
+
+The experimental combine uses one 65,536-byte runner scratch buffer. Hit and
+miss kernels write disjoint router rows. The same serialized Metal queue orders
+both producers, the final combine, and the next layer's reuse of the buffer.
+This preserves CPU/GPU overlap and the expert-weight cache policy. The experiment
+is archived. Production continues the legacy reduction and full prompt replay.

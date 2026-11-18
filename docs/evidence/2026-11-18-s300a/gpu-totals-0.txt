@@ -1,0 +1,58 @@
+Load: 0.132 s
+Loaded footprint: 0.996 GiB
+Loaded Metal allocation: 4.928 GiB
+Context: 8192
+Active-streaming budget: 5 GiB; planned 5.000 / 5.000 GiB
+Expert cache slots: 2183
+Expert storage: raw-safetensors
+GPU profiling: enabled
+Warmup runs: 1
+Measured runs: 1
+Sampler: greedy, seed: 42
+
+=== Warmup 1/1 ===
+GPU command duration sum for prefill and decode: 3717.262 ms
+Prompt tokens: 52
+Generated tokens: 128
+Finish reason: Output limit
+Prefill/TTFT: 2.357 s
+Decode: 127 inter-token transitions in 4.249 s (29.89 tok/s)
+Inter-token latency: mean 33.46 ms, p50 32.02 ms, p95 42.91 ms, min 26.88 ms, max 55.73 ms (127 samples)
+CPU token selection: mean 0.031 ms, p50 0.032 ms, p95 0.033 ms (128 samples)
+Decode-only cache: 32737 hits, 7903 misses, 80.55% hit rate, 62.2 misses/token, 13.024 GiB fetched
+Final footprint: 4.809 GiB
+Final Metal allocation: 4.928 GiB
+At    1: first token produced during prefill; footprint 4.807 GiB, Metal 4.928 GiB
+At   64:  29.84 tok/s,  63.6 misses/token, 107.3 MiB/token, step  38.08 ms, miss fetch  14.90 ms, GPU wait  22.49 ms (attn/router 13.92, MoE 0.00), footprint 4.808 GiB, Metal 4.928 GiB
+         exact GPU: 20.83 ms (attention/router 11.01, shared/hits 5.16, miss/tail/head 4.66)
+At  128:  29.93 tok/s,  60.9 misses/token, 102.8 MiB/token, step  42.89 ms, miss fetch  20.67 ms, GPU wait  21.61 ms (attn/router 13.17, MoE 0.00), footprint 4.809 GiB, Metal 4.928 GiB
+         exact GPU: 21.04 ms (attention/router 10.80, shared/hits 4.93, miss/tail/head 5.31)
+Cache including prefill: 2183/2183 occupied, 44907 hits, 12373 misses, 78.40% hit rate, 10190 evictions, 20.390 GiB fetched
+Layer cache hit rates (%): 00:58.1 01:64.7 02:58.5 03:68.2 04:77.3 05:78.6 06:81.0 07:82.4 08:86.5 09:83.9 10:82.4 11:75.1 12:81.7 13:84.1 14:81.7 15:83.3 16:82.0 17:80.6 18:79.5 19:80.3 20:87.4 21:81.3 22:78.1 23:75.3 24:77.4 25:81.1 26:80.1 27:80.6 28:80.2 29:79.3 30:81.5 31:80.9 32:74.6 33:74.9 34:78.1 35:80.6 36:79.5 37:83.0 38:78.1 39:74.0
+
+=== Measured 1/1 ===
+GPU command duration sum for prefill and decode: 3652.134 ms
+Prompt tokens: 52
+Generated tokens: 128
+Finish reason: Output limit
+Prefill/TTFT: 1.917 s
+Decode: 127 inter-token transitions in 4.079 s (31.14 tok/s)
+Inter-token latency: mean 32.12 ms, p50 31.20 ms, p95 38.68 ms, min 25.78 ms, max 55.16 ms (127 samples)
+CPU token selection: mean 0.029 ms, p50 0.031 ms, p95 0.033 ms (128 samples)
+Decode-only cache: 32751 hits, 7889 misses, 80.59% hit rate, 62.1 misses/token, 13.001 GiB fetched
+Final footprint: 4.809 GiB
+Final Metal allocation: 4.928 GiB
+At    1: first token produced during prefill; footprint 4.809 GiB, Metal 4.928 GiB
+At   64:  30.35 tok/s,  63.5 misses/token, 107.1 MiB/token, step  34.81 ms, miss fetch  12.29 ms, GPU wait  21.85 ms (attn/router 13.49, MoE 0.00), footprint 4.809 GiB, Metal 4.928 GiB
+         exact GPU: 20.37 ms (attention/router 10.69, shared/hits 5.00, miss/tail/head 4.67)
+At  128:  31.95 tok/s,  60.8 misses/token, 102.6 MiB/token, step  30.21 ms, miss fetch   7.63 ms, GPU wait  21.92 ms (attn/router 13.56, MoE 0.00), footprint 4.809 GiB, Metal 4.928 GiB
+         exact GPU: 21.30 ms (attention/router 10.90, shared/hits 5.33, miss/tail/head 5.07)
+Cache including prefill: 2183/2183 occupied, 45460 hits, 11820 misses, 79.36% hit rate, 11820 evictions, 19.479 GiB fetched
+Layer cache hit rates (%): 00:61.4 01:66.1 02:60.3 03:69.3 04:78.7 05:80.0 06:82.3 07:83.7 08:87.4 09:84.5 10:83.7 11:76.4 12:82.4 13:85.1 14:81.8 15:84.2 16:82.6 17:81.4 18:79.9 19:81.0 20:87.8 21:82.3 22:79.1 23:76.0 24:77.6 25:81.4 26:80.4 27:81.3 28:81.0 29:79.9 30:82.0 31:81.4 32:74.9 33:76.0 34:79.3 35:81.8 36:80.8 37:84.2 38:79.5 39:75.8
+
+=== Measured summary ===
+Decode rate across 1 runs: min 31.14, mean 31.14, max 31.14 tok/s, spread 0.00%
+Prefill/TTFT across 1 runs: min 1.917, mean 1.917, max 1.917 s
+CPU token selection across 1 runs: min 0.029, mean 0.029, max 0.029 ms
+Repeated greedy outputs identical: yes
+Expert I/O process totals: 0 packed experts, 0 pread operations, 0 packed read failures

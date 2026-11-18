@@ -1,0 +1,16 @@
+128-1-legacy 128 14.05s
+128-1-router-order 128 13.72s
+128-2-router-order 128 13.80s
+128-2-legacy 128 13.29s
+128-3-legacy 128 13.45s
+128-3-router-order 128 13.23s
+128-4-router-order 128 13.97s
+128-4-legacy 128 14.10s
+128-5-legacy 128 12.97s
+128-5-router-order 128 13.52s
+512-1-legacy 512 41.75s
+512-1-router-order 512 42.10s
+512-2-router-order 512 41.90s
+512-2-legacy 512 43.24s
+128-1-router-order-gpu 128 13.64s
+128-1-legacy-gpu 128 12.75s

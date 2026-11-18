@@ -157,3 +157,11 @@ verified once; hashing warms OS cache. No performance/memory-regression claim.
 M5/32 GB/10 GPU cores, macOS27.2.1/26B131, Swift6.4.2; 133 GiB disk free and
 normal pressure/no other model owner before sequential checks. Runtime Q4 math
 and readers remain unchanged; CPU reader behavior has independent test coverage.
+
+## S3-00a expert-cache residency prototype
+
+Five alternating 128-output pairs measured −2.76% mean decode-rate change
+(95% interval −7.58% to +2.07%). Two 512-output pairs measured −1.60% and
++0.64%. The prototype adds one 65,536-byte Metal buffer. These measurements
+support characterization of a numerical issue. Production remains on the
+existing reduction path. [Host, full runs, and limits](evidence/2026-11-18-s300a/README.md).

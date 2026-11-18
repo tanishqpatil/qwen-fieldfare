@@ -1,0 +1,12 @@
+{
+  "base": "c1ff7c907309b81e67f9b03925b127bdf48f323b",
+  "archive_variant_source_sha256": {
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift": "e58fe3e11b314bc9ce3a623dad663bff2ceb4d077aa27aeb045e51276c810b2c",
+    "Sources/QwenFieldfareCore/Metal/LinearAttention/deltanet.metal": "e499bd46f7aec98598c202e43d94f80e0229a16d39479ccf1b9655ceb9fe82fa",
+    "Tests/QwenFieldfareServerTests/ExpertResidencyProbeTests.swift": "7c6962eaa13b784b0f2e2f29068f9f8ab16c83b40e6f55f5b575ae324364962a",
+    "Package.resolved": "b8411551d7a805e4a51f9c92fd2d857f20660d8f8a1c70d1d96b1ba2b61c978b",
+    "docs/evidence/2026-11-17-parity/reference.json": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747"
+  },
+  "forced_probe_runner_sha256_before_bench_opt_in": "3351d41ce4f1723158c816d95ea29a6345affc2baca0d2c345e70792a9752f06",
+  "model_storage": "raw Safetensors. The independent strict MLX test reverified all checkpoint hashes."
+}

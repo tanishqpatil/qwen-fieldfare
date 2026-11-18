@@ -1,0 +1,12 @@
+Building for production...
+[Computing dependencies]
+[3 / 4] QwenFieldfareServerTests-product
+[11 / 12] QwenFieldfareServerTests-product
+Build complete! (4.15 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ExpertResidencyProbeTests started.
+➜ Test compareResidentExpertsAndForcedHistory() skipped.
+✔ Suite ExpertResidencyProbeTests passed after 0.001 seconds.
+✔ Test run with 1 test in 1 suite passed after 0.001 seconds.

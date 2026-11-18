@@ -1,0 +1,8 @@
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ExpertResidencyProbeTests started.
+◇ Test compareResidentExpertsAndForcedHistory() started.
+✔ Test compareResidentExpertsAndForcedHistory() passed after 190.121 seconds.
+✔ Suite ExpertResidencyProbeTests passed after 190.121 seconds.
+✔ Test run with 1 test in 1 suite passed after 190.121 seconds.

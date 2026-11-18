@@ -1,6 +1,32 @@
 # Agent recovery memory
 
-## Current milestone — S3-00 exact-prefix state reuse
+## Current milestone — S3-00a expert-cache residency
+
+S3-00a characterized residency-dependent MoE accumulation. The experiment is
+archived and production uses full replay with the original sum. S3-00 remains
+blocked. Preserve the strict MLX fixture and the 131/132 release blocker.
+The next gate is review of matched logits and hidden values before promoting
+a router-order path. Stop at the S3-00a report.
+
+### S3-00a result — Outcome B
+
+Started at clean c1ff7c9. Layer-0 weight digests, router weights, gate/up,
+and per-expert contributions are bitwise identical across all-cold, all-warm,
+alternating masks, and a repeated mixed mask. Legacy mixed output changes 195
+of 2048 values, max 7.45058e-9. Stable router-order reduction eliminates the
+mask difference with one 65,536-byte Metal scratch buffer. Same forced 430+512
+history reproduces 1031 vs 285 at output index 465 in legacy. Prototype logits
+are bitwise equal across histories at all 941 input positions. Prototype vs
+legacy warm logits at index 465 differ 1.358% relative L2 despite the same top
+token. Candidate strict MLX hashes and test ran, unchanged 131/132 and original
+61/14988/10000. Archived candidate and test under
+docs/evidence/2026-11-18-s300a/residency-probe.patch.gz. Release pairs show mean
+decode-rate changes of −2.76% at 128 and −0.48% at 512 output tokens. The
+128 interval crosses zero. All source, test, manifest, and pin changes from
+the probe and profiling variants were reversed. See evidence README for host,
+commands, outputs, limits and next review. No production correction is retained.
+
+## Historical milestone — S3-00 exact-prefix state reuse
 
 Explicit authorization supersedes S2-03 stop. Measure replay baselines first,
 then one bounded in-place exact consumed-token prefix per active runner,default

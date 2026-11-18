@@ -76,3 +76,36 @@ This is not proof of the full model or an attribution of every final-logit error
 Strict 132/132 remains in force; current outcome is 131/132. See the
 [isolation report](evidence/2026-11-17-isolation/REPORT.md) for results, limitations
 and the proposed additional validation dimensions. No policy is changed here.
+
+## S3-00a: cache-residency consistency
+
+With fixed layer-0 inputs and real checkpoint weights, all examined router
+weights, expert records, gate/up activations, and weighted expert contributions
+match bit for bit across cold, warm, and mixed masks. Legacy sums change when
+the top-eight contributions are regrouped into hits and misses. The same mixed
+mask reproduces exactly. The final CPU left-to-right reconstruction is not
+bitwise identical to the compiled Metal combine. Source grouping and measured
+outputs establish the residency effect without requiring an assumed compiler
+instruction order.
+
+A diagnostic path stores the eight FP32 weighted contributions by router
+position and reduces in that order. The two matched-input expert histories
+produce equal projected logit bytes at all 941 inspected input positions and
+equal final hidden bytes at the historical divergence. At that position the
+legacy histories differ by 1.950% relative L2 in logits. Router-order logits
+differ by 1.358% relative L2 from the legacy retained-tool control, though the
+two predict the same IDs on the warm 512-step fixture. This improvement in
+residency consistency says nothing by itself about reference accuracy.
+
+Proposed deterministic gate for review: with the same executable, device,
+context, checkpoint, teacher tokens, and precision, require exact equality
+for matched-input router results and per-expert contributions and for canonical
+MoE layer output across masks. Repeat one mask to check same-mask nondeterminism.
+Require equal logits across controlled histories at every forced position and
+inspect hidden values and top-two scores at any first differing prediction.
+Apply an independent, checkpoint-identified MLX reference gate with the
+original strict test. Other devices or deliberately different arithmetic
+would need separate calibration on matched inputs before adopting tolerances.
+The observed differences are descriptive and are not an allowable error budget.
+Future conversation reuse must independently compare with canonical full replay.
+See [S3-00a evidence](evidence/2026-11-18-s300a/README.md).

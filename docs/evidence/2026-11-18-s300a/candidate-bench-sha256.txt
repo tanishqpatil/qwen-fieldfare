@@ -1,0 +1,1 @@
+9b0efaec5a8d5c13ca73bd8e818a28cb6dbed2dc9c843c0f5f63e32a690789b5  .build/release/QwenFieldfareBench

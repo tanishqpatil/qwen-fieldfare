@@ -1,0 +1,226 @@
+{
+  "pairs": [
+    {
+      "workload": 128,
+      "pair": 1,
+      "measurements": {
+        "legacy": {
+          "decode_tokens_s": 29.2,
+          "prefill_seconds": 1.968,
+          "decode_hit_rate_pct": 80.59,
+          "decode_logical_gib": 13.001,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.81,
+          "disk0_device_mb_total_delta": 9711.12,
+          "cpu_seconds_warmup_measured_load": 9.963654,
+          "decode_misses": 7889
+        },
+        "router-order": {
+          "decode_tokens_s": 29.5,
+          "prefill_seconds": 1.963,
+          "decode_hit_rate_pct": 80.57,
+          "decode_logical_gib": 13.012,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.793,
+          "disk0_device_mb_total_delta": 8820.42,
+          "cpu_seconds_warmup_measured_load": 10.059057000000003,
+          "decode_misses": 7896
+        }
+      },
+      "decode_delta_pct": 1.0273972602739656,
+      "prefill_delta_pct": -0.2540650406503975
+    },
+    {
+      "workload": 128,
+      "pair": 2,
+      "measurements": {
+        "router-order": {
+          "decode_tokens_s": 29.9,
+          "prefill_seconds": 1.937,
+          "decode_hit_rate_pct": 80.57,
+          "decode_logical_gib": 13.012,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.793,
+          "disk0_device_mb_total_delta": 8263.07,
+          "cpu_seconds_warmup_measured_load": 10.116060000000001,
+          "decode_misses": 7896
+        },
+        "legacy": {
+          "decode_tokens_s": 31.84,
+          "prefill_seconds": 1.785,
+          "decode_hit_rate_pct": 80.59,
+          "decode_logical_gib": 13.001,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.793,
+          "disk0_device_mb_total_delta": 6180.76,
+          "cpu_seconds_warmup_measured_load": 10.241837000000004,
+          "decode_misses": 7889
+        }
+      },
+      "decode_delta_pct": -6.092964824120606,
+      "prefill_delta_pct": 8.515406162465
+    },
+    {
+      "workload": 128,
+      "pair": 3,
+      "measurements": {
+        "legacy": {
+          "decode_tokens_s": 34.27,
+          "prefill_seconds": 1.746,
+          "decode_hit_rate_pct": 80.59,
+          "decode_logical_gib": 13.001,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.809,
+          "disk0_device_mb_total_delta": 5017.14,
+          "cpu_seconds_warmup_measured_load": 10.335667000000003,
+          "decode_misses": 7889
+        },
+        "router-order": {
+          "decode_tokens_s": 33.59,
+          "prefill_seconds": 1.723,
+          "decode_hit_rate_pct": 80.57,
+          "decode_logical_gib": 13.012,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.809,
+          "disk0_device_mb_total_delta": 4967.22,
+          "cpu_seconds_warmup_measured_load": 10.279853999999997,
+          "decode_misses": 7896
+        }
+      },
+      "decode_delta_pct": -1.984242777939893,
+      "prefill_delta_pct": -1.3172966781214157
+    },
+    {
+      "workload": 128,
+      "pair": 4,
+      "measurements": {
+        "router-order": {
+          "decode_tokens_s": 30.07,
+          "prefill_seconds": 1.962,
+          "decode_hit_rate_pct": 80.57,
+          "decode_logical_gib": 13.012,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.793,
+          "disk0_device_mb_total_delta": 7986.79,
+          "cpu_seconds_warmup_measured_load": 10.252744999999997,
+          "decode_misses": 7896
+        },
+        "legacy": {
+          "decode_tokens_s": 29.85,
+          "prefill_seconds": 1.962,
+          "decode_hit_rate_pct": 80.59,
+          "decode_logical_gib": 13.001,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.793,
+          "disk0_device_mb_total_delta": 8318.14,
+          "cpu_seconds_warmup_measured_load": 10.231788000000005,
+          "decode_misses": 7889
+        }
+      },
+      "decode_delta_pct": 0.7370184254606338,
+      "prefill_delta_pct": 0.0
+    },
+    {
+      "workload": 128,
+      "pair": 5,
+      "measurements": {
+        "legacy": {
+          "decode_tokens_s": 32.14,
+          "prefill_seconds": 1.76,
+          "decode_hit_rate_pct": 80.59,
+          "decode_logical_gib": 13.001,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.793,
+          "disk0_device_mb_total_delta": 5921.54,
+          "cpu_seconds_warmup_measured_load": 10.198267000000001,
+          "decode_misses": 7889
+        },
+        "router-order": {
+          "decode_tokens_s": 29.74,
+          "prefill_seconds": 1.94,
+          "decode_hit_rate_pct": 80.57,
+          "decode_logical_gib": 13.012,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.793,
+          "disk0_device_mb_total_delta": 7963.93,
+          "cpu_seconds_warmup_measured_load": 10.20189800000001,
+          "decode_misses": 7896
+        }
+      },
+      "decode_delta_pct": -7.46733042937151,
+      "prefill_delta_pct": 10.22727272727273
+    },
+    {
+      "workload": 512,
+      "pair": 1,
+      "measurements": {
+        "legacy": {
+          "decode_tokens_s": 28.07,
+          "prefill_seconds": 2.06,
+          "decode_hit_rate_pct": 76.56,
+          "decode_logical_gib": 63.176,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.817,
+          "disk0_device_mb_total_delta": 26533.73,
+          "cpu_seconds_warmup_measured_load": 32.67134699999999,
+          "decode_misses": 38336
+        },
+        "router-order": {
+          "decode_tokens_s": 27.62,
+          "prefill_seconds": 2.057,
+          "decode_hit_rate_pct": 76.59,
+          "decode_logical_gib": 63.077,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.818,
+          "disk0_device_mb_total_delta": 25869.32,
+          "cpu_seconds_warmup_measured_load": 33.034941,
+          "decode_misses": 38276
+        }
+      },
+      "decode_delta_pct": -1.603135019593871,
+      "prefill_delta_pct": -0.14563106796117165
+    },
+    {
+      "workload": 512,
+      "pair": 2,
+      "measurements": {
+        "router-order": {
+          "decode_tokens_s": 28.5,
+          "prefill_seconds": 2.042,
+          "decode_hit_rate_pct": 76.59,
+          "decode_logical_gib": 63.077,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.817,
+          "disk0_device_mb_total_delta": 23857.49,
+          "cpu_seconds_warmup_measured_load": 33.27641299999998,
+          "decode_misses": 38276
+        },
+        "legacy": {
+          "decode_tokens_s": 28.32,
+          "prefill_seconds": 2.028,
+          "decode_hit_rate_pct": 76.56,
+          "decode_logical_gib": 63.176,
+          "metal_gib": 4.928,
+          "footprint_gib": 4.817,
+          "disk0_device_mb_total_delta": 24444.23,
+          "cpu_seconds_warmup_measured_load": 33.36685700000001,
+          "decode_misses": 38336
+        }
+      },
+      "decode_delta_pct": 0.6355932203389925,
+      "prefill_delta_pct": 0.6903353057199135
+    }
+  ],
+  "128": {
+    "mean_decode_delta_pct": -2.756024469139482,
+    "mean_prefill_delta_pct": 3.4342634341931833,
+    "decode_paired_95_ci_pct": [
+      -7.582682852145887,
+      2.0706339138669234
+    ]
+  },
+  "512": {
+    "mean_decode_delta_pct": -0.48377089962743924,
+    "mean_prefill_delta_pct": 0.27235211887937094
+  }
+}

@@ -1,6 +1,14 @@
 # QwenFieldfare
 
-## Current milestone — S3-00 exact-prefix state reuse
+## Current milestone — S3-00a expert-cache residency
+
+S3-00a characterized residency-dependent MoE accumulation. The experiment is
+archived and production uses full replay with the original sum. S3-00 remains
+blocked. Preserve the strict MLX fixture and the 131/132 release blocker.
+The next gate is review of matched logits and hidden values before promoting
+a router-order path. Stop at the S3-00a report.
+
+## Historical milestone — S3-00 exact-prefix state reuse
 
 Explicit authorization supersedes S2-03 stop. Measure replay baselines first,
 then one bounded in-place exact consumed-token prefix per active runner,default
@@ -75,7 +83,7 @@ fixture/evidence/tests; never suppress failures or claim full parity. New or
 worsened mismatches block affected changes. Production-readiness claims require
 an independently reviewed numerical policy and sufficient evidence.
 
-Historical Stage1-only boundary is superseded by the current S2-02 directive above.
+Historical Stage 1 and S2-02 boundaries are superseded by the milestone above.
 No further broad/layer-3 numerical investigation without a bounded hypothesis
 and decision it informs, or a change directly requiring it. Model-free tests
 first; model-backed checks only for inference-affecting work/integration gates.

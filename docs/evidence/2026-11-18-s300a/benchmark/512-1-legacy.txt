@@ -1,0 +1,64 @@
+Load: 0.154 s
+Loaded footprint: 0.996 GiB
+Loaded Metal allocation: 4.928 GiB
+Context: 8192
+Active-streaming budget: 5 GiB; planned 5.000 / 5.000 GiB
+Expert cache slots: 2183
+Expert storage: raw-safetensors
+GPU profiling: disabled
+Warmup runs: 1
+Measured runs: 1
+Sampler: greedy, seed: 42
+
+=== Warmup 1/1 ===
+Prompt tokens: 52
+Generated tokens: 512
+Finish reason: Output limit
+Prefill/TTFT: 2.246 s
+Decode: 511 inter-token transitions in 18.356 s (27.84 tok/s)
+Inter-token latency: mean 35.92 ms, p50 34.98 ms, p95 46.04 ms, min 26.28 ms, max 58.91 ms (511 samples)
+CPU token selection: mean 0.029 ms, p50 0.032 ms, p95 0.033 ms (512 samples)
+Decode-only cache: 125194 hits, 38326 misses, 76.56% hit rate, 75.0 misses/token, 63.159 GiB fetched
+Final footprint: 4.817 GiB
+Final Metal allocation: 4.928 GiB
+At    1: first token produced during prefill; footprint 4.806 GiB, Metal 4.928 GiB
+At   64:  30.14 tok/s,  63.6 misses/token, 107.3 MiB/token, step  35.37 ms, miss fetch  12.98 ms, GPU wait  21.70 ms (attn/router 13.37, MoE 0.00), footprint 4.808 GiB, Metal 4.928 GiB
+At  128:  29.37 tok/s,  60.9 misses/token, 102.8 MiB/token, step  45.55 ms, miss fetch  21.77 ms, GPU wait  23.03 ms (attn/router 14.25, MoE 0.00), footprint 4.809 GiB, Metal 4.928 GiB
+At  192:  29.84 tok/s,  59.7 misses/token, 100.8 MiB/token, step  31.47 ms, miss fetch   8.86 ms, GPU wait  21.97 ms (attn/router 13.63, MoE 0.00), footprint 4.810 GiB, Metal 4.928 GiB
+At  256:  29.23 tok/s,  71.5 misses/token, 120.6 MiB/token, step  33.45 ms, miss fetch  10.29 ms, GPU wait  22.15 ms (attn/router 13.78, MoE 0.00), footprint 4.811 GiB, Metal 4.928 GiB
+At  320:  26.66 tok/s,  86.9 misses/token, 146.6 MiB/token, step  29.91 ms, miss fetch   6.24 ms, GPU wait  22.99 ms (attn/router 14.35, MoE 0.00), footprint 4.813 GiB, Metal 4.928 GiB
+At  384:  25.81 tok/s,  94.5 misses/token, 159.4 MiB/token, step  38.49 ms, miss fetch  14.88 ms, GPU wait  22.92 ms (attn/router 14.27, MoE 0.00), footprint 4.814 GiB, Metal 4.928 GiB
+At  448:  27.32 tok/s,  79.6 misses/token, 134.4 MiB/token, step  40.06 ms, miss fetch  16.96 ms, GPU wait  22.31 ms (attn/router 13.87, MoE 0.00), footprint 4.815 GiB, Metal 4.928 GiB
+At  512:  25.29 tok/s,  83.2 misses/token, 140.4 MiB/token, step  33.03 ms, miss fetch   9.25 ms, GPU wait  23.12 ms (attn/router 14.39, MoE 0.00), footprint 4.817 GiB, Metal 4.928 GiB
+Cache including prefill: 2183/2183 occupied, 137364 hits, 42796 misses, 76.25% hit rate, 40613 evictions, 70.526 GiB fetched
+Layer cache hit rates (%): 00:60.0 01:65.7 02:60.9 03:66.0 04:71.6 05:75.2 06:79.6 07:80.9 08:80.9 09:77.6 10:76.3 11:72.9 12:77.1 13:81.1 14:75.8 15:82.2 16:81.0 17:80.7 18:77.8 19:76.1 20:84.3 21:77.0 22:78.0 23:75.1 24:75.1 25:77.5 26:76.0 27:78.7 28:80.4 29:79.1 30:80.2 31:79.6 32:76.4 33:75.0 34:78.8 35:77.4 36:76.6 37:77.5 38:73.8 39:74.2
+
+=== Measured 1/1 ===
+Prompt tokens: 52
+Generated tokens: 512
+Finish reason: Output limit
+Prefill/TTFT: 2.060 s
+Decode: 511 inter-token transitions in 18.204 s (28.07 tok/s)
+Inter-token latency: mean 35.62 ms, p50 34.52 ms, p95 46.58 ms, min 26.27 ms, max 57.74 ms (511 samples)
+CPU token selection: mean 0.030 ms, p50 0.032 ms, p95 0.033 ms (512 samples)
+Decode-only cache: 125184 hits, 38336 misses, 76.56% hit rate, 75.0 misses/token, 63.176 GiB fetched
+Final footprint: 4.817 GiB
+Final Metal allocation: 4.928 GiB
+At    1: first token produced during prefill; footprint 4.817 GiB, Metal 4.928 GiB
+At   64:  31.16 tok/s,  63.5 misses/token, 107.1 MiB/token, step  30.87 ms, miss fetch   8.11 ms, GPU wait  22.09 ms (attn/router 13.63, MoE 0.00), footprint 4.817 GiB, Metal 4.928 GiB
+At  128:  30.13 tok/s,  61.2 misses/token, 103.2 MiB/token, step  42.91 ms, miss fetch  20.76 ms, GPU wait  21.56 ms (attn/router 13.27, MoE 0.00), footprint 4.817 GiB, Metal 4.928 GiB
+At  192:  29.55 tok/s,  59.8 misses/token, 100.9 MiB/token, step  31.65 ms, miss fetch   8.89 ms, GPU wait  22.11 ms (attn/router 13.74, MoE 0.00), footprint 4.817 GiB, Metal 4.928 GiB
+At  256:  29.25 tok/s,  71.3 misses/token, 120.3 MiB/token, step  32.45 ms, miss fetch   9.44 ms, GPU wait  22.36 ms (attn/router 13.91, MoE 0.00), footprint 4.817 GiB, Metal 4.928 GiB
+At  320:  27.01 tok/s,  86.9 misses/token, 146.7 MiB/token, step  29.75 ms, miss fetch   6.61 ms, GPU wait  22.46 ms (attn/router 13.98, MoE 0.00), footprint 4.817 GiB, Metal 4.928 GiB
+At  384:  26.09 tok/s,  94.8 misses/token, 160.0 MiB/token, step  37.95 ms, miss fetch  14.88 ms, GPU wait  22.40 ms (attn/router 13.97, MoE 0.00), footprint 4.817 GiB, Metal 4.928 GiB
+At  448:  27.15 tok/s,  79.5 misses/token, 134.1 MiB/token, step  39.76 ms, miss fetch  15.57 ms, GPU wait  23.51 ms (attn/router 14.17, MoE 0.20), footprint 4.817 GiB, Metal 4.928 GiB
+At  512:  25.37 tok/s,  83.1 misses/token, 140.2 MiB/token, step  33.79 ms, miss fetch  10.19 ms, GPU wait  22.96 ms (attn/router 14.28, MoE 0.00), footprint 4.817 GiB, Metal 4.928 GiB
+Cache including prefill: 2183/2183 occupied, 137892 hits, 42268 misses, 76.54% hit rate, 42268 evictions, 69.656 GiB fetched
+Layer cache hit rates (%): 00:60.7 01:66.4 02:61.4 03:66.3 04:72.2 05:75.6 06:79.8 07:81.1 08:81.1 09:78.0 10:76.6 11:73.3 12:77.5 13:81.1 14:76.1 15:82.5 16:81.1 17:80.8 18:77.9 19:76.4 20:84.5 21:77.4 22:78.2 23:75.4 24:75.2 25:78.0 26:76.1 27:78.7 28:80.6 29:79.4 30:80.6 31:79.5 32:76.7 33:74.8 34:79.4 35:77.9 36:77.0 37:77.6 38:74.5 39:74.4
+
+=== Measured summary ===
+Decode rate across 1 runs: min 28.07, mean 28.07, max 28.07 tok/s, spread 0.00%
+Prefill/TTFT across 1 runs: min 2.060, mean 2.060, max 2.060 s
+CPU token selection across 1 runs: min 0.030, mean 0.030, max 0.030 ms
+Repeated greedy outputs identical: yes
+Expert I/O process totals: 0 packed experts, 0 pread operations, 0 packed read failures

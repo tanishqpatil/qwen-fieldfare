@@ -172,3 +172,20 @@ No cache flag/UI control ships;S3-00 is blocked,not completed. A future attempt
 requires separately scoped residency-independent reduction/reference validation
 or independently reviewed acceptance policy. The original MLX131/132 release
 blocker remains unchanged;this diagnostic neither resolves nor explains it.
+
+## ADR-013 — Characterize residency-dependent MoE reduction
+
+S3-00a isolated the different FP32 hit/miss grouping with matched weights,
+routing, inputs, and per-expert values. The experimental router-order combine
+reproduces hidden values and logits across the tested cache histories. It
+also changes logits relative to production. The independent strict MLX test
+returns the existing 131/132 result. This qualifies neither different scores
+on the reference workload nor conversation-state reuse.
+
+Archive the diagnostic, measurements, and failing strict output. Keep the
+production execution path at the validated base. Review the deterministic gate
+in [the numerical contract](NUMERICAL_CONTRACT.md) before considering a
+production reduction change. Use a matched, checkpoint-identified reference
+sample to review score and margin differences beyond token counts. Resume S3-00
+only after a candidate passes those gates, then independently compare reuse
+against that candidate's full replay.

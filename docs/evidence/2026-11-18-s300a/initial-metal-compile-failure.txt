@@ -1,0 +1,49 @@
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ExpertResidencyProbeTests started.
+◇ Test compareResidentExpertsAndForcedHistory() started.
+✘ Test compareResidentExpertsAndForcedHistory() recorded an issue at ExpertResidencyProbeTests.swift:58:6: Caught error: Metal library compile failed: Error Domain=MTLLibraryErrorDomain Code=3 "program_source:821:9: warning: variable 'shared_inv' is used uninitialized whenever 'if' condition is false [-Wsometimes-uninitialized]
+    if (tid == 0) {
+        ^~~~~~~~
+program_source:833:35: note: uninitialized use occurs here
+    out[idx] = shared_core[tid] * shared_inv * norm_weight[tid] * silu(z[idx]);
+                                  ^~~~~~~~~~
+program_source:821:5: note: remove the 'if' if its condition is always true
+    if (tid == 0) {
+    ^~~~~~~~~~~~~~
+program_source:781:33: note: initialize the variable 'shared_inv' to silence this warning
+    threadgroup float shared_inv;
+                                ^
+                                 = 0.0
+program_source:2611:25: error: no matching function for call to 'qwen_q4_row_simd_f32'
+    const float value = qwen_q4_row_simd_f32(
+                        ^~~~~~~~~~~~~~~~~~~~
+program_source:2220:14: note: candidate function not viable: requires 10 arguments, but 9 were provided
+inline float qwen_q4_row_simd_f32(
+             ^
+" UserInfo={NSLocalizedDescription=program_source:821:9: warning: variable 'shared_inv' is used uninitialized whenever 'if' condition is false [-Wsometimes-uninitialized]
+    if (tid == 0) {
+        ^~~~~~~~
+program_source:833:35: note: uninitialized use occurs here
+    out[idx] = shared_core[tid] * shared_inv * norm_weight[tid] * silu(z[idx]);
+                                  ^~~~~~~~~~
+program_source:821:5: note: remove the 'if' if its condition is always true
+    if (tid == 0) {
+    ^~~~~~~~~~~~~~
+program_source:781:33: note: initialize the variable 'shared_inv' to silence this warning
+    threadgroup float shared_inv;
+                                ^
+                                 = 0.0
+program_source:2611:25: error: no matching function for call to 'qwen_q4_row_simd_f32'
+    const float value = qwen_q4_row_simd_f32(
+                        ^~~~~~~~~~~~~~~~~~~~
+program_source:2220:14: note: candidate function not viable: requires 10 arguments, but 9 were provided
+inline float qwen_q4_row_simd_f32(
+             ^
+}
+✘ Test compareResidentExpertsAndForcedHistory() failed after 0.667 seconds with 1 issue.
+✘ Suite ExpertResidencyProbeTests failed after 0.667 seconds with 1 issue.
+✘ Test run with 1 test in 1 suite failed after 0.667 seconds with 1 issue.
+Note: Some test targets reported failures:
+  - QwenFieldfareServerTests (Swift Testing)

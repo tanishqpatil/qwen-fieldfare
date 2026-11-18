@@ -1,0 +1,18 @@
+{
+  "outcome": "B, characterized",
+  "restored_production_base": "c1ff7c9",
+  "retained_production_correction": false,
+  "package_passed": 153,
+  "package_skipped": 3,
+  "release_seconds": 40.0,
+  "checker_tests": 6,
+  "candidate_strict_teacher_tokens": "131/132",
+  "candidate_strict_mismatch": [
+    61,
+    14988,
+    10000
+  ],
+  "candidate_strict_exit_note": "Bench catch exits 1. The zsh wrapper failed after the strict log and did not save the separate child exit status.",
+  "prefix_reuse": "blocked",
+  "no_push_merge_or_commit": true
+}
