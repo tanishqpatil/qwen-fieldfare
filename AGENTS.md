@@ -1,6 +1,14 @@
 # QwenFieldfare
 
-## Current milestone — S3-00d exact-prefix state reuse
+## Current milestone — S3-02a sampled selector measurement
+
+Use `feature/sampled-selector-profile` from the validated stable server
+tip `2e5b993`. S3-01a–c closed on the separate prefill branch at `e6ac9c3`.
+S3-02a is a measurement and decision. Its opt-in probe is archived and is
+absent from production. Preserve the original strict 131/132 release blocker.
+Any selector implementation requires its own focused qualification milestone.
+
+## Historical milestone — S3-00d exact-prefix state reuse
 
 Qualify one in-place exact consumed-token prefix per active server runner
 against fixed router-order full replay. The default is off. Native chat

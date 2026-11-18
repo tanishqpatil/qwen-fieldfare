@@ -1,0 +1,146 @@
+[
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-300-seen",
+    "round" : 0,
+    "totalNs" : 461269417,
+    "totalThreadCPUNs" : 460864958
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-empty-seen",
+    "round" : 0,
+    "totalNs" : 24120709,
+    "totalThreadCPUNs" : 24067291
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 7,
+    "name" : "k1-empty-seen",
+    "round" : 0,
+    "totalNs" : 22629375,
+    "totalThreadCPUNs" : 22569459
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-empty-seen",
+    "round" : 1,
+    "totalNs" : 24356958,
+    "totalThreadCPUNs" : 24187959
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 7,
+    "name" : "k1-empty-seen",
+    "round" : 1,
+    "totalNs" : 22273042,
+    "totalThreadCPUNs" : 22249750
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-300-seen",
+    "round" : 1,
+    "totalNs" : 440657625,
+    "totalThreadCPUNs" : 440432875
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 7,
+    "name" : "k1-empty-seen",
+    "round" : 2,
+    "totalNs" : 22102084,
+    "totalThreadCPUNs" : 22096167
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-300-seen",
+    "round" : 2,
+    "totalNs" : 434332334,
+    "totalThreadCPUNs" : 434144458
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-empty-seen",
+    "round" : 2,
+    "totalNs" : 23278417,
+    "totalThreadCPUNs" : 23259125
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-300-seen",
+    "round" : 3,
+    "totalNs" : 433003334,
+    "totalThreadCPUNs" : 432812708
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-empty-seen",
+    "round" : 3,
+    "totalNs" : 23283000,
+    "totalThreadCPUNs" : 23269417
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 7,
+    "name" : "k1-empty-seen",
+    "round" : 3,
+    "totalNs" : 22083667,
+    "totalThreadCPUNs" : 22076791
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-empty-seen",
+    "round" : 4,
+    "totalNs" : 23280833,
+    "totalThreadCPUNs" : 23273250
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 7,
+    "name" : "k1-empty-seen",
+    "round" : 4,
+    "totalNs" : 22119208,
+    "totalThreadCPUNs" : 22105000
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-300-seen",
+    "round" : 4,
+    "totalNs" : 431065416,
+    "totalThreadCPUNs" : 430877375
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 7,
+    "name" : "k1-empty-seen",
+    "round" : 5,
+    "totalNs" : 22092208,
+    "totalThreadCPUNs" : 22085250
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-300-seen",
+    "round" : 5,
+    "totalNs" : 445203875,
+    "totalThreadCPUNs" : 444121292
+  },
+  {
+    "choices" : 128,
+    "minimumSearches" : 182,
+    "name" : "default-empty-seen",
+    "round" : 5,
+    "totalNs" : 23263875,
+    "totalThreadCPUNs" : 23256541
+  }
+]

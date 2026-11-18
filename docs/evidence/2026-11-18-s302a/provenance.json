@@ -1,0 +1,45 @@
+{
+  "baseBenchSHA256": "d069ec9840be316da1150140b1f0da973708952a03cfa13001da749ebb31d803",
+  "captureSHA256": {
+    "runs.jsonl.gz": "268a732c92c8d7f1e0ad9b72d7acb277db32faa79d22ea4896b279065480193e",
+    "summary.json": "994a4a93dccf3d18ad53d03c9d604c8948a0f7e37dc430175e76f10ef0bea85f",
+    "synthetic.json": "fc664f6c393db2f40b682f8a1b95387b8d8fd04e78d4372bf586520dea507502"
+  },
+  "hardware": {
+    "chip": "Apple M5",
+    "gpuCores": 10,
+    "model": "MacBook Pro (Mac17,2)",
+    "ramGiB": 32
+  },
+  "macOS": "27.2.1 (26B131)",
+  "modelShardBytes": [
+    5288196018,
+    5368472749,
+    5368324139,
+    4377211365
+  ],
+  "previousStudyCommit": "e6ac9c3483c27da210234968b7e4897e4cc8a4bf",
+  "probeBenchSHA256": "7440141d2aa82324c7a73e9533e8a8ad275ef1d4715775f9013d72797e99765c",
+  "selectorProbeArchiveSHA256": "96f4102caa2c38cf53bf1c8d9d6e908760870a978da339299022fea7f8e62486",
+  "selectorProbePatchSHA256": "e729021bae34be1b9d48685cc8c7a5ad47fd23022809ff1716a83d77e79d01e2",
+  "sourceSHA256": {
+    "Sources/QwenFieldfareBench/main.swift": {
+      "base": "12b8fe2d082c27032a40e7e48849dda1f8a72c07bf77bedb0fde2a480b85a60a",
+      "probe": "bf47b2d52fd772c18eaa50aac91d2d7a5f004c993da8a189790a1442462c90c0"
+    },
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenGenerationSupport.swift": {
+      "base": "26bbb2a658ccd71f696bb67188ec5fbd1efc59a0fdb87355cfe1bb4819c1890b",
+      "probe": "ad953c86b1a96138e36c68d8995c04fc4acd6c416e5cba3f323ea1ec5a49d34f"
+    },
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift": {
+      "base": "a9149556448f7e1a10ec34b47e243b49668c7b8c4b4b5c2236928c90af78650a",
+      "probe": "879716bdf2c5b583b0ac6aaec23975dd011defc7313ff98d75d8340e9e61b206"
+    },
+    "Tests/QwenFieldfareCore/QwenGenerationSupportTests.swift": {
+      "base": "fbb64095801665a7885466ccce59d02e32edcf85a191b23bba13b57472a79ef0",
+      "probe": "1de71a799639b4dccf6559242fc4b53eee906e8ff72d89c138059bf4fd3d5bd8"
+    }
+  },
+  "stableCommit": "2e5b9934a5a96b18d352f58e0fa4201319fb12e2",
+  "swift": "6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)"
+}

@@ -1453,3 +1453,32 @@ The temporary repository paths and prompt counts differed. The fixed
 input gate independently established same-runtime raw equivalence.
 Review the final scope, retain the strict MLX blocker, publish the
 implementation and evidence on the feature branch and stop at S3-00d.
+
+## S3-02a measure default sampled token selection
+
+Verified `2e5b993` as the remote stable inference tip and created
+`feature/sampled-selector-profile` from it. S3-01a–c remain closed at
+`e6ac9c3` on the separate prefill branch. Built and tested the opt-in probe
+in a disposable snapshot. Used the existing shared logit buffer after
+the existing GPU wait and measured on-CPU selector time, scan and tail
+phases, prompt/seen-set work, GPU wait, expert I/O and callback delivery.
+Ran 28 serial model controls at 8K/5 GiB with one owner, including one
+sustained reversed-order pair per sampler. Used matched synthetic controls
+for Set and Top-K attribution. Profiler on/off matched
+output digests, finish labels and cache demand within each workload.
+
+Sustained sampled selection took 3.124 ms on CPU per token, with elapsed
+p50/p95/max 3.118/3.931/6.568 ms. It accounts for 8.50% of the 36.767 ms
+mean transition. The matched synthetic empty-Set control reduced CPU time
+from 3.442 to 0.184 ms with the same 182 minimum rescans and selected IDs.
+Pressure stayed normal with 4.928 GiB allocated in Metal. Decision A
+justifies one exact bitmap experiment after this stop. The diagnostic
+patch is retained only as evidence.
+
+Validation passed on the evidence branch with 171 package passes and
+four opt-in skips, eleven focused existing tests, a stable release build,
+six model-free numerical checker tests and the known-only mismatch check.
+The disposable probe passed 13 focused tests and the release build.
+The analyzer passed its five tests. The strict baseline is still 131/132
+at token 61, reused from checkpoint-verified evidence. See the
+[reproduction, raw timing and decision](evidence/2026-11-18-s302a/README.md).

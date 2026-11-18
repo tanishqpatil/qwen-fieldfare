@@ -1,6 +1,23 @@
 # Authoritative implementation backlog
 
-## Current milestone — S3-00d restore exact-prefix state reuse
+## Current milestone — S3-02a sampled selector measurement
+
+- [x] Branch from the verified stable inference tip.
+- [x] Split selector CPU time from GPU waits, buffer access, seen bookkeeping and callbacks.
+- [x] Measure paired seeded app-default and exact-greedy diagnostic workloads at 128 and 512 outputs.
+- [x] Inspect matched synthetic controls and preserve the numerical and lifecycle checks.
+- [x] Decide whether a sampled-selector candidate merits a dedicated experiment.
+- [x] Review and prepare the evidence-only checkpoint on the measurement branch.
+
+Decision A. The sampled selector consumes 3.124 ms of CPU per token and
+8.50% of sustained inter-token latency. Propose one exact, sequence-local
+dense bitmap for seen-token membership as a separately scoped experiment.
+The selector, production sources and strict 131/132 release gate are unchanged.
+
+S3-01a–c remain closed on `feature/bounded-chunked-prefill` at `e6ac9c3`.
+See the [S3-02a evidence](docs/evidence/2026-11-18-s302a/README.md).
+
+## Historical milestone — S3-00d restore exact-prefix state reuse
 
 - [x] Restore the one-runner ledger and opt-in CLI/native server controls over fixed router order.
 - [x] Run model-free state-contract and terminal-delivery lifecycle tests.

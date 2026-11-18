@@ -1,6 +1,21 @@
 # Performance and correctness baselines
 
-Current execution (2026-11-18): S3-00 is **blocked,not promoted**. Five short
+## S3-02a diagnostic sampled-decode baseline
+
+| Sampler and output target | Inter-token mean | Selector thread CPU | Selector elapsed share |
+| --- | ---: | ---: | ---: |
+| App defaults, seeded, 128 | 32.499 ms | 3.199 ms | 9.85% |
+| App defaults, seeded, 512 | 36.767 ms | 3.124 ms | 8.50% |
+| Exact greedy, 128 | 29.702 ms | 0.028 ms | 0.098% |
+| Exact greedy, 512 | 33.617 ms | 0.030 ms | 0.091% |
+
+Each sampler used three pairs at 128 outputs and four pairs at 512 outputs
+on the M5 with 8,192 context, 5 GiB, and 2,183 expert slots. The exact-greedy
+control has a different output and expert history. The measurements
+are phase attribution with uncontrolled OS file-cache history. See
+[reproduction and per-run data](evidence/2026-11-18-s302a/README.md).
+
+The initial S3-00 candidate was reverted on 2026-11-18. Five short
 same-Swift tool-cycle pairs matched and measured73.126% paired mean prefill
 reduction,then the first sustained512 continuation diverged at output465.
 Full-replay-only cold/warm expert-history diagnostic reproduced the difference.
@@ -8,8 +23,7 @@ The complete production candidate was reverted;no cache controls ship. See
 [all measurements,failed gates and limitations](evidence/2026-11-18-s300/README.md).
 Strict MLX131/132 remains unresolved. Dated prior status below is historical.
 
-Current execution status (2026-11-17): Stage1 remains in progress; S1-01d
-fallback reader migration is complete. Latest gates and separate fallback smoke
+S1-01d completed the fallback reader migration on 2026-11-17. Latest gates and separate fallback smoke
 integration are in [S1-01d evidence](evidence/2026-11-17-s101d/README.md). Strict
 active-streaming131/132 remains unresolved. Dated sections below preserve prior
 results/status; they are not instructions to restart numerical investigation.

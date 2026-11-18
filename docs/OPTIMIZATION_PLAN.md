@@ -1,6 +1,22 @@
 # Optimization analysis and priority order
 
-2026-11-18 execution result: S3-00 exact-prefix reuse is **blocked**. Five short
+## S3-02a sampled selector attribution
+
+Decision A. Default sampled selection costs 3.124 ms on CPU per sustained
+token. Its 3.127 ms of elapsed time is 8.50% of the 36.767 ms inter-token
+mean at 512 outputs. Scope the next experiment to an exact dense seen-token
+bitmap maintained for the sequence. Preserve the existing selector's full
+score scan, penalties, Top-K, minimum replacement, sort and random draw.
+Require exact matched outputs, then apply the common alternating test with a
+5% promotion threshold and a positive paired 95% confidence interval.
+
+S3-01c closed chunked-prefill scheduling on `feature/bounded-chunked-prefill`
+at `e6ac9c3`. S3-02a starts from the validated S3-00d tokenwise source at
+`2e5b993`, where exact-prefix reuse is available and off by default.
+See the [diagnostic controls](evidence/2026-11-18-s302a/README.md).
+
+The initial S3-00 exact-prefix candidate failed qualification on 2026-11-18.
+Five short
 raw-ID tool-cycle pairs matched,but sustained512 diverged. A bounded full-replay
 expert-history diagnostic reproduced both behaviors. Candidate fully reverted;
 production remains S2-03 reset/replay,no cache controls ship. See
@@ -118,15 +134,13 @@ Every runtime experiment uses this gate unless a stricter one is documented:
 
 ### S1 — token-selection hot paths
 
-**Status: S1a greedy measurement and S1b exact-greedy fast path promoted
-locally on 2026-08-30. S1c production-sampler work is not started.**
+**Status.** S1a measured greedy and S1b promoted the exact-greedy fast path
+on 2026-08-30. S3-02a now measures the app-default selector separately.
+No sampled runtime candidate has been implemented.
 
-Stage S1a added measurement-only reporting for the existing `cpuArgmaxMs`.
-Exact greedy was measured over 128- and 512-token runs. App-default sampling
-was not modified or benchmarked, so S1c remains a separate future experiment.
-Any S1c work must use an explicit fixed validation seed and report that the
-real UI default remains unseeded. Greedy and sampled rates must never be
-combined in one headline.
+Stage S1a reported the existing `cpuArgmaxMs` for 128- and 512-token greedy
+runs. The S3-02a default-sampled profile uses an explicit fixed seed while the
+UI default remains unseeded. Keep greedy and sampled workload claims separate.
 
 Stage S1b restored one shared exact greedy fast path for both runners when:
 
@@ -141,11 +155,10 @@ It uses Accelerate's maximum-index operation and preserves the same token IDs.
 The current paired measurement reduced mean token selection from 3.171 ms to
 0.028 ms; older scalar measurements are not used as the promoted result.
 
-Stage S1c targets the production sampler only if S1a establishes a material
-cost. Candidate design should remove 248,320 hash-set lookups, reuse fixed
-Top-K/weight scratch, and apply penalties through an indexed seen-token
-representation while preserving exact seeded output. Start with a CPU design;
-do not mix it with a GPU Top-K rewrite.
+S3-02a identifies seen-token hashing as the next focused CPU candidate.
+Replace Set membership for the sampled vocabulary scan only. Keep Top-K
+and weight scratch, greedy, and GPU behavior out of the first experiment.
+Require exact seeded output and apply the existing promotion gates.
 
 Promotion gates:
 

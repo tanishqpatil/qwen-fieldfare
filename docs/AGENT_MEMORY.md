@@ -1,6 +1,27 @@
 # Agent recovery memory
 
-## Current milestone — S3-00d exact-prefix qualification
+## Current milestone — S3-02a sampled selector measurement
+
+On `feature/sampled-selector-profile` from `2e5b993`. S3-01a–c closed on
+the independent chunked-prefill branch at `e6ac9c3`. At 8K and 5 GiB,
+28 serial real model controls captured 128 and 512 outputs using exact greedy
+or the native sampled settings with fixed seed 42. Each within-sampler
+opt-in/control pair matched output digest, finish, demand and Metal allocation.
+
+Decision A. At 512 outputs, the sampled selector averaged 3.124 ms on
+CPU (3.127 ms elapsed, 8.50% of transition time), versus 0.030 ms on CPU
+for exact greedy. The synthetic membership control fell from 3.442 ms
+with a 300-ID Set to 0.184 ms with an empty Set and the same Top-K work.
+At least 1.838 ms per token must be recovered for a 5% latency reduction.
+Next, qualify only a sequence-local dense seen-token bitmap with unchanged
+sampling arithmetic and exact outputs, then apply the existing paired gate.
+This candidate has not started.
+
+The opt-in probe lives only in the evidence archive. The strict fixture and
+checkpoint-verified 131/132 record at token 61 are unchanged. See the
+[measurements and reproduction](evidence/2026-11-18-s302a/README.md).
+
+## Historical milestone — S3-00d exact-prefix qualification
 
 Base 7370a1d on `feature/local-coding-agent-server`. Fixed router-order
 production arithmetic remains the full-replay control. The initial

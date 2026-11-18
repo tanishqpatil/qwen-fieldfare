@@ -239,3 +239,19 @@ The default stays off. The original S3-00 rejection and independent strict
 MLX 131/132 baseline remain evidence. See the
 [technical contract](EXACT_PREFIX_STATE_CONTRACT.md) and
 [qualification evidence](evidence/2026-11-18-s300d/README.md).
+
+## ADR — S3-02a sampled selector measurement
+
+Decision A. App-default sampled selection accounts for 8.50% of sustained
+inter-token latency. The matched synthetic case attributes the major cost
+to nonempty Set membership in the full scan. Target that operation with
+one dense, exact seen-token bitmap per generation. A 5% decode reduction
+requires saving at least 1.838 ms per token at the measured operating point.
+Validate identical selector outputs and finish states before any controlled
+candidate A/B. Promotion keeps the existing 5% point threshold and a
+positive paired 95% confidence interval.
+
+The diagnostic code stays in the evidence archive. The production sampler
+and strict MLX fixture match the stable tip. The known 131/132 result stays
+a release blocker.
+See the [profile](evidence/2026-11-18-s302a/README.md).
