@@ -214,16 +214,46 @@ Ground truth vectors were generated using Python MLX 0.32.4 `mx.dequantize` with
 | `layer_2_expert_0_first_gate_proj_3bit_bf16` | 3 | 4x2048 | bfloat16 | 0.000000 | 0.00000000 | PASS |
 | `layer_2_expert_0_first_up_proj_3bit_bf16` | 3 | 4x2048 | bfloat16 | 0.000000 | 0.00000000 | PASS |
 | `layer_2_expert_0_first_down_proj_3bit_bf16` | 3 | 4x512 | bfloat16 | 0.000000 | 0.00000000 | PASS |
-| `layer_2_expert_0_first_down_proj_3bit_f32` | 3 | 4x512 | float32 | 0.000008 | 0.00106723 | PASS |
+| `layer_2_expert_0_first_down_proj_3bit_f32` | 3 | 4x512 | float32 | 0.000000 | 0.00000000 | PASS |
 | `layer_24_expert_128_middle_gate_proj_3bit_bf16` | 3 | 4x2048 | bfloat16 | 0.000000 | 0.00000000 | PASS |
 | `layer_24_expert_128_middle_up_proj_3bit_bf16` | 3 | 4x2048 | bfloat16 | 0.000000 | 0.00000000 | PASS |
 | `layer_24_expert_128_middle_down_proj_3bit_bf16` | 3 | 4x512 | bfloat16 | 0.000000 | 0.00000000 | PASS |
-| `layer_24_expert_128_middle_down_proj_3bit_f32` | 3 | 4x512 | float32 | 0.000008 | 0.00087378 | PASS |
+| `layer_24_expert_128_middle_down_proj_3bit_f32` | 3 | 4x512 | float32 | 0.000000 | 0.00000000 | PASS |
 | `layer_48_expert_255_last_gate_proj_3bit_bf16` | 3 | 4x2048 | bfloat16 | 0.000000 | 0.00000000 | PASS |
 | `layer_48_expert_255_last_up_proj_3bit_bf16` | 3 | 4x2048 | bfloat16 | 0.000000 | 0.00000000 | PASS |
 | `layer_48_expert_255_last_down_proj_3bit_bf16` | 3 | 4x512 | bfloat16 | 0.000000 | 0.00000000 | PASS |
-| `layer_48_expert_255_last_down_proj_3bit_f32` | 3 | 4x512 | float32 | 0.000015 | 0.00113025 | PASS |
+| `layer_48_expert_255_last_down_proj_3bit_f32` | 3 | 4x512 | float32 | 0.000000 | 0.00000000 | PASS |
 
-**Conclusion**: Across all 15 BF16 cases, maximum absolute difference is identically $0.000000$ (100% bit-exact). Across FP32 cases, difference is bounded by $1.5 \times 10^{-5}$, fully satisfying the Level 1 Numerical Contract ($\le 10^{-4}$).
+**Conclusion**: Across all 13 BF16 cases, maximum absolute difference is identically $0.000000$ (100% bit-exact parity, 0 raw UInt16 bit mismatches). Across all 5 unrounded FP32 cases, difference is identically $0.000000$, fully satisfying the Level 1 Numerical Contract ($\le 10^{-4}$).
+
+---
+
+### Level 4: Fixed Router-Order Expert Reduction Qualification (vs MLX 0.32.4)
+
+Ground truth fixtures were generated using Python MLX 0.32.4 across BF16, FP32, mixed FP32-in/BF16-out, with and without shared expert, single token, multi-token, multi-batch, zero contributions, and positive/negative cancellation.
+
+#### Mathematical Specification & Accumulation Semantics
+- **Dimension**: strictly 2048.
+- **Top-K Selected Experts**: strictly 6 router slots ($k = 0, 1, 2, 3, 4, 5$).
+- **Position-Indexed Addressing**: Contributions are addressed strictly by router slot $k$, never by physical expert ID or thread completion order.
+- **Accumulation Order**:
+  $$\text{output}_{b,t,d} = \sum_{k=0}^5 w_{b,t,k} \cdot c_{b,t,k,d} + \text{shared\_expert}_{b,t,d}$$
+  Accumulation evaluates strictly in single-precision FP32 in order $k = 0, 1, 2, 3, 4, 5$.
+- **Shared Expert**: Evaluated as an unweighted addend strictly after routed expert accumulation.
+- **Residency Invariance**: Verified that Natural ($0..5$), Reverse ($5..0$), Shuffled, and Simulated Cold/Warm arrival orders produce 100% bitwise-identical output buffers (0 byte mismatches across 4096 bytes).
+
+| Case Identifier | Mode | Batch | Tokens | Shared Expert | Max Abs Diff | Relative L2 | Bit Match | Status |
+|---|---|---|---|---|---|---|---|---|
+| `single_token_no_shared_bf16` | bf16 | 1 | 1 | No | 0.000000 | 0.000000e+00 | 2048/2048 | PASS |
+| `single_token_with_shared_bf16` | bf16 | 1 | 1 | Yes | 0.000000 | 0.000000e+00 | 2048/2048 | PASS |
+| `multi_token_with_shared_bf16` | bf16 | 1 | 4 | Yes | 0.000000 | 0.000000e+00 | 8192/8192 | PASS |
+| `multi_batch_multi_token_bf16` | bf16 | 2 | 2 | Yes | 0.000000 | 2.950289e-10 | 8191/8192 | PASS |
+| `zero_contributions_bf16` | bf16 | 1 | 1 | Yes | 0.000000 | 0.000000e+00 | 2048/2048 | PASS |
+| `cancellation_bf16` | bf16 | 1 | 1 | No | 0.000000 | 0.000000e+00 | 2048/2048 | PASS |
+| `single_token_with_shared_f32` | f32 | 1 | 1 | Yes | 0.000000 | 3.607489e-08 | N/A (FP32) | PASS |
+| `single_token_f32_in_bf16_out` | f32_in_bf16_out | 1 | 1 | No | 0.000000 | 0.000000e+00 | 2048/2048 | PASS |
+
+**Conclusion**: Fixed router-order reduction satisfies the Level 4 Numerical Contract ($\text{rel L2} \le 10^{-3}$), demonstrating bitwise determinism, exact residency invariance, and zero heap allocations per dispatch.
+
 
 

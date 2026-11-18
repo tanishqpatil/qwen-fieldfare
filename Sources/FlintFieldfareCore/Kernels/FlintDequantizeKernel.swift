@@ -2,6 +2,12 @@ import Foundation
 import Metal
 
 /// Host Swift controller for Flint native 3-bit and 4-bit Metal dequantization kernels.
+///
+/// ### Architecture & Memory Model Note
+/// This kernel is a stateless compute dispatch primitive operating on caller-provided `MTLBuffer`s
+/// with explicit byte offsets. It intentionally does NOT own or manage an expert cache, scratch buffer pool,
+/// or memory staging lifecycle. A future reusable resident/expert scratch-buffer manager (Milestones F3/F4)
+/// will coordinate preallocated scratch slices across active MoE layers, ensuring bounded working memory.
 public final class FlintDequantizeKernel {
 
     public enum Dtype: Sendable {

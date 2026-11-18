@@ -56,8 +56,8 @@ def main():
         "expected_hex": to_hex_mx(deq4_bf16)
     })
 
-    # 4-bit -> FP32 output
-    deq4_f32 = deq4_bf16.astype(mx.float32)
+    # 4-bit -> FP32 output (unrounded FP32 oracle)
+    deq4_f32 = mx.dequantize(w4_mx, s4_mx.astype(mx.float32), b4_mx.astype(mx.float32), group_size=64, bits=4)
     cases.append({
         "name": "synthetic_4bit_f32",
         "bits": 4,
@@ -118,8 +118,8 @@ def main():
         "expected_hex": to_hex_mx(deq3_bf16)
     })
 
-    # 3-bit -> FP32 output
-    deq3_f32 = deq3_bf16.astype(mx.float32)
+    # 3-bit -> FP32 output (unrounded FP32 oracle)
+    deq3_f32 = mx.dequantize(w3_mx, s3_mx.astype(mx.float32), b3_mx.astype(mx.float32), group_size=64, bits=3)
     cases.append({
         "name": "synthetic_3bit_f32",
         "bits": 3,
@@ -242,8 +242,8 @@ def main():
             "expected_hex": to_hex_mx(deq_down)
         })
 
-        # Also add FP32 output variant for down_proj
-        deq_down_f32 = deq_down.astype(mx.float32)
+        # Also add unrounded FP32 oracle variant for down_proj
+        deq_down_f32 = mx.dequantize(w_down, s_down.astype(mx.float32), b_down.astype(mx.float32), group_size=64, bits=3)
         cases.append({
             "name": f"layer_{layer_idx}_expert_{expert_id}_{expert_tag}_down_proj_3bit_f32",
             "bits": 3,

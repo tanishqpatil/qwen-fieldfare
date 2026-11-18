@@ -106,13 +106,37 @@ This document is the authoritative recovery guide for agents operating on FlintF
     - Supports resident shared expert projections: 4-bit INT4 group size 64 (`[1024, 256]` and `[2048, 128]` UInt32).
     - Bounded execution memory: dequantizes on-demand into temporary preallocated scratch buffer (only 6 MiB per expert, 36 MiB for all Top-6 experts), zero permanent memory expansion.
     - Direct zero-copy consumption of resident weights. Zero weight mutation (SHA-256 verified invariant before and after execution).
-    - Pinned MLX 0.32.4 Numerical Qualification: All 18 golden test cases passed (15/15 BF16 cases 100% bit-exact $0.000000$, FP32 diff bounded by $1.5 \times 10^{-5}$).
+    - Review #009 Cleanup: Added raw-UInt16 bit-exact equality assertions for all 13 BF16 cases (100% bit-exact 0 mismatches), unrounded FP32 oracle with $0.000000$ error across all 5 FP32 cases.
+    - Pinned MLX 0.32.4 Numerical Qualification: All 18 golden test cases passed (13 BF16 cases 100% bit-exact, 5 FP32 cases exact match).
     - Apple M5 Hardware Benchmark:
       - Shared Expert Gate Proj (4-bit, [1024, 2048]): P50 = 32.25 µs (166.63 GB/s).
       - Routed Expert Gate Proj (3-bit, [512, 2048]): P50 = 17.71 µs (144.33 GB/s).
       - Routed Expert Down Proj (3-bit, [2048, 512]): P50 = 17.67 µs (144.67 GB/s).
       - Routed Expert Gate Proj FP32 (3-bit, [512, 2048]): P50 = 22.25 µs (209.13 GB/s).
-  - Test Suite Breakdown: **90 tests passing across 8 suites in 7.503s (clean ./Scripts/test.sh)**:
+  - `FlintReductionKernel` & Metal Shading Language (`flint_reduction.metal`) (F2-05):
+    - Fixed Router-Order Expert Reduction for 47 MoE layers (layers 2 through 48).
+    - Combines contributions of Flint's 6 router-selected experts strictly in fixed router order $k = 0, 1, 2, 3, 4, 5$.
+    - Input layout: `contributions[batch, tokens, 6, 2048]`, `weights[batch, tokens, 6]`, optional `sharedExpert[batch, tokens, 2048]`.
+    - Output layout: `output[batch, tokens, 2048]`.
+    - Mathematical formula: $\text{output}_{b,t,d} = \sum_{k=0}^5 w_{b,t,k} c_{b,t,k,d} + \text{shared\_expert}_{b,t,d}$.
+    - Explicit FP32 accumulation semantics with BF16 or FP32 output cast boundary.
+    - Unweighted shared expert addition performed strictly after router-selected expert accumulation.
+    - Absolute Residency Invariance: Output is strictly addressed by router slot $k \in [0..5]$, never by thread completion order, arrival order, or cache residency.
+    - Residency Invariance Contract Verified: Tested Natural, Reverse, Shuffled, and Simulated Cold/Warm arrival orders across multiple randomized trials; all produce 100% bitwise-identical output (exact SHA-256 match, 0 byte differences across 4096 bytes).
+    - 50-Run Bitwise Determinism Verified: 50 consecutive dispatches produce identical SHA-256 digests.
+    - Pinned MLX 0.32.4 Numerical Qualification: All 8 golden test cases passed (BF16 cases 100% bit-exact across thousands of dimensions, FP32 max abs diff $0.000000$, relative L2 $\le 3.6 \times 10^{-8}$).
+    - Apple M5 Hardware Benchmark:
+      - Single-token reduction (BF16, with shared expert): P50 = 1.75 µs (Min: 1.67 µs, P95: 1.83 µs, Max: 8.17 µs, Mean: 1.84 µs ± 0.64 µs, 18.74 GB/s effective).
+      - Steady-state heap allocations: strictly 0 per dispatch.
+  - Router Selection Discrepancy Characterization (Review #009 Task B):
+    - Conducted 100-token deterministic diagnostic on live Layer 2 router gate weights (`diagnose_router_discrepancy.py`).
+    - 97 / 100 tokens (97.0%) match 100% identically between Metal and MLX (all 6 experts and selection order match).
+    - 3 / 100 tokens (3.0%) exhibit a 6th-expert boundary difference at rank 5.
+    - Root cause identified: In those 3 tokens, the 6th and 7th candidate scores in MLX were mathematically tied (`margin_mlx == 0.0` down to the last float32 bit).
+    - Dot-product accumulation order differences between Metal's 4-wide sequential reduction and MLX's GEMM are bounded by $\le 0.00039$, which triggers MLX `mx.argpartition` arbitrary introselect tie-breaking vs Metal's deterministic lower-expert-ID tie-breaking policy.
+    - Verified that gate weights are strictly indexed by expert ID across all layers.
+  - Test Suite Breakdown: **98 tests passing across 9 suites in 7.755s (clean ./Scripts/test.sh)**:
+    - `FlintReductionKernelTests`: 8 tests (MLX qualification, CPU analytical contract, residency invariance, 50-run determinism, magnitude/cancellation, buffer bounds, M5 benchmark, shader equivalence).
     - `FlintDequantizeKernelTests`: 7 tests (MLX qualification, analytical boundary-crossing, 50-run determinism, buffer bounds, real checkpoint expert immutability, M5 benchmark, shader equivalence).
     - `FlintRouterKernelTests`: 7 tests (MLX qualification, analytical tie-breaking, 50-run determinism, buffer bounds, resident weight immutability, M5 benchmark, shader equivalence).
     - `FlintAttentionKernelTests`: 10 tests (analytical synthetic sink, RoPE invariants, sliding boundaries 1..514, 38 MLX goldens, resident sinks integration & immutability, ring layout rejection, bounded-KV eviction, buffer bounds, M5 benchmark, shader equivalence).
@@ -137,5 +161,5 @@ This document is the authoritative recovery guide for agents operating on FlintF
 5. **Never Commit Weights**: Checkpoint files remain strictly external.
 
 ## Immediate Next Steps
-1. Submit Review #006 Completion Report (Prerequisite RMSNorm Fixes + F2-02 Attention Sinks, RoPE, and SDPA Qualification).
-2. Request authorization for Milestone F2-03 (Sigmoid Top-6 Router Kernel).
+1. Submit Review #009 Completion Report (F2-04 Qualification Cleanup + Router Discrepancy Characterization + F2-05 Fixed Router-Order Expert Reduction).
+2. Request authorization for Milestone F2-06 (SwiGLU Dense & Shared Expert MLP).

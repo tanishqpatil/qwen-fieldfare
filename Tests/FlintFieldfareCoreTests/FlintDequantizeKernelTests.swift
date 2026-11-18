@@ -113,13 +113,19 @@ import Testing
                     l2DiffSum += diffD * diffD
                     l2RefSum += refD * refD
                 }
+                let relL2 = (l2RefSum > 1e-12) ? sqrt(l2DiffSum / l2RefSum) : sqrt(l2DiffSum)
+                #expect(maxAbsDiff <= 1e-5, "Case \(c.name) max abs diff \(maxAbsDiff) exceeds 1e-5")
+                #expect(relL2 <= 1e-5, "Case \(c.name) relative L2 \(relL2) exceeds 1e-5")
             } else {
-                // bfloat16: unpack uint16 and cast to float
+                // bfloat16: unpack uint16 and perform direct raw-UInt16 equality test
                 let metalU16 = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: UInt16.self), count: totalElements))
                 let expU16 = expData.withUnsafeBytes { Array($0.bindMemory(to: UInt16.self)) }
 
+                var rawBitMismatches = 0
                 for i in 0..<totalElements {
-                    // Exact bit comparison on bfloat16 representation
+                    if metalU16[i] != expU16[i] {
+                        rawBitMismatches += 1
+                    }
                     let mVal = Float(bitPattern: UInt32(metalU16[i]) << 16)
                     let eVal = Float(bitPattern: UInt32(expU16[i]) << 16)
                     let diff = abs(mVal - eVal)
@@ -129,15 +135,16 @@ import Testing
                     l2DiffSum += diffD * diffD
                     l2RefSum += refD * refD
                 }
-            }
 
-            let relL2 = (l2RefSum > 1e-12) ? sqrt(l2DiffSum / l2RefSum) : sqrt(l2DiffSum)
-            #expect(maxAbsDiff <= 1e-4, "Case \(c.name) max abs diff \(maxAbsDiff) exceeds 1e-4")
-            #expect(relL2 <= 2e-3, "Case \(c.name) relative L2 \(relL2) exceeds 2e-3")
+                #expect(rawBitMismatches == 0, "Case \(c.name) raw-UInt16 bit mismatches: \(rawBitMismatches) / \(totalElements)")
+                let relL2 = (l2RefSum > 1e-12) ? sqrt(l2DiffSum / l2RefSum) : sqrt(l2DiffSum)
+                #expect(maxAbsDiff == 0.0, "Case \(c.name) max abs diff \(maxAbsDiff) is not 0.0")
+                #expect(relL2 == 0.0, "Case \(c.name) relative L2 \(relL2) is not 0.0")
+            }
 
             let shapeStr = "\(c.rows)x\(c.cols)"
             print(String(format: "%-50@ | %4d | %6@ | %-8@ | %12.6f | %12.8f | PASS",
-                         c.name, c.bits, shapeStr, c.out_dtype, maxAbsDiff, relL2))
+                         c.name, c.bits, shapeStr, c.out_dtype, maxAbsDiff, (l2RefSum > 1e-12) ? sqrt(l2DiffSum / l2RefSum) : 0.0))
         }
         print(String(repeating: "-", count: 115))
     }
