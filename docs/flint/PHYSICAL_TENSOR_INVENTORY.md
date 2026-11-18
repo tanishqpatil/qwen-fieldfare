@@ -19,13 +19,13 @@ Physical validation was performed using `FlintSafetensorsFile` and `FlintModelDi
 
 | Shard Filename | Total File Size (Bytes) | Header Size (Bytes) | Payload Size (Bytes) | Tensor Count |
 | :--- | :--- | :--- | :--- | :--- |
-| `model-00001-of-00004.safetensors` | 5,297,553,268 | 134,800 | 5,297,418,460 | 542 |
-| `model-00002-of-00004.safetensors` | 5,363,650,068 | 126,344 | 5,363,523,716 | 508 |
-| `model-00003-of-00004.safetensors` | 5,294,980,456 | 133,264 | 5,294,847,184 | 536 |
-| `model-00004-of-00004.safetensors` | 1,881,556,490 | 41,088 | 1,881,515,394 | 165 |
-| **Global Total** | **17,837,740,282** | **435,496** | **17,837,304,754** | **1,751** |
+| `model-00001-of-00004.safetensors` | 5,297,553,268 | 64,364 | 5,297,488,896 | 542 |
+| `model-00002-of-00004.safetensors` | 5,363,650,068 | 61,068 | 5,363,588,992 | 508 |
+| `model-00003-of-00004.safetensors` | 5,294,980,456 | 64,416 | 5,294,916,032 | 536 |
+| `model-00004-of-00004.safetensors` | 1,881,556,490 | 19,714 | 1,881,536,768 | 165 |
+| **Global Total** | **17,837,740,282** | **209,562** | **17,837,530,688** | **1,751** |
 
-*Note: Header byte counts exclude the 8-byte little-endian header length prefix.*
+*Note: Header byte counts exclude the 8-byte little-endian header length prefix (4 shards $\times$ 8 bytes = 32 bytes). Sum: $209,562\text{ (headers)} + 32\text{ (length prefixes)} + 17,837,530,688\text{ (payloads)} = 17,837,740,282\text{ bytes}$.*
 
 ---
 
@@ -137,7 +137,7 @@ $$\begin{aligned}
 \text{offset}(\text{down\_biases}, e) &= \text{base\_offset}(\text{down\_biases}) + e \times 32,768
 \end{aligned}$$
 
-Each read is executed via `FlintSafetensorsFile.readPayloadSlice(range:)` using POSIX `pread`, ensuring thread-safe, non-racing, zero-copy bounded reads directly from disk.
+Each read is executed via `FlintSafetensorsFile.readPayloadSlice(range:)` or `readPayload(into:range:)` using POSIX `pread`, ensuring thread-safe, non-racing direct reads from OS cache into caller-allocated memory without intermediate Swift Data allocations.
 
 ---
 
@@ -148,19 +148,32 @@ The physical integrity of random-access reads was cross-checked against independ
 | Tensor Name | Byte Range | SHA-256 Digest | Status |
 | :--- | :--- | :--- | :--- |
 | `model.layers.2.self_attn.softmax_offset` | `0..<64` | `e55d79b0bd25bc2d585bc4bf6706ae3d6d62e2561c9b0ec8f9918041f6404404` | MATCH |
-| `model.layers.0.input_layernorm.weight` | `0..<4096` | `f33f5b184b24b4e62c37c757ee2d90396173e9ef2ef28af130b266ca021cc4a5` | MATCH |
+| `model.layers.0.input_layernorm.weight` (Prefix) | `0..<128` | `f33f5b184b24b4e62c37c757ee2d90396173e9ef2ef28af130b266ca021cc4a5` | MATCH |
+| `model.layers.0.input_layernorm.weight` (Full Tensor) | `0..<4096` | `a47a5d39863526d5a24983779dda01852c4ea1f6d6989b695da57f18aa7b24a0` | MATCH |
 | `model.embed_tokens.weight` | `0..<256` | `c5b8b890109befaf2efd23d462ece554855d2c73d1c14301a8c62afff75bed71` | MATCH |
 | `model.layers.2.mlp.switch_mlp.gate_proj.weight` (Expert 0) | `0..<393216` | `a4fa16c82f9b2f8094462209ea1ed8def8d50730030347d96d582d9ce14f7820` | MATCH |
 | `model.layers.20.mlp.switch_mlp.gate_proj.weight` (Expert 128) | `50331648..<50724864` | `a3fcc07e846e6c78e5a57c7e89870e97bbb56afe2a0ddb7979043c127acbd678` | MATCH |
 | `model.layers.48.mlp.switch_mlp.down_proj.weight` (Expert 255) | `100270080..<100663296` | `2e823253c72b37404f447e5656a08995746460f39b417474eeed19078d9fd15b` | MATCH |
-| `model.layers.2.mlp.switch_mlp.gate_proj.scales` (Expert 0) | `0..<32768` | `7cc18d29413197ee959987c119bbb6e0ed834af8af8107cb3e9e937d9ee267d7` | MATCH |
-| `model.layers.2.mlp.switch_mlp.gate_proj.biases` (Expert 0) | `0..<32768` | `4629cee3a9d13041dafcf227f7ac56e5c2388a2619ed197595e176a1fd1bab2d` | MATCH |
+| `model.layers.2.mlp.switch_mlp.gate_proj.scales` (Prefix) | `0..<64` | `7cc18d29413197ee959987c119bbb6e0ed834af8af8107cb3e9e937d9ee267d7` | MATCH |
+| `model.layers.2.mlp.switch_mlp.gate_proj.scales` (Expert 0 Full) | `0..<32768` | `91243a6f1cd6e9489624c85e9780297562c8f94ea9aec390d02eae69b774cb40` | MATCH |
+| `model.layers.2.mlp.switch_mlp.gate_proj.biases` (Prefix) | `0..<64` | `4629cee3a9d13041dafcf227f7ac56e5c2388a2619ed197595e176a1fd1bab2d` | MATCH |
+| `model.layers.2.mlp.switch_mlp.gate_proj.biases` (Expert 0 Full) | `0..<32768` | `86e7916072ec4e247330d049e2712cce082873727610bfaa9007f74256f4373e` | MATCH |
 
 ---
 
 ## 7. Integrity Conclusions
 
-1. **Physical Zero-Overlap Invariant**: Every tensor range within all 4 shards is strictly disjoint from all other tensor ranges:
-   $$\text{offset}_{i} + \text{byteCount}_{i} \le \text{offset}_{i+1}$$
-2. **Deterministic Layout**: Every shard header's metadata and byte bounds completely account for the physical payload without gaps or unmapped trailing space.
-3. **No Dynamic Tensor Discovery**: The runtime does not rely on filenames or globbing at inference time; all tensor locations are resolved via `model.safetensors.index.json` validated against `FlintSafetensorsFile` headers.
+1. **Physical Zero-Overlap & Zero-Gap Invariant**:
+   Every tensor range within all 4 shards is strictly contiguous and disjoint:
+   $$\text{offset}_{0} = 0, \quad \text{offset}_{i} + \text{byteCount}_{i} == \text{offset}_{i+1}, \quad \text{offset}_{\text{last}} + \text{byteCount}_{\text{last}} == \text{payloadBytes}$$
+   Zero internal gaps and zero trailing unmapped payload bytes exist across all 4 shards.
+2. **Deterministic Layout & 1:1 Bijection**:
+   `model.safetensors.index.json` maps 1,751 tensors, and the 4 shard headers declare exactly 1,751 tensors. Every index key exists in its declared shard, and total header tensors strictly equal index keys (verified bidirectional bijection).
+3. **Bounded Memory & Caller Buffer Transfer**:
+   Data-returning reads are bounded by an explicit allocation limit (`maxAllocatedBytes`, default 64 MiB). Large tensors are transferred via caller-allocated buffers (`UnsafeMutableRawBufferPointer`) or chunked iteration (`readTensorChunks`), completely avoiding intermediate Swift Data heap copies.
+4. **File Mutation & Replacement Detection**:
+   `verifyUnchanged()` cross-checks open file descriptor identity (`fstat`) for size/timestamp modifications, and cross-checks the filesystem path (`stat`) for file unlinking or inode replacement.
+5. **Symlink Rejection**:
+   Direct symlinks passed to `FlintSafetensorsFile` are rejected at open time via `O_NOFOLLOW` (returning `ELOOP` mapped to `notRegularFile`).
+6. **No Dynamic Tensor Discovery**:
+   The runtime does not rely on filenames or globbing at inference time; all tensor locations are resolved via `model.safetensors.index.json` validated against `FlintSafetensorsFile` headers.

@@ -142,3 +142,44 @@
      - Verified `/Users/tanishq/dev/product/qwen-fieldfare` has 0 modifications and remained completely untouched.
      - Symlink `/Users/tanishq/dev/product/flint-fieldfare` left untouched.
 - **Verdict on F1-03**: Safe, bounded Safetensors access and physical tensor validation fully implemented, tested, and documented. Ready for F1-04 authorization.
+
+
+---
+
+## 2026-11-18 — F1-03: Safety Closure & Review #004 Hardening
+
+- **Author**: Inference Systems Architect
+- **Branch**: `feature/recursive-flint-40b-a2p5b`
+- **Authorized Directory**: `/Users/tanishq/dev/product/flint-fieldfare-isolated`
+- **Actions Completed**:
+  1. **Capacity-Aware Buffer Writes**:
+     - Replaced unchecked `UnsafeMutableRawPointer` API with `UnsafeMutableRawBufferPointer`:
+       - `readPayload(into buffer: UnsafeMutableRawBufferPointer, range: Range<Int>)`
+       - `readTensorPayload(_ name: String, into buffer: UnsafeMutableRawBufferPointer)`
+       - `readTensorSlice(_ name: String, byteRange: Range<Int>, into buffer: UnsafeMutableRawBufferPointer)`
+     - Added `FlintSafetensorsError.bufferCapacityInsufficient(required:available:)` when buffer capacity is less than requested range count.
+     - Handled empty buffers and empty ranges (`range.isEmpty`) without unnecessary failure.
+     - Preserved `pread` partial-read and `EINTR` loop handling.
+     - Restricted file descriptor visibility: changed `public let descriptor` to `internal let descriptor`, preventing external modification or unmanaged POSIX `close`.
+  2. **Zero-Dimension Overflow Path Elimination**:
+     - Removed unchecked `shape.reduce(1, *)` from `FlintTensorInfo.init`.
+     - Added `FlintSafetensorsHeader.validatedElementCount(shape:name:)` computing element count safely with integer overflow checking across non-zero dimensions.
+     - Malformed shapes like `[Int.max, Int.max, 0]` throw `.arithmeticOverflow` without trapping or crashing.
+     - Scalar tensors (`shape: []`) safely evaluate to 1 element; valid zero-element tensors (`shape: [10, 0, 5]`) safely evaluate to 0 elements.
+  3. **Bounded Data Allocation Policy & Chunked Streaming**:
+     - Introduced `maxAllocatedBytes` (default 64 MiB, `67,108,864` bytes) capping Data-returning convenience methods (`readPayloadSlice`, `readTensorPayload`, `readTensorSlice`).
+     - Added `FlintSafetensorsError.requestedAllocationExceedsLimit(requested:limit:)`.
+     - Implemented `readTensorChunks(_:chunkSize:handler:)` providing bounded chunk streaming (default 1 MiB chunks) directly into caller handlers without full tensor allocations.
+  4. **Corrected Physical Inventory Evidence & Invariants**:
+     - Verified exact shard payload bytes on disk: Shard 1 (5,297,488,896 B), Shard 2 (5,363,588,992 B), Shard 3 (5,294,916,032 B), Shard 4 (1,881,536,768 B). Total payload: 17,837,530,688 B. Total headers: 209,562 B. Total length prefixes: 32 B. Sum = 17,837,740,282 B.
+     - Mathematically verified that across all 4 shards: first offset is 0, consecutive offsets have zero gaps ($\text{offset}_{i} + \text{byteCount}_{i} == \text{offset}_{i+1}$), and trailing unmapped bytes are 0.
+     - Enforced bidirectional 1:1 bijection in `FlintModelDirectory.crossValidate` (1,751 tensors in index map, 1,751 tensors in shard headers).
+     - Corrected and expanded SHA-256 evidence: tested both prefix slices and full ranges for `input_layernorm.weight` (128 B and 4,096 B), `gate_proj.scales` (64 B and 32,768 B), and `gate_proj.biases` (64 B and 32,768 B).
+     - Enhanced `verifyUnchanged()` to check both open descriptor identity via `fstat` and on-disk path identity via `stat` (detecting file unlinking and inode replacement).
+     - Direct symlink rejection enforced at open time via `O_NOFOLLOW`.
+  5. **Focused Regression Tests**:
+     - Added tests for exact-sized, oversized, zero-length, and smaller-than-requested destination buffers.
+     - Added tests for chunked tensor streaming, zero-dimension overflow handling, allocation limits, symlink rejection, and on-disk file replacement.
+     - Full test suite: **50 tests passed across 3 suites in 0.019 seconds**.
+  6. **Strict Workspace Isolation Maintained**:
+     - Verified `/Users/tanishq/dev/product/qwen-fieldfare` remained completely untouched (0 uncommitted changes).

@@ -29,7 +29,7 @@
 |---|---|---|---|---|---|---|---|
 | **F1-01** | P0 | `COMPLETED` | Flint Model Configuration & Directory | `Sources/FlintFieldfareCore/` | Strict Case A (INT4) & Case B (141 Mixed overrides) validation, pread safety | `FlintModelDirectoryTests` | Validated in test suite (22 tests) |
 | **F1-02** | P0 | `COMPLETED` | Flint Dedicated Inference Lease | `Sources/FlintFieldfareCore/` | Acquire `/tmp/flintfieldfare-inference-\(uid).lock` without Qwen conflict | `FlintInferenceLeaseTests` | Validated in test suite |
-| **F1-03** | P0 | `COMPLETED` | Bounded Safetensors Access & Validation | `Sources/FlintFieldfareCore/` | Map all 1,751 tensors across 4 shards, POSIX pread, zero overlap, cross-validation, SHA-256 match | `FlintSafetensorsFileTests` | Validated in test suite (23 tests), `docs/flint/PHYSICAL_TENSOR_INVENTORY.md` |
+| **F1-03** | P0 | `COMPLETED` | Bounded Safetensors Access & Validation | `Sources/FlintFieldfareCore/` | Map all 1,751 tensors across 4 shards, capacity-checked buffers, 64 MB Data limit, zero-trap shapes, chunked streaming | `FlintSafetensorsFileTests` | Validated in test suite (28 tests), `docs/flint/PHYSICAL_TENSOR_INVENTORY.md` |
 | **F1-04** | P0 | `PENDING` | Resident Weight Extraction & Storage | `Sources/FlintFieldfareCore/` | Load embeddings, lm_head, attention projections, dense MLPs, routers, shared experts | `FlintResidentWeightsTests`| Pending |
 | **F1-05** | P0 | `COMPLETED` | Model-Free Malformed Checkpoint Tests | `Tests/FlintFieldfareCoreTests/` | Reject missing tensors, corrupted shapes, wrong layer types | Unit tests | Validated in test suite |
 

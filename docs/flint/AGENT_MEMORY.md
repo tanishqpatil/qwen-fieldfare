@@ -30,7 +30,7 @@ This document is the authoritative recovery guide for agents operating on FlintF
     - Empirical validation of live checkpoint `/Users/tanishq/models/flint-mixed-3-4bit` (4 shards, 1,751 tensors, 17.84 GB).
     - Bitwise SHA-256 match against independent Python/MLX ground truth across 8 empirical tensors.
     - Physical tensor inventory report: `docs/flint/PHYSICAL_TENSOR_INVENTORY.md` ($1,376,256\text{ B} = 1.3125\text{ MiB}$ per 3-bit expert, closed-form offset formula).
-  - Test Suite: **45 tests passing across 3 suites in 0.017 seconds**.
+  - Test Suite: **50 tests passing across 3 suites in 0.019 seconds**.
 - **F1-04 (Resident Weight Extraction & Storage)**: Pending authorization.
 - **F2 (Mathematical Primitives & Metal Kernels)**: Pending.
 - **F3 (First Real Flint Token Forward)**: Pending.
@@ -42,12 +42,12 @@ This document is the authoritative recovery guide for agents operating on FlintF
 3. **Symlink Invariant**: Leave the existing `/Users/tanishq/dev/product/flint-fieldfare` symlink untouched until explicit user/reviewer authorization is granted.
 
 ## Key Architectural Invariants
-1. **Never use Qwen Recurrent/DeltaNet code for Flint**: Flint is a pure Transformer MoE (5 full-attention, 42 sliding-attention with window 513).
+1. **Never use Qwen Recurrent/DeltaNet code for Flint**: Flint is a pure Transformer MoE (14 full-attention, 35 sliding-attention with window 513). All 49 layers feature self-attention.
 2. **Fixed Router-Order Reduction**: Always accumulate into `contributions[position * 2048 + row]` where `position \in [0, 5]` and sum in order $0 \to 5$. Never accumulate by cache residency.
 3. **Learned Attention Sinks**: `softmax_offset[32]` is an extra logit in softmax denominator without a value vector.
 4. **Dedicated Lease Lock**: `/tmp/flintfieldfare-inference-\(getuid()).lock`.
 5. **Never Commit Weights**: Checkpoint files remain strictly external.
 
 ## Immediate Next Steps
-1. Submit Review #003 / F1-03 Completion Report.
-2. Await reviewer evaluation and authorization for F1-04 (`FlintResidentLoader.swift`).
+1. Submit Review #004 Safety Closure completion report.
+2. Await authorization for F1-04 (`FlintResidentLoader.swift`).

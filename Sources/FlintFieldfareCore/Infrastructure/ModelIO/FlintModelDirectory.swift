@@ -237,6 +237,12 @@ public enum FlintModelDirectory {
                 throw FlintSafetensorsError.tensorNotFound(name: "\(tensorName) missing from shard \(shardName)")
             }
         }
+        let totalHeaderTensors = shardFiles.values.reduce(0) { $0 + $1.header.tensors.count }
+        guard totalHeaderTensors == weightMap.count else {
+            throw FlintSafetensorsError.metadataConflict(
+                "Total tensors across shard headers (\(totalHeaderTensors)) != weight_map count (\(weightMap.count))"
+            )
+        }
 
         // 3. Verify physical layout of representative tensors against config
         func verifyTensor(name: String, expectedShape: [Int], expectedDtype: String) throws {

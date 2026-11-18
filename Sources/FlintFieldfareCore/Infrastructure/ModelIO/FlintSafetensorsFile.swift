@@ -19,6 +19,8 @@ public enum FlintSafetensorsError: Error, LocalizedError, Equatable {
     case tensorNotFound(name: String)
     case outOfBoundsRange(requested: Range<Int>, available: Range<Int>)
     case metadataConflict(String)
+    case bufferCapacityInsufficient(required: Int, available: Int)
+    case requestedAllocationExceedsLimit(requested: Int, limit: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -52,6 +54,10 @@ public enum FlintSafetensorsError: Error, LocalizedError, Equatable {
             return "Requested byte range \(req) is out of bounds for available range \(avail)"
         case .metadataConflict(let detail):
             return "Contradictory metadata between configuration and Safetensors checkpoint: \(detail)"
+        case .bufferCapacityInsufficient(let req, let avail):
+            return "Destination buffer capacity (\(avail) bytes) is insufficient for requested read size (\(req) bytes)"
+        case .requestedAllocationExceedsLimit(let req, let lim):
+            return "Requested Data allocation of \(req) bytes exceeds maximum allowed limit of \(lim) bytes"
         }
     }
 }
@@ -66,14 +72,33 @@ public struct FlintTensorInfo: Equatable, Sendable {
     public let byteCount: Int     // dataOffsets[1] - dataOffsets[0]
     public let elementCount: Int
 
-    public init(name: String, shape: [Int], dtype: String, byteWidth: Int, dataOffsets: [Int]) {
+    public init(
+        name: String,
+        shape: [Int],
+        dtype: String,
+        byteWidth: Int,
+        dataOffsets: [Int],
+        elementCount: Int
+    ) {
         self.name = name
         self.shape = shape
         self.dtype = dtype
         self.byteWidth = byteWidth
         self.dataOffsets = dataOffsets
-        self.byteCount = dataOffsets[1] - dataOffsets[0]
-        self.elementCount = shape.reduce(1, *)
+        self.byteCount = dataOffsets.count >= 2 ? (dataOffsets[1] - dataOffsets[0]) : 0
+        self.elementCount = elementCount
+    }
+
+    public init(name: String, shape: [Int], dtype: String, byteWidth: Int, dataOffsets: [Int]) {
+        let count = (try? FlintSafetensorsHeader.validatedElementCount(shape: shape, name: name)) ?? 0
+        self.init(
+            name: name,
+            shape: shape,
+            dtype: dtype,
+            byteWidth: byteWidth,
+            dataOffsets: dataOffsets,
+            elementCount: count
+        )
     }
 }
 
@@ -108,6 +133,28 @@ public struct FlintSafetensorsHeader: Equatable, Sendable {
             throw FlintSafetensorsError.invalidHeaderLength("header length \(length) exceeds remaining file size \(fileByteCount - 8)")
         }
         return length
+    }
+
+    /// Safely computes the total element count of a shape tensor without risk of integer overflow.
+    /// Traps are strictly prevented for malformed shapes such as [Int.max, Int.max, 0].
+    public static func validatedElementCount(shape: [Int], name: String) throws -> Int {
+        var product = 1
+        var hasZero = false
+        for dim in shape {
+            guard dim >= 0 else {
+                throw FlintSafetensorsError.invalidTensor(name: name, reason: "dimension \(dim) must be non-negative")
+            }
+            if dim == 0 {
+                hasZero = true
+            } else {
+                let (newProduct, overflow) = product.multipliedReportingOverflow(by: dim)
+                guard !overflow else {
+                    throw FlintSafetensorsError.arithmeticOverflow(name: "\(name) element count")
+                }
+                product = newProduct
+            }
+        }
+        return hasZero ? 0 : product
     }
 
     public static func parse(data: Data, fileByteCount: Int) throws -> FlintSafetensorsHeader {
@@ -197,16 +244,7 @@ public struct FlintSafetensorsHeader: Equatable, Sendable {
                 throw FlintSafetensorsError.invalidTensor(name: name, reason: "data_offsets end (\(offsets[1])) exceeds shard payload size (\(maxPayload))")
             }
 
-            var elements = shape.contains(0) ? 0 : 1
-            if elements != 0 {
-                for dim in shape {
-                    let (res, multOverflow) = elements.multipliedReportingOverflow(by: dim)
-                    guard !multOverflow else {
-                        throw FlintSafetensorsError.arithmeticOverflow(name: "\(name) element count")
-                    }
-                    elements = res
-                }
-            }
+            let elements = try validatedElementCount(shape: shape, name: name)
 
             let (expectedBytes, bytesOverflow) = elements.multipliedReportingOverflow(by: byteWidth)
             guard !bytesOverflow else {
@@ -230,7 +268,8 @@ public struct FlintSafetensorsHeader: Equatable, Sendable {
                 shape: shape,
                 dtype: dtype,
                 byteWidth: byteWidth,
-                dataOffsets: offsets
+                dataOffsets: offsets,
+                elementCount: elements
             )
         }
 
@@ -281,9 +320,12 @@ public struct FlintSafetensorsHeader: Equatable, Sendable {
 /// An open, validated Safetensors shard owning a POSIX file descriptor.
 /// Thread-safe for concurrent read operations via pread.
 public final class FlintSafetensorsFile: @unchecked Sendable {
+    public static let defaultMaxAllocatedBytes = 64 * 1024 * 1024 // 64 MiB default cap for Data allocations
+
     public let path: String
-    public let descriptor: Int32
+    internal let descriptor: Int32
     public let header: FlintSafetensorsHeader
+    public let maxAllocatedBytes: Int
     private let identity: Identity
 
     public struct Identity: Equatable, Sendable {
@@ -316,33 +358,37 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
         }
     }
 
-    public init(url: URL) throws {
-        let canonicalPath = url.resolvingSymlinksInPath().path
-        let fd = open(canonicalPath, O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC)
+    public init(url: URL, maxAllocatedBytes: Int = defaultMaxAllocatedBytes) throws {
+        let filePath = url.path
+        let fd = open(filePath, O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC)
         guard fd >= 0 else {
-            throw FlintSafetensorsError.posix(operation: "open(\(canonicalPath))", code: errno)
+            if errno == ELOOP {
+                throw FlintSafetensorsError.notRegularFile("Symlink rejected by O_NOFOLLOW: \(filePath)")
+            }
+            throw FlintSafetensorsError.posix(operation: "open(\(filePath))", code: errno)
         }
 
         do {
-            let identity = try Identity(descriptor: fd, path: canonicalPath)
+            let identity = try Identity(descriptor: fd, path: filePath)
             var prefixData = Data(count: 8)
-            try Self.preadExact(fd: fd, destination: &prefixData, offset: 0, path: canonicalPath)
+            try Self.preadExact(fd: fd, destination: &prefixData, offset: 0, path: filePath)
 
             let headerLen = try FlintSafetensorsHeader.headerLength(prefix: prefixData, fileByteCount: identity.size)
             var headerData = Data(count: headerLen)
-            try Self.preadExact(fd: fd, destination: &headerData, offset: 8, path: canonicalPath)
+            try Self.preadExact(fd: fd, destination: &headerData, offset: 8, path: filePath)
 
             let header = try FlintSafetensorsHeader.parse(data: headerData, fileByteCount: identity.size)
 
             // Re-verify that file wasn't modified while reading header
-            let currentIdentity = try Identity(descriptor: fd, path: canonicalPath)
+            let currentIdentity = try Identity(descriptor: fd, path: filePath)
             guard identity == currentIdentity else {
-                throw FlintSafetensorsError.fileChanged(canonicalPath)
+                throw FlintSafetensorsError.fileChanged(filePath)
             }
 
-            self.path = canonicalPath
+            self.path = filePath
             self.descriptor = fd
             self.header = header
+            self.maxAllocatedBytes = maxAllocatedBytes
             self.identity = identity
         } catch {
             close(fd)
@@ -354,15 +400,27 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
         close(descriptor)
     }
 
-    /// Verifies that the open file descriptor has not undergone size or timestamp changes.
+    /// Verifies that the open file descriptor has not undergone size or timestamp changes,
+    /// and verifies that the file on disk has not been unlinked or replaced with another inode.
     public func verifyUnchanged() throws {
+        // 1. Open descriptor check
         let current = try Identity(descriptor: descriptor, path: path)
         guard identity == current else {
-            throw FlintSafetensorsError.fileChanged(path)
+            throw FlintSafetensorsError.fileChanged("Open file descriptor identity modified for \(path)")
+        }
+
+        // 2. On-disk path check
+        var pathInfo = stat()
+        guard stat(path, &pathInfo) == 0 else {
+            throw FlintSafetensorsError.fileChanged("File at \(path) is no longer accessible on disk (errno \(errno))")
+        }
+        guard pathInfo.st_dev == identity.device && pathInfo.st_ino == identity.inode else {
+            throw FlintSafetensorsError.fileChanged("File at \(path) was replaced on disk (inode \(identity.inode) -> \(pathInfo.st_ino))")
         }
     }
 
     /// Reads the entire physical byte payload of a named tensor into Data.
+    /// Allocation is capped by maxAllocatedBytes.
     public func readTensorPayload(_ name: String) throws -> Data {
         guard let info = header.tensors[name] else {
             throw FlintSafetensorsError.tensorNotFound(name: name)
@@ -370,8 +428,9 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
         return try readPayloadSlice(range: info.dataOffsets[0]..<info.dataOffsets[1])
     }
 
-    /// Reads a sub-range within a named tensor's payload.
+    /// Reads a sub-range within a named tensor's payload into Data.
     /// byteRange is relative to the start of the tensor's data.
+    /// Allocation is capped by maxAllocatedBytes.
     public func readTensorSlice(_ name: String, byteRange: Range<Int>) throws -> Data {
         guard let info = header.tensors[name] else {
             throw FlintSafetensorsError.tensorNotFound(name: name)
@@ -390,7 +449,8 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
         return try readPayloadSlice(range: physicalStart..<physicalEnd)
     }
 
-    /// Reads a byte range relative to the shard's payload start (i.e. immediately after header).
+    /// Reads a byte range relative to the shard's payload start (i.e. immediately after header) into Data.
+    /// Allocation is capped by maxAllocatedBytes.
     public func readPayloadSlice(range: Range<Int>) throws -> Data {
         let payloadBytes = header.fileByteCount - header.payloadOffset
         guard range.lowerBound >= 0, range.upperBound <= payloadBytes else {
@@ -402,6 +462,12 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
         if range.isEmpty {
             return Data()
         }
+        guard range.count <= maxAllocatedBytes else {
+            throw FlintSafetensorsError.requestedAllocationExceedsLimit(
+                requested: range.count,
+                limit: maxAllocatedBytes
+            )
+        }
 
         try verifyUnchanged()
         let fileOffset = header.payloadOffset + range.lowerBound
@@ -411,8 +477,9 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
         return data
     }
 
-    /// Zero-copy read into caller-allocated memory.
-    public func readPayload(into destination: UnsafeMutableRawPointer, range: Range<Int>) throws {
+    /// Reads a byte range relative to the shard's payload start into a caller-allocated buffer.
+    /// Destination capacity is strictly verified against requested range.count to prevent buffer overflow.
+    public func readPayload(into buffer: UnsafeMutableRawBufferPointer, range: Range<Int>) throws {
         let payloadBytes = header.fileByteCount - header.payloadOffset
         guard range.lowerBound >= 0, range.upperBound <= payloadBytes else {
             throw FlintSafetensorsError.outOfBoundsRange(
@@ -420,8 +487,20 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
                 available: 0..<payloadBytes
             )
         }
+        guard buffer.count >= range.count else {
+            throw FlintSafetensorsError.bufferCapacityInsufficient(
+                required: range.count,
+                available: buffer.count
+            )
+        }
         if range.isEmpty {
             return
+        }
+        guard let baseAddress = buffer.baseAddress else {
+            throw FlintSafetensorsError.bufferCapacityInsufficient(
+                required: range.count,
+                available: 0
+            )
         }
 
         try verifyUnchanged()
@@ -430,7 +509,7 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
         while totalRead < range.count {
             let bytes = pread(
                 descriptor,
-                destination.advanced(by: totalRead),
+                baseAddress.advanced(by: totalRead),
                 range.count - totalRead,
                 off_t(fileOffset + totalRead)
             )
@@ -445,6 +524,63 @@ public final class FlintSafetensorsFile: @unchecked Sendable {
             totalRead += bytes
         }
         try verifyUnchanged()
+    }
+
+    /// Reads the entire physical byte payload of a named tensor into a caller-allocated buffer.
+    public func readTensorPayload(_ name: String, into buffer: UnsafeMutableRawBufferPointer) throws {
+        guard let info = header.tensors[name] else {
+            throw FlintSafetensorsError.tensorNotFound(name: name)
+        }
+        try readPayload(into: buffer, range: info.dataOffsets[0]..<info.dataOffsets[1])
+    }
+
+    /// Reads a sub-range within a named tensor's payload into a caller-allocated buffer.
+    public func readTensorSlice(_ name: String, byteRange: Range<Int>, into buffer: UnsafeMutableRawBufferPointer) throws {
+        guard let info = header.tensors[name] else {
+            throw FlintSafetensorsError.tensorNotFound(name: name)
+        }
+        guard byteRange.lowerBound >= 0, byteRange.upperBound <= info.byteCount else {
+            throw FlintSafetensorsError.outOfBoundsRange(
+                requested: byteRange,
+                available: 0..<info.byteCount
+            )
+        }
+        let physicalStart = info.dataOffsets[0] + byteRange.lowerBound
+        let physicalEnd = info.dataOffsets[0] + byteRange.upperBound
+        try readPayload(into: buffer, range: physicalStart..<physicalEnd)
+    }
+
+    /// Reads a named tensor in bounded chunks without loading the entire tensor into memory.
+    public func readTensorChunks(
+        _ name: String,
+        chunkSize: Int = 1024 * 1024,
+        handler: (_ chunk: UnsafeRawBufferPointer, _ offsetInTensor: Int) throws -> Void
+    ) throws {
+        guard let info = header.tensors[name] else {
+            throw FlintSafetensorsError.tensorNotFound(name: name)
+        }
+        guard chunkSize > 0 else {
+            throw FlintSafetensorsError.bufferCapacityInsufficient(required: 1, available: chunkSize)
+        }
+        let totalBytes = info.byteCount
+        if totalBytes == 0 {
+            try handler(UnsafeRawBufferPointer(start: nil, count: 0), 0)
+            return
+        }
+
+        let actualChunk = min(chunkSize, totalBytes)
+        var chunkBuffer = Data(count: actualChunk)
+        var offset = 0
+        while offset < totalBytes {
+            let thisRead = min(actualChunk, totalBytes - offset)
+            let subRange = offset..<(offset + thisRead)
+            try chunkBuffer.withUnsafeMutableBytes { rawBuf in
+                let sliceBuf = UnsafeMutableRawBufferPointer(rebasing: rawBuf[0..<thisRead])
+                try readTensorSlice(name, byteRange: subRange, into: sliceBuf)
+                try handler(UnsafeRawBufferPointer(sliceBuf), offset)
+            }
+            offset += thisRead
+        }
     }
 
     private static func preadExact(fd: Int32, destination: inout Data, offset: off_t, path: String) throws {
