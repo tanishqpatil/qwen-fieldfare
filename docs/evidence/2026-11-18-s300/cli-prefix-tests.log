@@ -1,0 +1,133 @@
+Building for debugging...
+[Computing dependencies]
+[2 / 21] QwenFieldfareServerSupport
+[12 / 31] QwenFieldfareServerSupport
+[18 / 37] QwenFieldfareServerSupport
+[27 / 42] QwenFieldfareServer-product
+[29 / 44] QwenFieldfareServer-product
+[34 / 48] QwenFieldfareServerManagement
+[40 / 51] QwenFieldfareServer-product
+[41 / 52] QwenFieldfareServerManagementTests-product
+[50 / 60] QwenFieldfareServerManagementTests-product
+[52 / 61] QwenFieldfareMac-product
+[55 / 61] QwenFieldfareServerTests-product
+[57 / 61] QwenFieldfareServerManagementTests-product
+[59 / 61] QwenFieldfareServerManagementTests-product
+[65 / 65] QwenFieldfareMac-product
+Build complete! (2.64 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ConfigurationTests started.
+◇ Test defaultsAndHelpVersionNeedNoModelOrSecret() started.
+✔ Test defaultsAndHelpVersionNeedNoModelOrSecret() passed after 0.001 seconds.
+◇ Test invalidSettingsAreRecoverableAndSecretSafe() started.
+✔ Test invalidSettingsAreRecoverableAndSecretSafe() passed after 0.001 seconds.
+◇ Test restrictedKeyFileAndUnsafeTypes() started.
+✔ Test restrictedKeyFileAndUnsafeTypes() passed after 0.001 seconds.
+◇ Test configurableQueueSaturatesAtEachBound() started.
+✔ Test configurableQueueSaturatesAtEachBound() passed after 0.036 seconds.
+◇ Test installedOpenCodeToolHistoryWireFixture() started.
+✔ Test installedOpenCodeToolHistoryWireFixture() passed after 0.005 seconds.
+◇ Test openCodeNumericSchemaBoundsEnforced() started.
+✔ Test openCodeNumericSchemaBoundsEnforced() passed after 0.001 seconds.
+◇ Test prefixCacheDefaultsOffAndRejectsUnknownModes() started.
+✔ Test prefixCacheDefaultsOffAndRejectsUnknownModes() passed after 0.001 seconds.
+◇ Test successfulFlushProtectsCommitFromExpectedConnectionClose() started.
+✔ Test successfulFlushProtectsCommitFromExpectedConnectionClose() passed after 0.001 seconds.
+✔ Suite ConfigurationTests passed after 0.045 seconds.
+◇ Suite PrefixBoundaryInvestigationTests started.
+◇ Test ordinaryHistoryChangesEarlierAssistantPreamble() started.
+✔ Test ordinaryHistoryChangesEarlierAssistantPreamble() passed after 0.001 seconds.
+◇ Test canonicalSequentialToolsCanPreserveTheFramingPrefix() started.
+✔ Test canonicalSequentialToolsCanPreserveTheFramingPrefix() passed after 0.008 seconds.
+✔ Suite PrefixBoundaryInvestigationTests passed after 0.008 seconds.
+◇ Suite ServerTests started.
+◇ Test validation() started.
+✔ Test validation() passed after 0.001 seconds.
+◇ Test admissionQueueCancellationAndShutdown() started.
+✔ Test admissionQueueCancellationAndShutdown() passed after 0.015 seconds.
+◇ Test realHTTPProtocolAndSSE() started.
+✔ Test realHTTPProtocolAndSSE() passed after 0.078 seconds.
+◇ Test clientDisconnectCancelsAndWorkerCanShutdown() started.
+✔ Test clientDisconnectCancelsAndWorkerCanShutdown() passed after 0.120 seconds.
+◇ Test initializationFailureIsRecoverable() started.
+✔ Test initializationFailureIsRecoverable() passed after 0.001 seconds.
+◇ Test failureAndLoopbackSecurity() started.
+✔ Test failureAndLoopbackSecurity() passed after 0.003 seconds.
+✔ Suite ServerTests passed after 0.219 seconds.
+◇ Suite TelemetryTests started.
+◇ Test healthCountersAndTimingsRetainNoPayload() started.
+✔ Test healthCountersAndTimingsRetainNoPayload() passed after 0.005 seconds.
+◇ Test queuedCancellationIsCountedWithoutExecutingWork() started.
+✔ Test queuedCancellationIsCountedWithoutExecutingWork() passed after 0.005 seconds.
+◇ Test restartImmediatelyRebindsUsedPort() started.
+✔ Test restartImmediatelyRebindsUsedPort() passed after 0.002 seconds.
+◇ Test bufferingDurationAppearsOnlyForValidatedCalls() started.
+✔ Test bufferingDurationAppearsOnlyForValidatedCalls() passed after 0.015 seconds.
+✔ Suite TelemetryTests passed after 0.029 seconds.
+◇ Suite ToolContractTests started.
+◇ Test goldenCheckpointPromptsMatchPythonAndOfficial() started.
+✔ Test goldenCheckpointPromptsMatchPythonAndOfficial() passed after 0.025 seconds.
+◇ Test everyPossibleDelimiterFragmentBoundary() started.
+✔ Test everyPossibleDelimiterFragmentBoundary() passed after 0.015 seconds.
+◇ Test multipleCallsAndStableCallIDs() started.
+✔ Test multipleCallsAndStableCallIDs() passed after 0.001 seconds.
+◇ Test nestedValuesUnicodeAndMultilineStrings() started.
+✔ Test nestedValuesUnicodeAndMultilineStrings() passed after 0.001 seconds.
+◇ Test malformedUnknownIncompleteAndLimitedTurnsNeverCommit() started.
+✔ Test malformedUnknownIncompleteAndLimitedTurnsNeverCommit() passed after 0.003 seconds.
+◇ Test literalProseAndPartialDelimiterIsWithheld() started.
+✔ Test literalProseAndPartialDelimiterIsWithheld() passed after 0.001 seconds.
+◇ Test strictJSONSchemasAndToolChoice() started.
+✔ Test strictJSONSchemasAndToolChoice() passed after 0.001 seconds.
+◇ Test numericEnumSemanticsAndMissingDefinitions() started.
+✔ Test numericEnumSemanticsAndMissingDefinitions() passed after 0.001 seconds.
+◇ Test resultAssociationAndInjectionValidation() started.
+✔ Test resultAssociationAndInjectionValidation() passed after 0.001 seconds.
+✔ Suite ToolContractTests passed after 0.049 seconds.
+◇ Suite ToolHTTPTests started.
+◇ Test jsonAndSSEToolObjectsRoundTrip() started.
+✔ Test jsonAndSSEToolObjectsRoundTrip() passed after 0.005 seconds.
+◇ Test invalidOutputAndDisabledCallsFailWithoutExecutableDeltas() started.
+✔ Test invalidOutputAndDisabledCallsFailWithoutExecutableDeltas() passed after 0.003 seconds.
+◇ Test cancellationDoesNotCommitPartialCallAndContextBounds() started.
+✔ Test cancellationDoesNotCommitPartialCallAndContextBounds() passed after 0.001 seconds.
+◇ Test disconnectWhileNativeDelimiterPendingCancelsGeneration() started.
+✔ Test disconnectWhileNativeDelimiterPendingCancelsGeneration() passed after 0.125 seconds.
+◇ Test toolsDisabledCanStillReturnNormalText() started.
+✔ Test toolsDisabledCanStillReturnNormalText() passed after 0.004 seconds.
+✔ Suite ToolHTTPTests passed after 0.140 seconds.
+✔ Test run with 34 tests in 6 suites passed after 0.492 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenActiveStreamingMemoryConfigurationTests started.
+◇ Test eightKProfilesRetainExpectedSlotBudgets() started.
+✔ Test eightKProfilesRetainExpectedSlotBudgets() passed after 0.001 seconds.
+◇ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() started.
+✔ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() passed after 0.001 seconds.
+◇ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() started.
+✔ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() passed after 0.001 seconds.
+◇ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() started.
+✔ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() passed after 0.001 seconds.
+✔ Suite QwenActiveStreamingMemoryConfigurationTests passed after 0.001 seconds.
+◇ Suite QwenPrefixStateTests started.
+◇ Test strictPrefixInPlaceAndNoUnsupportedRewind() started.
+✔ Test strictPrefixInPlaceAndNoUnsupportedRewind() passed after 0.001 seconds.
+◇ Test emptySuffixAheadAndSchemaChangesReplay() started.
+✔ Test emptySuffixAheadAndSchemaChangesReplay() passed after 0.001 seconds.
+◇ Test disabledLimitAndClearCannotPublishPendingState() started.
+✔ Test disabledLimitAndClearCannotPublishPendingState() passed after 0.001 seconds.
+◇ Test incorrectPositionsAndOversizedInputsAreRecoverable() started.
+✔ Test incorrectPositionsAndOversizedInputsAreRecoverable() passed after 0.001 seconds.
+✔ Suite QwenPrefixStateTests passed after 0.001 seconds.
+◇ Suite QwenRuntimeTelemetryTests started.
+◇ Test nearestRankPercentilesAndMean() started.
+✔ Test nearestRankPercentilesAndMean() passed after 0.001 seconds.
+◇ Test boundedAccumulatorDropsOldestSamplesAndResets() started.
+✔ Test boundedAccumulatorDropsOldestSamplesAndResets() passed after 0.001 seconds.
+◇ Test cacheDerivedMetricsUseDemandRequestsOnly() started.
+✔ Test cacheDerivedMetricsUseDemandRequestsOnly() passed after 0.001 seconds.
+✔ Suite QwenRuntimeTelemetryTests passed after 0.001 seconds.
+✔ Test run with 11 tests in 3 suites passed after 0.001 seconds.

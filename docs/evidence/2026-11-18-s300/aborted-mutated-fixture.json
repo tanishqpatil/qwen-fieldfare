@@ -1,0 +1,43 @@
+{
+  "cache_slots" : 2183,
+  "kind" : "same Swift runner deterministic raw-token equivalence; no HTTP\/tool execution",
+  "load_seconds" : 0.15267558333289344,
+  "records" : [
+    {
+      "cache" : {
+        "comparedPrefixTokens" : 0,
+        "consumedTokens" : 0,
+        "hits" : 0,
+        "invalidations" : 1,
+        "misses" : 0,
+        "mode" : "off",
+        "processedPromptTokens" : 1483,
+        "reason" : "disabled",
+        "reusedPrefixTokens" : 0,
+        "session" : "E5865FDD-8853-4A59-8370-4AD02DA703AC",
+        "tokenStorageBytes" : 0,
+        "valid" : false
+      },
+      "expert_fetched_bytes" : 283373862912,
+      "expert_misses" : 160146,
+      "finish" : "End of turn",
+      "footprint_bytes" : 5197751272,
+      "metal_bytes" : 5291294720,
+      "mode" : "off",
+      "output_sha256" : "f04a86d83758201aa1958f787f1fada58cda91018606d1b67d49210a79d481f8",
+      "output_tokens" : 1,
+      "prompt_tokens" : 1483,
+      "round" : 0,
+      "step" : 0,
+      "timing" : {
+        "decodeAfterFirstTokenMs" : 42.993000002752524,
+        "firstGeneratedTokenMs" : 54220.080583334493,
+        "outcome" : "completed",
+        "outputTokens" : 1,
+        "overallMs" : 54263.809833333653,
+        "prefillMs" : 54218.571066856384
+      }
+    }
+  ],
+  "rounds" : 5
+}

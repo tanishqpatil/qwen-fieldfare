@@ -1,6 +1,20 @@
 # QwenFieldfare
 
-## Current milestone — S2-03 native server management
+## Current milestone — S3-00 exact-prefix state reuse
+
+Explicit authorization supersedes S2-03 stop. Measure replay baselines first,
+then one bounded in-place exact consumed-token prefix per active runner,default
+off,with validated commit/invalidation and shared CLI/UI controls. No state
+rewind approximation,kernel/math/precision/expert-policy changes or second owner.
+Stop at first validated reuse milestone;review/local commit only,no push/merge.
+
+S3-00 qualification failed on sustained same-Swift raw-token equivalence. The
+candidate is archived and production code restored to S2-03. Stop after restored
+validation/report; no cache controls ship and no math/kernel fix is authorized.
+See docs/evidence/2026-11-18-s300/README.md for the failed gate and bounded diagnostic.
+
+
+## Historical milestone — S2-03 native server management
 
 Explicit user authorization supersedes S2-02 stop. Checkpoint S2-02, reuse the
 existing Core/backend/HTTP implementation in native server controls, preserve

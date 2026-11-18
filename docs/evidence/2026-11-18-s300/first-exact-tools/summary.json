@@ -1,0 +1,52 @@
+{
+  "phase": "first-exact-tools",
+  "mode": "exact-prefix",
+  "base_commit": "83d28e28745d43000ad7e732e8ba2a069591575e",
+  "server_sha256": "7f2aedf5e0b8de75ddced55ee96a23f5b9b9cafb6d9482bb1f810c8f98d7796b",
+  "context": 8192,
+  "memory_gib": 5,
+  "profiling": false,
+  "profile": "tools",
+  "checkpoint": "external compatible Qwen3.6-35B-A3B MLX4bit; prior identity/integrity evidence reused; normal loader checks enabled",
+  "process_pid": 84113,
+  "ready_seconds": 1.2172616250027204,
+  "loaded_health": {
+    "tools": true,
+    "active_generations": 0,
+    "requests": {
+      "completed": 0,
+      "rejected": 0,
+      "failed": 0,
+      "cancelled": 0
+    },
+    "status": "ready",
+    "model": "qwen-fieldfare",
+    "service": "QwenFieldfareServer",
+    "diagnostics": {
+      "memoryBudgetGiB": 5,
+      "context": 8192,
+      "metalAllocatedBytes": 5291294720,
+      "physicalFootprintBytes": 1156601856,
+      "prefixCache": {
+        "consumedTokens": 0,
+        "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+        "processedPromptTokens": 0,
+        "comparedPrefixTokens": 0,
+        "mode": "exact-prefix",
+        "invalidations": 1,
+        "reusedPrefixTokens": 0,
+        "hits": 0,
+        "misses": 0,
+        "reason": "modeChanged",
+        "valid": false,
+        "tokenStorageBytes": 0
+      }
+    },
+    "queue_capacity": 2,
+    "queued_requests": 0
+  },
+  "tool_cycle_seconds": 54.005738667001424,
+  "passed": true,
+  "server_exit": 0,
+  "all_wall_seconds": 56.3632922090037
+}

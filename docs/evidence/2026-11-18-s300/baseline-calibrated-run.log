@@ -1,0 +1,43 @@
+warmup 200 {'completion_tokens': 1, 'prompt_tokens': 17, 'total_tokens': 18} 0.915
+calibrated-1k-first 200 {'completion_tokens': 1, 'prompt_tokens': 1026, 'total_tokens': 1027} 35.455
+calibrated-1k-followup 200 {'completion_tokens': 1, 'prompt_tokens': 1049, 'total_tokens': 1050} 36.625
+calibrated-4k-first 200 {'completion_tokens': 1, 'prompt_tokens': 4038, 'total_tokens': 4039} 150.186
+calibrated-4k-followup 200 {'completion_tokens': 1, 'prompt_tokens': 4061, 'total_tokens': 4062} 151.378
+longer-first 200 {'completion_tokens': 1, 'prompt_tokens': 6144, 'total_tokens': 6145} 241.238
+{
+  "phase": "baseline-calibrated",
+  "mode": "original replay only; cache implementation absent",
+  "base_commit": "83d28e28745d43000ad7e732e8ba2a069591575e",
+  "server_sha256": "8728793fc353ce8f7129f4506dabc85d3783c7bc83abae4c2369916b3c54ed69",
+  "context": 8192,
+  "memory_gib": 5,
+  "profiling": false,
+  "profile": "calibrated",
+  "checkpoint": "external compatible Qwen3.6-35B-A3B MLX4bit; prior identity/integrity evidence reused; normal loader checks enabled",
+  "process_pid": 78668,
+  "ready_seconds": 3.7340016669986653,
+  "loaded_health": {
+    "queue_capacity": 2,
+    "requests": {
+      "cancelled": 0,
+      "rejected": 0,
+      "failed": 0,
+      "completed": 0
+    },
+    "diagnostics": {
+      "memoryBudgetGiB": 5,
+      "metalAllocatedBytes": 5291294720,
+      "physicalFootprintBytes": 1174411216,
+      "context": 8192
+    },
+    "queued_requests": 0,
+    "model": "qwen-fieldfare",
+    "tools": true,
+    "status": "ready",
+    "service": "QwenFieldfareServer",
+    "active_generations": 0
+  },
+  "passed": true,
+  "server_exit": 0,
+  "all_wall_seconds": 619.6459609999947
+}

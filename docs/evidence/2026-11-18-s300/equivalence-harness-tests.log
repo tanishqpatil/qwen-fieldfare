@@ -1,0 +1,41 @@
+Building for debugging...
+[Computing dependencies]
+[Pre-planning 1 / 1453]
+[Planning deferred tasks]
+[1 / 5] CNIOLinux
+[18 / 29] QwenFieldfareServerTests-product
+[27 / 38] QwenFieldfareServerTests-product
+[31 / 37] QwenFieldfareServerTests-product
+[33 / 37] QwenFieldfareServerTests-product
+Build complete! (1.83 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite RealPrefixEquivalenceTests started.
+➜ Test realGreedyReplayAndPrefixTokensAgree() skipped.
+✔ Suite RealPrefixEquivalenceTests passed after 0.001 seconds.
+✔ Test run with 1 test in 1 suite passed after 0.001 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite SettingsTests started.
+◇ Test validationReusesCLIAndPrivateFile() started.
+✔ Test validationReusesCLIAndPrivateFile() passed after 0.004 seconds.
+◇ Test olderPersistedSettingsKeepValuesAndDefaultCacheOff() started.
+✔ Test olderPersistedSettingsKeepValuesAndDefaultCacheOff() passed after 0.001 seconds.
+✔ Suite SettingsTests passed after 0.005 seconds.
+✔ Test run with 2 tests in 1 suite passed after 0.005 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenPrefixStateTests started.
+◇ Test strictPrefixInPlaceAndNoUnsupportedRewind() started.
+✔ Test strictPrefixInPlaceAndNoUnsupportedRewind() passed after 0.001 seconds.
+◇ Test emptySuffixAheadAndSchemaChangesReplay() started.
+✔ Test emptySuffixAheadAndSchemaChangesReplay() passed after 0.001 seconds.
+◇ Test disabledLimitAndClearCannotPublishPendingState() started.
+✔ Test disabledLimitAndClearCannotPublishPendingState() passed after 0.001 seconds.
+◇ Test incorrectPositionsAndOversizedInputsAreRecoverable() started.
+✔ Test incorrectPositionsAndOversizedInputsAreRecoverable() passed after 0.001 seconds.
+✔ Suite QwenPrefixStateTests passed after 0.001 seconds.
+✔ Test run with 4 tests in 1 suite passed after 0.001 seconds.

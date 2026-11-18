@@ -1,0 +1,69 @@
+Building for production...
+[Computing dependencies]
+[Pre-planning 1 / 1453]
+[Planning deferred tasks]
+[75 / 237]
+[99 / 243] InternalCollectionsUtilities
+[116 / 254] CNIOFreeBSD
+[123 / 255] CNIOLLHTTP
+[126 / 255]
+[131 / 256] _NIODataStructures
+[136 / 255] InternalCollectionsUtilities
+[154 / 270] CNIOAtomics
+[164 / 276] NIOConcurrencyHelpers
+[173 / 277] QwenFieldfarePresentationTests-product
+[175 / 282] Atomics
+[182 / 280]
+[183 / 280] OrderedCollections
+[196 / 290] NIOCore
+[198 / 291] QwenFieldfarePresentationTests-product
+[204 / 291] QwenFieldfarePresentationTests-product
+[208 / 291] NIOCore
+[220 / 310] NIOPosix
+[226 / 315] EventSource
+[231 / 319] HuggingFace
+[233 / 320] Jinja
+[238 / 319] NIOEmbedded
+[243 / 318] NIOPosix
+[251 / 324] NIO
+[259 / 330] HuggingFace
+[265 / 335] Hub
+[268 / 337] Hub
+[274 / 342] Tokenizers
+[281 / 342] Tokenizers
+[287 / 347] QwenFieldfareCore
+[290 / 349] QwenFieldfareCore
+[305 / 363] QwenFieldfarePack-product
+[315 / 372] QwenFieldfareCoreTests-product
+[319 / 373] QwenFieldfarePack-product
+[320 / 373] QwenFieldfarePack-product
+[322 / 375] QwenFieldfareBench-product
+[324 / 375] QwenFieldfareBench-product
+[325 / 375] QwenFieldfareBench-product
+[327 / 377] QwenFieldfareServerSupport
+[341 / 386] QwenFieldfareServer-product
+[344 / 388] QwenFieldfareServerTests-product
+[346 / 389] QwenFieldfareServer-product
+[348 / 389] QwenFieldfareServer-product
+[349 / 389] QwenFieldfareServerManagement
+[362 / 392] QwenFieldfareMac-product
+[369 / 393] QwenFieldfareServer-product
+[371 / 395] QwenFieldfareServerManagementTests-product
+[375 / 396] QwenFieldfareCoreTests-product
+[377 / 396] QwenFieldfareServerManagementTests-product
+[382 / 396] QwenFieldfareServerManagementTests-product
+[384 / 396] QwenFieldfareServerManagementTests-product
+[386 / 396] QwenFieldfareServerTests-product
+[391 / 396] QwenFieldfareServerTests-product
+[393 / 396] QwenFieldfareMac-product
+[395 / 399] QwenFieldfareMac-product
+[397 / 399] QwenFieldfareServerTests-product
+[398 / 399] QwenFieldfareMac-product
+Build complete! (43.22 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite RealPrefixEquivalenceTests started.
+➜ Test realGreedyReplayAndPrefixTokensAgree() skipped.
+✔ Suite RealPrefixEquivalenceTests passed after 0.001 seconds.
+✔ Test run with 1 test in 1 suite passed after 0.001 seconds.

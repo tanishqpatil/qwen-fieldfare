@@ -1,0 +1,5 @@
+{
+  "forward_tensor_body_identical_to": "83d28e2",
+  "body_sha256": "ce24e7a65d26e38c49a6f5fae31a6140cdfac79a15877f0a01c5d1742f65bac2",
+  "kernel_pin_template_sampling_changes": "none; generation only changes reset/prefix start, integer metadata tracking and existing forward calls"
+}

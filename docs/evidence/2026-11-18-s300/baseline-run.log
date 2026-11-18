@@ -1,0 +1,49 @@
+warmup 200 {'completion_tokens': 1, 'prompt_tokens': 17, 'total_tokens': 18} 1.52
+single-turn 200 {'completion_tokens': 1, 'prompt_tokens': 30, 'total_tokens': 31} 1.274
+two-turn-short 200 {'completion_tokens': 2, 'prompt_tokens': 47, 'total_tokens': 49} 1.621
+approx-1k-first 200 {'completion_tokens': 1, 'prompt_tokens': 826, 'total_tokens': 827} 31.807
+approx-1k-followup 200 {'completion_tokens': 1, 'prompt_tokens': 849, 'total_tokens': 850} 32.709
+approx-4k-first 200 {'completion_tokens': 1, 'prompt_tokens': 3282, 'total_tokens': 3283} 129.705
+approx-4k-followup 200 {'completion_tokens': 1, 'prompt_tokens': 3305, 'total_tokens': 3306} 127.29
+longer-first 200 {'completion_tokens': 1, 'prompt_tokens': 5010, 'total_tokens': 5011} 189.98
+tool-step-1 200 {'completion_tokens': 25, 'prompt_tokens': 1141, 'total_tokens': 1166} 42.35
+tool-step-2 200 {'completion_tokens': 25, 'prompt_tokens': 1255, 'total_tokens': 1280} 46.968
+tool-step-3 200 {'completion_tokens': 25, 'prompt_tokens': 1369, 'total_tokens': 1394} 50.303
+tool-final 200 {'completion_tokens': 1, 'prompt_tokens': 1482, 'total_tokens': 1483} 53.568
+{
+  "phase": "baseline",
+  "mode": "original replay only; cache implementation absent",
+  "base_commit": "83d28e28745d43000ad7e732e8ba2a069591575e",
+  "server_sha256": "8728793fc353ce8f7129f4506dabc85d3783c7bc83abae4c2369916b3c54ed69",
+  "context": 8192,
+  "memory_gib": 5,
+  "profiling": false,
+  "checkpoint": "external compatible Qwen3.6-35B-A3B MLX4bit; prior identity/integrity evidence reused; normal loader checks enabled",
+  "process_pid": 76728,
+  "ready_seconds": 3.6047482499998296,
+  "loaded_health": {
+    "model": "qwen-fieldfare",
+    "queue_capacity": 2,
+    "active_generations": 0,
+    "queued_requests": 0,
+    "tools": true,
+    "diagnostics": {
+      "memoryBudgetGiB": 5,
+      "metalAllocatedBytes": 5291294720,
+      "context": 8192,
+      "physicalFootprintBytes": 1175066696
+    },
+    "requests": {
+      "cancelled": 0,
+      "completed": 0,
+      "failed": 0,
+      "rejected": 0
+    },
+    "service": "QwenFieldfareServer",
+    "status": "ready"
+  },
+  "tool_cycle_seconds": 193.1939198340042,
+  "passed": true,
+  "server_exit": 0,
+  "all_wall_seconds": 712.9043084169971
+}

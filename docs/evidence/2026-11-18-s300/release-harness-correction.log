@@ -1,0 +1,47 @@
+Building for production...
+[Computing dependencies]
+[Pre-planning 1 / 1453]
+[Planning deferred tasks]
+[9 / 93]
+[11 / 21] QwenFieldfareServerTests-product
+[20 / 29] QwenFieldfareServerTests-product
+[24 / 28] QwenFieldfareServerTests-product
+[26 / 28] QwenFieldfareServerTests-product
+[31 / 35] QwenFieldfareCoreTests-product
+[33 / 37] QwenFieldfareCoreTests-product
+[37 / 38] QwenFieldfareCoreTests-product
+[40 / 40] QwenFieldfareCoreTests-product
+Build complete! (10.51 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite PrefixLifecycleTests started.
+◇ Test clearRequiresAuthenticationAndDoesNotGenerate() started.
+✔ Test clearRequiresAuthenticationAndDoesNotGenerate() passed after 0.018 seconds.
+◇ Test protocolFailureAndBackendErrorNeverCommit() started.
+✔ Test protocolFailureAndBackendErrorNeverCommit() passed after 0.001 seconds.
+◇ Test disconnectInvalidatesBeforeWorkerRelease() started.
+✔ Test disconnectInvalidatesBeforeWorkerRelease() passed after 0.014 seconds.
+✔ Suite PrefixLifecycleTests passed after 0.034 seconds.
+◇ Suite RealPrefixEquivalenceTests started.
+➜ Test realGreedyReplayAndPrefixTokensAgree() skipped.
+✔ Suite RealPrefixEquivalenceTests passed after 0.001 seconds.
+✔ Test run with 4 tests in 2 suites passed after 0.035 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenPrefixStateTests started.
+◇ Test strictPrefixInPlaceAndNoUnsupportedRewind() started.
+✔ Test strictPrefixInPlaceAndNoUnsupportedRewind() passed after 0.001 seconds.
+◇ Test emptySuffixAheadAndSchemaChangesReplay() started.
+✔ Test emptySuffixAheadAndSchemaChangesReplay() passed after 0.001 seconds.
+◇ Test disabledLimitAndClearCannotPublishPendingState() started.
+✔ Test disabledLimitAndClearCannotPublishPendingState() passed after 0.001 seconds.
+◇ Test incorrectPositionsAndOversizedInputsAreRecoverable() started.
+✔ Test incorrectPositionsAndOversizedInputsAreRecoverable() passed after 0.001 seconds.
+◇ Test failedOrInvalidatedTransactionsCannotBeCommitted() started.
+✔ Test failedOrInvalidatedTransactionsCannotBeCommitted() passed after 0.001 seconds.
+◇ Test pendingFinalTokensAndModeChangesNeverPublish() started.
+✔ Test pendingFinalTokensAndModeChangesNeverPublish() passed after 0.001 seconds.
+✔ Suite QwenPrefixStateTests passed after 0.001 seconds.
+✔ Test run with 6 tests in 1 suite passed after 0.001 seconds.

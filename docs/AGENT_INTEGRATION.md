@@ -327,3 +327,12 @@ numerical release blocker. The private explicit test client can be reproduced
 against a running managed instance with `python3 Scripts/test_managed_server.py
 --key-file /private/path/key --port 8080`; it never loads another model and saves
 only public synthetic fixture exchanges/aggregate measurements.
+
+## S3-00 cache qualification failed
+
+The exact-prefix candidate was reverted after sustained same-Swift raw-token
+divergence. Current CLI/UI/HTTP behavior remains S2-03 reset-and-replay;there is
+no supported --prefix-cache option or /v1/cache/clear endpoint. Client tool
+execution,authentication,JSON/SSE,queue and app/CLI ownership are unchanged.
+See [failed gate and reproduced expert-history sensitivity](evidence/2026-11-18-s300/README.md).
+Short tool-cycle hits and latency reductions do not establish qualified reuse.

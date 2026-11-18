@@ -1,0 +1,17 @@
+ProductName:		macOS
+ProductVersion:		27.2.1
+BuildVersion:		26B131
+Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)
+Target: arm64-apple-macosx27.2.0
+      Model Name: MacBook Pro
+      Model Identifier: Mac17,2
+      Chip: Apple M5
+      Total Number of Cores: 10 (4 Super and 6 Efficiency)
+      Memory: 32 GB
+      Chipset Model: Apple M5
+      Total Number of Cores: 10
+Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk3s5   926Gi   767Gi   134Gi    86%    4.9M  1.4G    0%   /System/Volumes/Data
+The system has 34359738368 (2097152 pages with a page size of 16384).
+System-wide memory free percentage: 85%
+vm.swapusage: total = 1024.00M  used = 279.69M  free = 744.31M  (encrypted)

@@ -1,0 +1,48 @@
+Building for production...
+[Computing dependencies]
+[Using on-disk description]
+[33 / 130]
+[59 / 137] _NIOBase64
+[73 / 147]
+[77 / 148] _NIOBase64
+[87 / 144] _NIODataStructures
+[88 / 143] NIOConcurrencyHelpers
+[100 / 152] CNIOAtomics
+[105 / 155] QwenFieldfarePresentation
+[110 / 156] Atomics
+[112 / 152] OrderedCollections
+[120 / 157] NIOCore
+[122 / 158] yyjson
+[123 / 158] NIOCore
+[132 / 174] NIOPosix
+[138 / 179] EventSource
+[141 / 181] HuggingFace
+[143 / 182] Jinja
+[145 / 178] NIOEmbedded
+[147 / 174] NIOPosix
+[152 / 177] NIO
+[161 / 183] Hub
+[164 / 185] Hub
+[167 / 187] Tokenizers
+[169 / 188] NIOHTTP1
+[171 / 184] Tokenizers
+[174 / 186] QwenFieldfareCore
+[177 / 188] QwenFieldfareCore
+[184 / 197] QwenFieldfarePack-product
+[194 / 206] QwenFieldfarePack-product
+[196 / 206] QwenFieldfarePack-product
+[196 / 206] QwenFieldfareBench-product
+[198 / 206] QwenFieldfareBench-product
+[198 / 206] QwenFieldfareServerSupport
+[204 / 213] QwenFieldfareServerManagement
+[206 / 215] QwenFieldfareServer-product
+[208 / 215] QwenFieldfareServer-product
+[209 / 215] QwenFieldfareServerManagement
+[212 / 213] QwenFieldfareMac-product
+[213 / 214] QwenFieldfareServer-product
+[218 / 219] QwenFieldfareMac-product
+[220 / 222] QwenFieldfareMac-product
+[221 / 222] QwenFieldfareMac-product
+[223 / 223] QwenFieldfareBench-product
+[226 / 226] QwenFieldfarePack-product
+Build complete! (36.67 secs)

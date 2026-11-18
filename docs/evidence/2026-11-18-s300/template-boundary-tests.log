@@ -1,0 +1,88 @@
+Building for debugging...
+[Computing dependencies]
+[Pre-planning 1 / 1453]
+[Planning deferred tasks]
+[41 / 198]
+[62 / 201] CNIOPosix
+[74 / 208] _NIODataStructures
+[88 / 210] NIOConcurrencyHelpers
+[101 / 201] NIOConcurrencyHelpers
+[109 / 202] QwenFieldfarePresentation
+[113 / 192] DequeModule
+[119 / 189] NIOCore
+[126 / 200] yyjson
+[130 / 200] NIOCore
+[131 / 200]
+[131 / 200] NIOCore
+[131 / 200] CNIOAtomics
+[131 / 200] NIOCore
+[142 / 222] NIOEmbedded
+[146 / 226] EventSource
+[153 / 244]
+[166 / 237] NIOPosix
+[168 / 248] NIOPosix
+[172 / 248] HuggingFace
+[174 / 248] HuggingFace
+[176 / 248] HuggingFace
+[176 / 248] NIOPosix
+[179 / 248] HuggingFace
+[181 / 244] NIOPosix
+[183 / 250] NIO
+[189 / 255] HuggingFace
+[190 / 267]
+[198 / 267] NIOHTTP1
+[201 / 267] HuggingFace
+[206 / 266] NIOHTTP1
+[216 / 273] Hub
+[219 / 276] Hub
+[219 / 276] Tokenizers
+[228 / 287] Tokenizers
+[231 / 286] Tokenizers
+[234 / 289] Tokenizers
+[236 / 300]
+[246 / 300] QwenFieldfareCore
+[247 / 300] QwenFieldfareCore
+[252 / 308] QwenFieldfareCore
+[253 / 305] QwenFieldfareCore
+[253 / 305] QwenFieldfarePack-product
+[262 / 325]
+[271 / 325] QwenFieldfareServerSupport
+[275 / 321] QwenFieldfareServerSupport
+[278 / 327] QwenFieldfareServerSupport
+[278 / 327] QwenFieldfareBench-product
+[287 / 334] QwenFieldfareServer-product
+[287 / 334] QwenFieldfareServerManagement
+[300 / 327] QwenFieldfareCore-product
+[300 / 327] QwenFieldfareServerManagement
+[307 / 334] QwenFieldfareBench-product
+[316 / 357] QwenFieldfareMac-product
+[317 / 361] QwenFieldfareCoreTests-product
+[322 / 360] QwenFieldfareServerTests-product
+[329 / 360] QwenFieldfareCoreTests-product
+[330 / 360] QwenFieldfareServerTests-product
+[333 / 360] QwenFieldfareServerManagementTests-product
+[337 / 360] QwenFieldfareMac-product
+[339 / 360] QwenFieldfareCoreTests-product
+[341 / 360] QwenFieldfareMac-product
+[342 / 360] QwenFieldfareServerTests-product
+[344 / 360] QwenFieldfareMac-product
+[347 / 360] QwenFieldfareCoreTests-product
+[349 / 360] QwenFieldfareServer-product
+[352 / 362] QwenFieldfareMac-product
+[354 / 363] QwenFieldfareMac-product
+[358 / 365] QwenFieldfareServerTests-product
+[364 / 369] QwenFieldfareServer-product
+[365 / 371] QwenFieldfareMac-product
+[367 / 371] QwenFieldfareMac-product
+[369 / 371] QwenFieldfareCoreTests-product
+Build complete! (14.30 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite PrefixBoundaryInvestigationTests started.
+◇ Test ordinaryHistoryChangesEarlierAssistantPreamble() started.
+✔ Test ordinaryHistoryChangesEarlierAssistantPreamble() passed after 0.001 seconds.
+◇ Test canonicalSequentialToolsCanPreserveTheFramingPrefix() started.
+✔ Test canonicalSequentialToolsCanPreserveTheFramingPrefix() passed after 0.012 seconds.
+✔ Suite PrefixBoundaryInvestigationTests passed after 0.013 seconds.
+✔ Test run with 2 tests in 1 suite passed after 0.013 seconds.

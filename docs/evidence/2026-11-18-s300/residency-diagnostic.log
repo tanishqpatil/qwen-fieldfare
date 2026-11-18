@@ -1,0 +1,8 @@
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite PrefixResidencyDiagnosticTests started.
+◇ Test fullReplayWithColdExpertHistory() started.
+✔ Test fullReplayWithColdExpertHistory() passed after 56.347 seconds.
+✔ Suite PrefixResidencyDiagnosticTests passed after 56.347 seconds.
+✔ Test run with 1 test in 1 suite passed after 56.347 seconds.

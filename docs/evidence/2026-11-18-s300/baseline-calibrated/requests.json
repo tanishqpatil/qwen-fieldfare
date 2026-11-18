@@ -1,0 +1,530 @@
+[
+  {
+    "label": "warmup",
+    "measured": false,
+    "http": 200,
+    "wall_seconds": 0.9154532500033383,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Reply with exactly: ready"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "ready",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794941241,
+      "id": "chatcmpl-C82218FA-A48E-469B-8131-C92C878FBFA3",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 17,
+        "total_tokens": 18
+      }
+    },
+    "health": {
+      "queued_requests": 0,
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "physicalFootprintBytes": 5159314144,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192
+      },
+      "tools": true,
+      "requests": {
+        "completed": 1,
+        "lastRequest": {
+          "outcome": "completed",
+          "admissionMs": 0.17808333359425887,
+          "promptTokens": 17,
+          "formattingMs": 0.005083333235234022,
+          "decodeAfterFirstTokenMs": 39.660083333728835,
+          "expertCacheMisses": 2318,
+          "overallMs": 915.2408750014729,
+          "actualPrefillTokens": 17,
+          "expertFetchedBytes": 4101636096,
+          "expertLogicalReads": 2318,
+          "prefillMs": 870.1169490814209,
+          "outputTokens": 1,
+          "tokenizationMs": 0.6145833322079852,
+          "firstGeneratedTokenMs": 875.1687916665105,
+          "queueWaitMs": 0.01683333539403975
+        },
+        "rejected": 0,
+        "cancelled": 0,
+        "failed": 0
+      },
+      "service": "QwenFieldfareServer",
+      "queue_capacity": 2,
+      "status": "ready",
+      "active_generations": 0,
+      "model": "qwen-fieldfare"
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "calibrated-1k-first",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 35.455087458998605,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n\ndef offset_32(value: int) -> int:\n    return value + 32  # deterministic offset\n\ndef offset_33(value: int) -> int:\n    return value + 33  # deterministic offset\n\ndef offset_34(value: int) -> int:\n    return value + 34  # deterministic offset\n\ndef offset_35(value: int) -> int:\n    return value + 35  # deterministic offset\n\ndef offset_36(value: int) -> int:\n    return value + 36  # deterministic offset\n\ndef offset_37(value: int) -> int:\n    return value + 37  # deterministic offset\n\ndef offset_38(value: int) -> int:\n    return value + 38  # deterministic offset\n\ndef offset_39(value: int) -> int:\n    return value + 39  # deterministic offset\n```"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "OK",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794941242,
+      "id": "chatcmpl-D99AAD19-14C6-4B65-8451-0BECE2806673",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 1026,
+        "total_tokens": 1027
+      }
+    },
+    "health": {
+      "queue_capacity": 2,
+      "requests": {
+        "completed": 2,
+        "rejected": 0,
+        "failed": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "admissionMs": 0.09549999958835542,
+          "formattingMs": 0.04204166179988533,
+          "promptTokens": 1026,
+          "decodeAfterFirstTokenMs": 46.40008333080914,
+          "expertCacheMisses": 109511,
+          "overallMs": 35454.904375001206,
+          "actualPrefillTokens": 1026,
+          "expertFetchedBytes": 193776648192,
+          "expertLogicalReads": 109511,
+          "prefillMs": 35403.09202671051,
+          "outputTokens": 1,
+          "tokenizationMs": 3.3902499999385327,
+          "firstGeneratedTokenMs": 35408.28712500661,
+          "queueWaitMs": 0.010958334314636886
+        },
+        "cancelled": 0
+      },
+      "diagnostics": {
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5182399248,
+        "memoryBudgetGiB": 5
+      },
+      "queued_requests": 0,
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "status": "ready",
+      "service": "QwenFieldfareServer",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "calibrated-1k-followup",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 36.62515633399744,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n\ndef offset_32(value: int) -> int:\n    return value + 32  # deterministic offset\n\ndef offset_33(value: int) -> int:\n    return value + 33  # deterministic offset\n\ndef offset_34(value: int) -> int:\n    return value + 34  # deterministic offset\n\ndef offset_35(value: int) -> int:\n    return value + 35  # deterministic offset\n\ndef offset_36(value: int) -> int:\n    return value + 36  # deterministic offset\n\ndef offset_37(value: int) -> int:\n    return value + 37  # deterministic offset\n\ndef offset_38(value: int) -> int:\n    return value + 38  # deterministic offset\n\ndef offset_39(value: int) -> int:\n    return value + 39  # deterministic offset\n```"
+        },
+        {
+          "content": "OK",
+          "role": "assistant"
+        },
+        {
+          "role": "user",
+          "content": "Does offset_7 add seven? Reply with exactly YES."
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "YES",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794941277,
+      "id": "chatcmpl-16589D71-641F-4361-B558-45314652DBFE",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 1049,
+        "total_tokens": 1050
+      }
+    },
+    "health": {
+      "queued_requests": 0,
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "physicalFootprintBytes": 5183087376,
+        "context": 8192
+      },
+      "tools": true,
+      "requests": {
+        "cancelled": 0,
+        "rejected": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "admissionMs": 0.11108333274023607,
+          "promptTokens": 1049,
+          "formattingMs": 0.043666666897479445,
+          "decodeAfterFirstTokenMs": 35.08095833240077,
+          "expertCacheMisses": 111718,
+          "overallMs": 36624.91437499557,
+          "actualPrefillTokens": 1049,
+          "expertFetchedBytes": 197681872896,
+          "expertLogicalReads": 111718,
+          "prefillMs": 36584.18691158295,
+          "outputTokens": 1,
+          "tokenizationMs": 3.648750003776513,
+          "firstGeneratedTokenMs": 36589.6183333316,
+          "queueWaitMs": 0.010749994544312358
+        },
+        "failed": 0,
+        "completed": 3
+      },
+      "service": "QwenFieldfareServer",
+      "queue_capacity": 2,
+      "status": "ready",
+      "active_generations": 0,
+      "model": "qwen-fieldfare"
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "calibrated-4k-first",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 150.18613412500417,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n\ndef offset_32(value: int) -> int:\n    return value + 32  # deterministic offset\n\ndef offset_33(value: int) -> int:\n    return value + 33  # deterministic offset\n\ndef offset_34(value: int) -> int:\n    return value + 34  # deterministic offset\n\ndef offset_35(value: int) -> int:\n    return value + 35  # deterministic offset\n\ndef offset_36(value: int) -> int:\n    return value + 36  # deterministic offset\n\ndef offset_37(value: int) -> int:\n    return value + 37  # deterministic offset\n\ndef offset_38(value: int) -> int:\n    return value + 38  # deterministic offset\n\ndef offset_39(value: int) -> int:\n    return value + 39  # deterministic offset\n\ndef offset_40(value: int) -> int:\n    return value + 40  # deterministic offset\n\ndef offset_41(value: int) -> int:\n    return value + 41  # deterministic offset\n\ndef offset_42(value: int) -> int:\n    return value + 42  # deterministic offset\n\ndef offset_43(value: int) -> int:\n    return value + 43  # deterministic offset\n\ndef offset_44(value: int) -> int:\n    return value + 44  # deterministic offset\n\ndef offset_45(value: int) -> int:\n    return value + 45  # deterministic offset\n\ndef offset_46(value: int) -> int:\n    return value + 46  # deterministic offset\n\ndef offset_47(value: int) -> int:\n    return value + 47  # deterministic offset\n\ndef offset_48(value: int) -> int:\n    return value + 48  # deterministic offset\n\ndef offset_49(value: int) -> int:\n    return value + 49  # deterministic offset\n\ndef offset_50(value: int) -> int:\n    return value + 50  # deterministic offset\n\ndef offset_51(value: int) -> int:\n    return value + 51  # deterministic offset\n\ndef offset_52(value: int) -> int:\n    return value + 52  # deterministic offset\n\ndef offset_53(value: int) -> int:\n    return value + 53  # deterministic offset\n\ndef offset_54(value: int) -> int:\n    return value + 54  # deterministic offset\n\ndef offset_55(value: int) -> int:\n    return value + 55  # deterministic offset\n\ndef offset_56(value: int) -> int:\n    return value + 56  # deterministic offset\n\ndef offset_57(value: int) -> int:\n    return value + 57  # deterministic offset\n\ndef offset_58(value: int) -> int:\n    return value + 58  # deterministic offset\n\ndef offset_59(value: int) -> int:\n    return value + 59  # deterministic offset\n\ndef offset_60(value: int) -> int:\n    return value + 60  # deterministic offset\n\ndef offset_61(value: int) -> int:\n    return value + 61  # deterministic offset\n\ndef offset_62(value: int) -> int:\n    return value + 62  # deterministic offset\n\ndef offset_63(value: int) -> int:\n    return value + 63  # deterministic offset\n\ndef offset_64(value: int) -> int:\n    return value + 64  # deterministic offset\n\ndef offset_65(value: int) -> int:\n    return value + 65  # deterministic offset\n\ndef offset_66(value: int) -> int:\n    return value + 66  # deterministic offset\n\ndef offset_67(value: int) -> int:\n    return value + 67  # deterministic offset\n\ndef offset_68(value: int) -> int:\n    return value + 68  # deterministic offset\n\ndef offset_69(value: int) -> int:\n    return value + 69  # deterministic offset\n\ndef offset_70(value: int) -> int:\n    return value + 70  # deterministic offset\n\ndef offset_71(value: int) -> int:\n    return value + 71  # deterministic offset\n\ndef offset_72(value: int) -> int:\n    return value + 72  # deterministic offset\n\ndef offset_73(value: int) -> int:\n    return value + 73  # deterministic offset\n\ndef offset_74(value: int) -> int:\n    return value + 74  # deterministic offset\n\ndef offset_75(value: int) -> int:\n    return value + 75  # deterministic offset\n\ndef offset_76(value: int) -> int:\n    return value + 76  # deterministic offset\n\ndef offset_77(value: int) -> int:\n    return value + 77  # deterministic offset\n\ndef offset_78(value: int) -> int:\n    return value + 78  # deterministic offset\n\ndef offset_79(value: int) -> int:\n    return value + 79  # deterministic offset\n\ndef offset_80(value: int) -> int:\n    return value + 80  # deterministic offset\n\ndef offset_81(value: int) -> int:\n    return value + 81  # deterministic offset\n\ndef offset_82(value: int) -> int:\n    return value + 82  # deterministic offset\n\ndef offset_83(value: int) -> int:\n    return value + 83  # deterministic offset\n\ndef offset_84(value: int) -> int:\n    return value + 84  # deterministic offset\n\ndef offset_85(value: int) -> int:\n    return value + 85  # deterministic offset\n\ndef offset_86(value: int) -> int:\n    return value + 86  # deterministic offset\n\ndef offset_87(value: int) -> int:\n    return value + 87  # deterministic offset\n\ndef offset_88(value: int) -> int:\n    return value + 88  # deterministic offset\n\ndef offset_89(value: int) -> int:\n    return value + 89  # deterministic offset\n\ndef offset_90(value: int) -> int:\n    return value + 90  # deterministic offset\n\ndef offset_91(value: int) -> int:\n    return value + 91  # deterministic offset\n\ndef offset_92(value: int) -> int:\n    return value + 92  # deterministic offset\n\ndef offset_93(value: int) -> int:\n    return value + 93  # deterministic offset\n\ndef offset_94(value: int) -> int:\n    return value + 94  # deterministic offset\n\ndef offset_95(value: int) -> int:\n    return value + 95  # deterministic offset\n\ndef offset_96(value: int) -> int:\n    return value + 96  # deterministic offset\n\ndef offset_97(value: int) -> int:\n    return value + 97  # deterministic offset\n\ndef offset_98(value: int) -> int:\n    return value + 98  # deterministic offset\n\ndef offset_99(value: int) -> int:\n    return value + 99  # deterministic offset\n\ndef offset_100(value: int) -> int:\n    return value + 100  # deterministic offset\n\ndef offset_101(value: int) -> int:\n    return value + 101  # deterministic offset\n\ndef offset_102(value: int) -> int:\n    return value + 102  # deterministic offset\n\ndef offset_103(value: int) -> int:\n    return value + 103  # deterministic offset\n\ndef offset_104(value: int) -> int:\n    return value + 104  # deterministic offset\n\ndef offset_105(value: int) -> int:\n    return value + 105  # deterministic offset\n\ndef offset_106(value: int) -> int:\n    return value + 106  # deterministic offset\n\ndef offset_107(value: int) -> int:\n    return value + 107  # deterministic offset\n\ndef offset_108(value: int) -> int:\n    return value + 108  # deterministic offset\n\ndef offset_109(value: int) -> int:\n    return value + 109  # deterministic offset\n\ndef offset_110(value: int) -> int:\n    return value + 110  # deterministic offset\n\ndef offset_111(value: int) -> int:\n    return value + 111  # deterministic offset\n\ndef offset_112(value: int) -> int:\n    return value + 112  # deterministic offset\n\ndef offset_113(value: int) -> int:\n    return value + 113  # deterministic offset\n\ndef offset_114(value: int) -> int:\n    return value + 114  # deterministic offset\n\ndef offset_115(value: int) -> int:\n    return value + 115  # deterministic offset\n\ndef offset_116(value: int) -> int:\n    return value + 116  # deterministic offset\n\ndef offset_117(value: int) -> int:\n    return value + 117  # deterministic offset\n\ndef offset_118(value: int) -> int:\n    return value + 118  # deterministic offset\n\ndef offset_119(value: int) -> int:\n    return value + 119  # deterministic offset\n\ndef offset_120(value: int) -> int:\n    return value + 120  # deterministic offset\n\ndef offset_121(value: int) -> int:\n    return value + 121  # deterministic offset\n\ndef offset_122(value: int) -> int:\n    return value + 122  # deterministic offset\n\ndef offset_123(value: int) -> int:\n    return value + 123  # deterministic offset\n\ndef offset_124(value: int) -> int:\n    return value + 124  # deterministic offset\n\ndef offset_125(value: int) -> int:\n    return value + 125  # deterministic offset\n\ndef offset_126(value: int) -> int:\n    return value + 126  # deterministic offset\n\ndef offset_127(value: int) -> int:\n    return value + 127  # deterministic offset\n\ndef offset_128(value: int) -> int:\n    return value + 128  # deterministic offset\n\ndef offset_129(value: int) -> int:\n    return value + 129  # deterministic offset\n\ndef offset_130(value: int) -> int:\n    return value + 130  # deterministic offset\n\ndef offset_131(value: int) -> int:\n    return value + 131  # deterministic offset\n\ndef offset_132(value: int) -> int:\n    return value + 132  # deterministic offset\n\ndef offset_133(value: int) -> int:\n    return value + 133  # deterministic offset\n\ndef offset_134(value: int) -> int:\n    return value + 134  # deterministic offset\n\ndef offset_135(value: int) -> int:\n    return value + 135  # deterministic offset\n\ndef offset_136(value: int) -> int:\n    return value + 136  # deterministic offset\n\ndef offset_137(value: int) -> int:\n    return value + 137  # deterministic offset\n\ndef offset_138(value: int) -> int:\n    return value + 138  # deterministic offset\n\ndef offset_139(value: int) -> int:\n    return value + 139  # deterministic offset\n\ndef offset_140(value: int) -> int:\n    return value + 140  # deterministic offset\n\ndef offset_141(value: int) -> int:\n    return value + 141  # deterministic offset\n\ndef offset_142(value: int) -> int:\n    return value + 142  # deterministic offset\n\ndef offset_143(value: int) -> int:\n    return value + 143  # deterministic offset\n\ndef offset_144(value: int) -> int:\n    return value + 144  # deterministic offset\n\ndef offset_145(value: int) -> int:\n    return value + 145  # deterministic offset\n\ndef offset_146(value: int) -> int:\n    return value + 146  # deterministic offset\n\ndef offset_147(value: int) -> int:\n    return value + 147  # deterministic offset\n\ndef offset_148(value: int) -> int:\n    return value + 148  # deterministic offset\n\ndef offset_149(value: int) -> int:\n    return value + 149  # deterministic offset\n\ndef offset_150(value: int) -> int:\n    return value + 150  # deterministic offset\n\ndef offset_151(value: int) -> int:\n    return value + 151  # deterministic offset\n\ndef offset_152(value: int) -> int:\n    return value + 152  # deterministic offset\n\ndef offset_153(value: int) -> int:\n    return value + 153  # deterministic offset\n\ndef offset_154(value: int) -> int:\n    return value + 154  # deterministic offset\n\ndef offset_155(value: int) -> int:\n    return value + 155  # deterministic offset\n```"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "OK",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794941314,
+      "id": "chatcmpl-A97560FB-276E-4994-B134-F32D7814CBF6",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 4038,
+        "total_tokens": 4039
+      }
+    },
+    "health": {
+      "queue_capacity": 2,
+      "requests": {
+        "completed": 4,
+        "rejected": 0,
+        "failed": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "admissionMs": 0.16250000044237822,
+          "formattingMs": 0.14037499931873754,
+          "promptTokens": 4038,
+          "decodeAfterFirstTokenMs": 49.557750004169066,
+          "expertCacheMisses": 468150,
+          "overallMs": 150185.89445832913,
+          "actualPrefillTokens": 4038,
+          "expertFetchedBytes": 828378316800,
+          "expertLogicalReads": 468150,
+          "prefillMs": 150121.69992923737,
+          "outputTokens": 1,
+          "tokenizationMs": 12.61204166803509,
+          "firstGeneratedTokenMs": 150136.13583333063,
+          "queueWaitMs": 0.009041665180120617
+        },
+        "cancelled": 0
+      },
+      "diagnostics": {
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5249246016,
+        "memoryBudgetGiB": 5
+      },
+      "queued_requests": 0,
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "status": "ready",
+      "service": "QwenFieldfareServer",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "calibrated-4k-followup",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 151.3780323750034,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n\ndef offset_32(value: int) -> int:\n    return value + 32  # deterministic offset\n\ndef offset_33(value: int) -> int:\n    return value + 33  # deterministic offset\n\ndef offset_34(value: int) -> int:\n    return value + 34  # deterministic offset\n\ndef offset_35(value: int) -> int:\n    return value + 35  # deterministic offset\n\ndef offset_36(value: int) -> int:\n    return value + 36  # deterministic offset\n\ndef offset_37(value: int) -> int:\n    return value + 37  # deterministic offset\n\ndef offset_38(value: int) -> int:\n    return value + 38  # deterministic offset\n\ndef offset_39(value: int) -> int:\n    return value + 39  # deterministic offset\n\ndef offset_40(value: int) -> int:\n    return value + 40  # deterministic offset\n\ndef offset_41(value: int) -> int:\n    return value + 41  # deterministic offset\n\ndef offset_42(value: int) -> int:\n    return value + 42  # deterministic offset\n\ndef offset_43(value: int) -> int:\n    return value + 43  # deterministic offset\n\ndef offset_44(value: int) -> int:\n    return value + 44  # deterministic offset\n\ndef offset_45(value: int) -> int:\n    return value + 45  # deterministic offset\n\ndef offset_46(value: int) -> int:\n    return value + 46  # deterministic offset\n\ndef offset_47(value: int) -> int:\n    return value + 47  # deterministic offset\n\ndef offset_48(value: int) -> int:\n    return value + 48  # deterministic offset\n\ndef offset_49(value: int) -> int:\n    return value + 49  # deterministic offset\n\ndef offset_50(value: int) -> int:\n    return value + 50  # deterministic offset\n\ndef offset_51(value: int) -> int:\n    return value + 51  # deterministic offset\n\ndef offset_52(value: int) -> int:\n    return value + 52  # deterministic offset\n\ndef offset_53(value: int) -> int:\n    return value + 53  # deterministic offset\n\ndef offset_54(value: int) -> int:\n    return value + 54  # deterministic offset\n\ndef offset_55(value: int) -> int:\n    return value + 55  # deterministic offset\n\ndef offset_56(value: int) -> int:\n    return value + 56  # deterministic offset\n\ndef offset_57(value: int) -> int:\n    return value + 57  # deterministic offset\n\ndef offset_58(value: int) -> int:\n    return value + 58  # deterministic offset\n\ndef offset_59(value: int) -> int:\n    return value + 59  # deterministic offset\n\ndef offset_60(value: int) -> int:\n    return value + 60  # deterministic offset\n\ndef offset_61(value: int) -> int:\n    return value + 61  # deterministic offset\n\ndef offset_62(value: int) -> int:\n    return value + 62  # deterministic offset\n\ndef offset_63(value: int) -> int:\n    return value + 63  # deterministic offset\n\ndef offset_64(value: int) -> int:\n    return value + 64  # deterministic offset\n\ndef offset_65(value: int) -> int:\n    return value + 65  # deterministic offset\n\ndef offset_66(value: int) -> int:\n    return value + 66  # deterministic offset\n\ndef offset_67(value: int) -> int:\n    return value + 67  # deterministic offset\n\ndef offset_68(value: int) -> int:\n    return value + 68  # deterministic offset\n\ndef offset_69(value: int) -> int:\n    return value + 69  # deterministic offset\n\ndef offset_70(value: int) -> int:\n    return value + 70  # deterministic offset\n\ndef offset_71(value: int) -> int:\n    return value + 71  # deterministic offset\n\ndef offset_72(value: int) -> int:\n    return value + 72  # deterministic offset\n\ndef offset_73(value: int) -> int:\n    return value + 73  # deterministic offset\n\ndef offset_74(value: int) -> int:\n    return value + 74  # deterministic offset\n\ndef offset_75(value: int) -> int:\n    return value + 75  # deterministic offset\n\ndef offset_76(value: int) -> int:\n    return value + 76  # deterministic offset\n\ndef offset_77(value: int) -> int:\n    return value + 77  # deterministic offset\n\ndef offset_78(value: int) -> int:\n    return value + 78  # deterministic offset\n\ndef offset_79(value: int) -> int:\n    return value + 79  # deterministic offset\n\ndef offset_80(value: int) -> int:\n    return value + 80  # deterministic offset\n\ndef offset_81(value: int) -> int:\n    return value + 81  # deterministic offset\n\ndef offset_82(value: int) -> int:\n    return value + 82  # deterministic offset\n\ndef offset_83(value: int) -> int:\n    return value + 83  # deterministic offset\n\ndef offset_84(value: int) -> int:\n    return value + 84  # deterministic offset\n\ndef offset_85(value: int) -> int:\n    return value + 85  # deterministic offset\n\ndef offset_86(value: int) -> int:\n    return value + 86  # deterministic offset\n\ndef offset_87(value: int) -> int:\n    return value + 87  # deterministic offset\n\ndef offset_88(value: int) -> int:\n    return value + 88  # deterministic offset\n\ndef offset_89(value: int) -> int:\n    return value + 89  # deterministic offset\n\ndef offset_90(value: int) -> int:\n    return value + 90  # deterministic offset\n\ndef offset_91(value: int) -> int:\n    return value + 91  # deterministic offset\n\ndef offset_92(value: int) -> int:\n    return value + 92  # deterministic offset\n\ndef offset_93(value: int) -> int:\n    return value + 93  # deterministic offset\n\ndef offset_94(value: int) -> int:\n    return value + 94  # deterministic offset\n\ndef offset_95(value: int) -> int:\n    return value + 95  # deterministic offset\n\ndef offset_96(value: int) -> int:\n    return value + 96  # deterministic offset\n\ndef offset_97(value: int) -> int:\n    return value + 97  # deterministic offset\n\ndef offset_98(value: int) -> int:\n    return value + 98  # deterministic offset\n\ndef offset_99(value: int) -> int:\n    return value + 99  # deterministic offset\n\ndef offset_100(value: int) -> int:\n    return value + 100  # deterministic offset\n\ndef offset_101(value: int) -> int:\n    return value + 101  # deterministic offset\n\ndef offset_102(value: int) -> int:\n    return value + 102  # deterministic offset\n\ndef offset_103(value: int) -> int:\n    return value + 103  # deterministic offset\n\ndef offset_104(value: int) -> int:\n    return value + 104  # deterministic offset\n\ndef offset_105(value: int) -> int:\n    return value + 105  # deterministic offset\n\ndef offset_106(value: int) -> int:\n    return value + 106  # deterministic offset\n\ndef offset_107(value: int) -> int:\n    return value + 107  # deterministic offset\n\ndef offset_108(value: int) -> int:\n    return value + 108  # deterministic offset\n\ndef offset_109(value: int) -> int:\n    return value + 109  # deterministic offset\n\ndef offset_110(value: int) -> int:\n    return value + 110  # deterministic offset\n\ndef offset_111(value: int) -> int:\n    return value + 111  # deterministic offset\n\ndef offset_112(value: int) -> int:\n    return value + 112  # deterministic offset\n\ndef offset_113(value: int) -> int:\n    return value + 113  # deterministic offset\n\ndef offset_114(value: int) -> int:\n    return value + 114  # deterministic offset\n\ndef offset_115(value: int) -> int:\n    return value + 115  # deterministic offset\n\ndef offset_116(value: int) -> int:\n    return value + 116  # deterministic offset\n\ndef offset_117(value: int) -> int:\n    return value + 117  # deterministic offset\n\ndef offset_118(value: int) -> int:\n    return value + 118  # deterministic offset\n\ndef offset_119(value: int) -> int:\n    return value + 119  # deterministic offset\n\ndef offset_120(value: int) -> int:\n    return value + 120  # deterministic offset\n\ndef offset_121(value: int) -> int:\n    return value + 121  # deterministic offset\n\ndef offset_122(value: int) -> int:\n    return value + 122  # deterministic offset\n\ndef offset_123(value: int) -> int:\n    return value + 123  # deterministic offset\n\ndef offset_124(value: int) -> int:\n    return value + 124  # deterministic offset\n\ndef offset_125(value: int) -> int:\n    return value + 125  # deterministic offset\n\ndef offset_126(value: int) -> int:\n    return value + 126  # deterministic offset\n\ndef offset_127(value: int) -> int:\n    return value + 127  # deterministic offset\n\ndef offset_128(value: int) -> int:\n    return value + 128  # deterministic offset\n\ndef offset_129(value: int) -> int:\n    return value + 129  # deterministic offset\n\ndef offset_130(value: int) -> int:\n    return value + 130  # deterministic offset\n\ndef offset_131(value: int) -> int:\n    return value + 131  # deterministic offset\n\ndef offset_132(value: int) -> int:\n    return value + 132  # deterministic offset\n\ndef offset_133(value: int) -> int:\n    return value + 133  # deterministic offset\n\ndef offset_134(value: int) -> int:\n    return value + 134  # deterministic offset\n\ndef offset_135(value: int) -> int:\n    return value + 135  # deterministic offset\n\ndef offset_136(value: int) -> int:\n    return value + 136  # deterministic offset\n\ndef offset_137(value: int) -> int:\n    return value + 137  # deterministic offset\n\ndef offset_138(value: int) -> int:\n    return value + 138  # deterministic offset\n\ndef offset_139(value: int) -> int:\n    return value + 139  # deterministic offset\n\ndef offset_140(value: int) -> int:\n    return value + 140  # deterministic offset\n\ndef offset_141(value: int) -> int:\n    return value + 141  # deterministic offset\n\ndef offset_142(value: int) -> int:\n    return value + 142  # deterministic offset\n\ndef offset_143(value: int) -> int:\n    return value + 143  # deterministic offset\n\ndef offset_144(value: int) -> int:\n    return value + 144  # deterministic offset\n\ndef offset_145(value: int) -> int:\n    return value + 145  # deterministic offset\n\ndef offset_146(value: int) -> int:\n    return value + 146  # deterministic offset\n\ndef offset_147(value: int) -> int:\n    return value + 147  # deterministic offset\n\ndef offset_148(value: int) -> int:\n    return value + 148  # deterministic offset\n\ndef offset_149(value: int) -> int:\n    return value + 149  # deterministic offset\n\ndef offset_150(value: int) -> int:\n    return value + 150  # deterministic offset\n\ndef offset_151(value: int) -> int:\n    return value + 151  # deterministic offset\n\ndef offset_152(value: int) -> int:\n    return value + 152  # deterministic offset\n\ndef offset_153(value: int) -> int:\n    return value + 153  # deterministic offset\n\ndef offset_154(value: int) -> int:\n    return value + 154  # deterministic offset\n\ndef offset_155(value: int) -> int:\n    return value + 155  # deterministic offset\n```"
+        },
+        {
+          "content": "OK",
+          "role": "assistant"
+        },
+        {
+          "role": "user",
+          "content": "Does offset_7 add seven? Reply with exactly YES."
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "YES",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794941464,
+      "id": "chatcmpl-6FFBBFC3-D627-499C-AF66-4236113DB611",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 4061,
+        "total_tokens": 4062
+      }
+    },
+    "health": {
+      "queued_requests": 0,
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "physicalFootprintBytes": 5160280872,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192
+      },
+      "tools": true,
+      "requests": {
+        "completed": 5,
+        "lastRequest": {
+          "outcome": "completed",
+          "admissionMs": 0.1640833361307159,
+          "promptTokens": 4061,
+          "formattingMs": 0.14366666437126696,
+          "decodeAfterFirstTokenMs": 39.84791666880483,
+          "expertCacheMisses": 470318,
+          "overallMs": 151377.79558333568,
+          "actualPrefillTokens": 4061,
+          "expertFetchedBytes": 832214532096,
+          "expertLogicalReads": 470318,
+          "prefillMs": 151324.39804077148,
+          "outputTokens": 1,
+          "tokenizationMs": 14.955541664676275,
+          "firstGeneratedTokenMs": 151337.7243333307,
+          "queueWaitMs": 0.011374999303370714
+        },
+        "rejected": 0,
+        "cancelled": 0,
+        "failed": 0
+      },
+      "service": "QwenFieldfareServer",
+      "queue_capacity": 2,
+      "status": "ready",
+      "active_generations": 0,
+      "model": "qwen-fieldfare"
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "longer-first",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 241.23770291599794,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n\ndef offset_32(value: int) -> int:\n    return value + 32  # deterministic offset\n\ndef offset_33(value: int) -> int:\n    return value + 33  # deterministic offset\n\ndef offset_34(value: int) -> int:\n    return value + 34  # deterministic offset\n\ndef offset_35(value: int) -> int:\n    return value + 35  # deterministic offset\n\ndef offset_36(value: int) -> int:\n    return value + 36  # deterministic offset\n\ndef offset_37(value: int) -> int:\n    return value + 37  # deterministic offset\n\ndef offset_38(value: int) -> int:\n    return value + 38  # deterministic offset\n\ndef offset_39(value: int) -> int:\n    return value + 39  # deterministic offset\n\ndef offset_40(value: int) -> int:\n    return value + 40  # deterministic offset\n\ndef offset_41(value: int) -> int:\n    return value + 41  # deterministic offset\n\ndef offset_42(value: int) -> int:\n    return value + 42  # deterministic offset\n\ndef offset_43(value: int) -> int:\n    return value + 43  # deterministic offset\n\ndef offset_44(value: int) -> int:\n    return value + 44  # deterministic offset\n\ndef offset_45(value: int) -> int:\n    return value + 45  # deterministic offset\n\ndef offset_46(value: int) -> int:\n    return value + 46  # deterministic offset\n\ndef offset_47(value: int) -> int:\n    return value + 47  # deterministic offset\n\ndef offset_48(value: int) -> int:\n    return value + 48  # deterministic offset\n\ndef offset_49(value: int) -> int:\n    return value + 49  # deterministic offset\n\ndef offset_50(value: int) -> int:\n    return value + 50  # deterministic offset\n\ndef offset_51(value: int) -> int:\n    return value + 51  # deterministic offset\n\ndef offset_52(value: int) -> int:\n    return value + 52  # deterministic offset\n\ndef offset_53(value: int) -> int:\n    return value + 53  # deterministic offset\n\ndef offset_54(value: int) -> int:\n    return value + 54  # deterministic offset\n\ndef offset_55(value: int) -> int:\n    return value + 55  # deterministic offset\n\ndef offset_56(value: int) -> int:\n    return value + 56  # deterministic offset\n\ndef offset_57(value: int) -> int:\n    return value + 57  # deterministic offset\n\ndef offset_58(value: int) -> int:\n    return value + 58  # deterministic offset\n\ndef offset_59(value: int) -> int:\n    return value + 59  # deterministic offset\n\ndef offset_60(value: int) -> int:\n    return value + 60  # deterministic offset\n\ndef offset_61(value: int) -> int:\n    return value + 61  # deterministic offset\n\ndef offset_62(value: int) -> int:\n    return value + 62  # deterministic offset\n\ndef offset_63(value: int) -> int:\n    return value + 63  # deterministic offset\n\ndef offset_64(value: int) -> int:\n    return value + 64  # deterministic offset\n\ndef offset_65(value: int) -> int:\n    return value + 65  # deterministic offset\n\ndef offset_66(value: int) -> int:\n    return value + 66  # deterministic offset\n\ndef offset_67(value: int) -> int:\n    return value + 67  # deterministic offset\n\ndef offset_68(value: int) -> int:\n    return value + 68  # deterministic offset\n\ndef offset_69(value: int) -> int:\n    return value + 69  # deterministic offset\n\ndef offset_70(value: int) -> int:\n    return value + 70  # deterministic offset\n\ndef offset_71(value: int) -> int:\n    return value + 71  # deterministic offset\n\ndef offset_72(value: int) -> int:\n    return value + 72  # deterministic offset\n\ndef offset_73(value: int) -> int:\n    return value + 73  # deterministic offset\n\ndef offset_74(value: int) -> int:\n    return value + 74  # deterministic offset\n\ndef offset_75(value: int) -> int:\n    return value + 75  # deterministic offset\n\ndef offset_76(value: int) -> int:\n    return value + 76  # deterministic offset\n\ndef offset_77(value: int) -> int:\n    return value + 77  # deterministic offset\n\ndef offset_78(value: int) -> int:\n    return value + 78  # deterministic offset\n\ndef offset_79(value: int) -> int:\n    return value + 79  # deterministic offset\n\ndef offset_80(value: int) -> int:\n    return value + 80  # deterministic offset\n\ndef offset_81(value: int) -> int:\n    return value + 81  # deterministic offset\n\ndef offset_82(value: int) -> int:\n    return value + 82  # deterministic offset\n\ndef offset_83(value: int) -> int:\n    return value + 83  # deterministic offset\n\ndef offset_84(value: int) -> int:\n    return value + 84  # deterministic offset\n\ndef offset_85(value: int) -> int:\n    return value + 85  # deterministic offset\n\ndef offset_86(value: int) -> int:\n    return value + 86  # deterministic offset\n\ndef offset_87(value: int) -> int:\n    return value + 87  # deterministic offset\n\ndef offset_88(value: int) -> int:\n    return value + 88  # deterministic offset\n\ndef offset_89(value: int) -> int:\n    return value + 89  # deterministic offset\n\ndef offset_90(value: int) -> int:\n    return value + 90  # deterministic offset\n\ndef offset_91(value: int) -> int:\n    return value + 91  # deterministic offset\n\ndef offset_92(value: int) -> int:\n    return value + 92  # deterministic offset\n\ndef offset_93(value: int) -> int:\n    return value + 93  # deterministic offset\n\ndef offset_94(value: int) -> int:\n    return value + 94  # deterministic offset\n\ndef offset_95(value: int) -> int:\n    return value + 95  # deterministic offset\n\ndef offset_96(value: int) -> int:\n    return value + 96  # deterministic offset\n\ndef offset_97(value: int) -> int:\n    return value + 97  # deterministic offset\n\ndef offset_98(value: int) -> int:\n    return value + 98  # deterministic offset\n\ndef offset_99(value: int) -> int:\n    return value + 99  # deterministic offset\n\ndef offset_100(value: int) -> int:\n    return value + 100  # deterministic offset\n\ndef offset_101(value: int) -> int:\n    return value + 101  # deterministic offset\n\ndef offset_102(value: int) -> int:\n    return value + 102  # deterministic offset\n\ndef offset_103(value: int) -> int:\n    return value + 103  # deterministic offset\n\ndef offset_104(value: int) -> int:\n    return value + 104  # deterministic offset\n\ndef offset_105(value: int) -> int:\n    return value + 105  # deterministic offset\n\ndef offset_106(value: int) -> int:\n    return value + 106  # deterministic offset\n\ndef offset_107(value: int) -> int:\n    return value + 107  # deterministic offset\n\ndef offset_108(value: int) -> int:\n    return value + 108  # deterministic offset\n\ndef offset_109(value: int) -> int:\n    return value + 109  # deterministic offset\n\ndef offset_110(value: int) -> int:\n    return value + 110  # deterministic offset\n\ndef offset_111(value: int) -> int:\n    return value + 111  # deterministic offset\n\ndef offset_112(value: int) -> int:\n    return value + 112  # deterministic offset\n\ndef offset_113(value: int) -> int:\n    return value + 113  # deterministic offset\n\ndef offset_114(value: int) -> int:\n    return value + 114  # deterministic offset\n\ndef offset_115(value: int) -> int:\n    return value + 115  # deterministic offset\n\ndef offset_116(value: int) -> int:\n    return value + 116  # deterministic offset\n\ndef offset_117(value: int) -> int:\n    return value + 117  # deterministic offset\n\ndef offset_118(value: int) -> int:\n    return value + 118  # deterministic offset\n\ndef offset_119(value: int) -> int:\n    return value + 119  # deterministic offset\n\ndef offset_120(value: int) -> int:\n    return value + 120  # deterministic offset\n\ndef offset_121(value: int) -> int:\n    return value + 121  # deterministic offset\n\ndef offset_122(value: int) -> int:\n    return value + 122  # deterministic offset\n\ndef offset_123(value: int) -> int:\n    return value + 123  # deterministic offset\n\ndef offset_124(value: int) -> int:\n    return value + 124  # deterministic offset\n\ndef offset_125(value: int) -> int:\n    return value + 125  # deterministic offset\n\ndef offset_126(value: int) -> int:\n    return value + 126  # deterministic offset\n\ndef offset_127(value: int) -> int:\n    return value + 127  # deterministic offset\n\ndef offset_128(value: int) -> int:\n    return value + 128  # deterministic offset\n\ndef offset_129(value: int) -> int:\n    return value + 129  # deterministic offset\n\ndef offset_130(value: int) -> int:\n    return value + 130  # deterministic offset\n\ndef offset_131(value: int) -> int:\n    return value + 131  # deterministic offset\n\ndef offset_132(value: int) -> int:\n    return value + 132  # deterministic offset\n\ndef offset_133(value: int) -> int:\n    return value + 133  # deterministic offset\n\ndef offset_134(value: int) -> int:\n    return value + 134  # deterministic offset\n\ndef offset_135(value: int) -> int:\n    return value + 135  # deterministic offset\n\ndef offset_136(value: int) -> int:\n    return value + 136  # deterministic offset\n\ndef offset_137(value: int) -> int:\n    return value + 137  # deterministic offset\n\ndef offset_138(value: int) -> int:\n    return value + 138  # deterministic offset\n\ndef offset_139(value: int) -> int:\n    return value + 139  # deterministic offset\n\ndef offset_140(value: int) -> int:\n    return value + 140  # deterministic offset\n\ndef offset_141(value: int) -> int:\n    return value + 141  # deterministic offset\n\ndef offset_142(value: int) -> int:\n    return value + 142  # deterministic offset\n\ndef offset_143(value: int) -> int:\n    return value + 143  # deterministic offset\n\ndef offset_144(value: int) -> int:\n    return value + 144  # deterministic offset\n\ndef offset_145(value: int) -> int:\n    return value + 145  # deterministic offset\n\ndef offset_146(value: int) -> int:\n    return value + 146  # deterministic offset\n\ndef offset_147(value: int) -> int:\n    return value + 147  # deterministic offset\n\ndef offset_148(value: int) -> int:\n    return value + 148  # deterministic offset\n\ndef offset_149(value: int) -> int:\n    return value + 149  # deterministic offset\n\ndef offset_150(value: int) -> int:\n    return value + 150  # deterministic offset\n\ndef offset_151(value: int) -> int:\n    return value + 151  # deterministic offset\n\ndef offset_152(value: int) -> int:\n    return value + 152  # deterministic offset\n\ndef offset_153(value: int) -> int:\n    return value + 153  # deterministic offset\n\ndef offset_154(value: int) -> int:\n    return value + 154  # deterministic offset\n\ndef offset_155(value: int) -> int:\n    return value + 155  # deterministic offset\n\ndef offset_156(value: int) -> int:\n    return value + 156  # deterministic offset\n\ndef offset_157(value: int) -> int:\n    return value + 157  # deterministic offset\n\ndef offset_158(value: int) -> int:\n    return value + 158  # deterministic offset\n\ndef offset_159(value: int) -> int:\n    return value + 159  # deterministic offset\n\ndef offset_160(value: int) -> int:\n    return value + 160  # deterministic offset\n\ndef offset_161(value: int) -> int:\n    return value + 161  # deterministic offset\n\ndef offset_162(value: int) -> int:\n    return value + 162  # deterministic offset\n\ndef offset_163(value: int) -> int:\n    return value + 163  # deterministic offset\n\ndef offset_164(value: int) -> int:\n    return value + 164  # deterministic offset\n\ndef offset_165(value: int) -> int:\n    return value + 165  # deterministic offset\n\ndef offset_166(value: int) -> int:\n    return value + 166  # deterministic offset\n\ndef offset_167(value: int) -> int:\n    return value + 167  # deterministic offset\n\ndef offset_168(value: int) -> int:\n    return value + 168  # deterministic offset\n\ndef offset_169(value: int) -> int:\n    return value + 169  # deterministic offset\n\ndef offset_170(value: int) -> int:\n    return value + 170  # deterministic offset\n\ndef offset_171(value: int) -> int:\n    return value + 171  # deterministic offset\n\ndef offset_172(value: int) -> int:\n    return value + 172  # deterministic offset\n\ndef offset_173(value: int) -> int:\n    return value + 173  # deterministic offset\n\ndef offset_174(value: int) -> int:\n    return value + 174  # deterministic offset\n\ndef offset_175(value: int) -> int:\n    return value + 175  # deterministic offset\n\ndef offset_176(value: int) -> int:\n    return value + 176  # deterministic offset\n\ndef offset_177(value: int) -> int:\n    return value + 177  # deterministic offset\n\ndef offset_178(value: int) -> int:\n    return value + 178  # deterministic offset\n\ndef offset_179(value: int) -> int:\n    return value + 179  # deterministic offset\n\ndef offset_180(value: int) -> int:\n    return value + 180  # deterministic offset\n\ndef offset_181(value: int) -> int:\n    return value + 181  # deterministic offset\n\ndef offset_182(value: int) -> int:\n    return value + 182  # deterministic offset\n\ndef offset_183(value: int) -> int:\n    return value + 183  # deterministic offset\n\ndef offset_184(value: int) -> int:\n    return value + 184  # deterministic offset\n\ndef offset_185(value: int) -> int:\n    return value + 185  # deterministic offset\n\ndef offset_186(value: int) -> int:\n    return value + 186  # deterministic offset\n\ndef offset_187(value: int) -> int:\n    return value + 187  # deterministic offset\n\ndef offset_188(value: int) -> int:\n    return value + 188  # deterministic offset\n\ndef offset_189(value: int) -> int:\n    return value + 189  # deterministic offset\n\ndef offset_190(value: int) -> int:\n    return value + 190  # deterministic offset\n\ndef offset_191(value: int) -> int:\n    return value + 191  # deterministic offset\n\ndef offset_192(value: int) -> int:\n    return value + 192  # deterministic offset\n\ndef offset_193(value: int) -> int:\n    return value + 193  # deterministic offset\n\ndef offset_194(value: int) -> int:\n    return value + 194  # deterministic offset\n\ndef offset_195(value: int) -> int:\n    return value + 195  # deterministic offset\n\ndef offset_196(value: int) -> int:\n    return value + 196  # deterministic offset\n\ndef offset_197(value: int) -> int:\n    return value + 197  # deterministic offset\n\ndef offset_198(value: int) -> int:\n    return value + 198  # deterministic offset\n\ndef offset_199(value: int) -> int:\n    return value + 199  # deterministic offset\n\ndef offset_200(value: int) -> int:\n    return value + 200  # deterministic offset\n\ndef offset_201(value: int) -> int:\n    return value + 201  # deterministic offset\n\ndef offset_202(value: int) -> int:\n    return value + 202  # deterministic offset\n\ndef offset_203(value: int) -> int:\n    return value + 203  # deterministic offset\n\ndef offset_204(value: int) -> int:\n    return value + 204  # deterministic offset\n\ndef offset_205(value: int) -> int:\n    return value + 205  # deterministic offset\n\ndef offset_206(value: int) -> int:\n    return value + 206  # deterministic offset\n\ndef offset_207(value: int) -> int:\n    return value + 207  # deterministic offset\n\ndef offset_208(value: int) -> int:\n    return value + 208  # deterministic offset\n\ndef offset_209(value: int) -> int:\n    return value + 209  # deterministic offset\n\ndef offset_210(value: int) -> int:\n    return value + 210  # deterministic offset\n\ndef offset_211(value: int) -> int:\n    return value + 211  # deterministic offset\n\ndef offset_212(value: int) -> int:\n    return value + 212  # deterministic offset\n\ndef offset_213(value: int) -> int:\n    return value + 213  # deterministic offset\n\ndef offset_214(value: int) -> int:\n    return value + 214  # deterministic offset\n\ndef offset_215(value: int) -> int:\n    return value + 215  # deterministic offset\n\ndef offset_216(value: int) -> int:\n    return value + 216  # deterministic offset\n\ndef offset_217(value: int) -> int:\n    return value + 217  # deterministic offset\n\ndef offset_218(value: int) -> int:\n    return value + 218  # deterministic offset\n\ndef offset_219(value: int) -> int:\n    return value + 219  # deterministic offset\n\ndef offset_220(value: int) -> int:\n    return value + 220  # deterministic offset\n\ndef offset_221(value: int) -> int:\n    return value + 221  # deterministic offset\n\ndef offset_222(value: int) -> int:\n    return value + 222  # deterministic offset\n\ndef offset_223(value: int) -> int:\n    return value + 223  # deterministic offset\n\ndef offset_224(value: int) -> int:\n    return value + 224  # deterministic offset\n\ndef offset_225(value: int) -> int:\n    return value + 225  # deterministic offset\n\ndef offset_226(value: int) -> int:\n    return value + 226  # deterministic offset\n\ndef offset_227(value: int) -> int:\n    return value + 227  # deterministic offset\n\ndef offset_228(value: int) -> int:\n    return value + 228  # deterministic offset\n\ndef offset_229(value: int) -> int:\n    return value + 229  # deterministic offset\n\ndef offset_230(value: int) -> int:\n    return value + 230  # deterministic offset\n\ndef offset_231(value: int) -> int:\n    return value + 231  # deterministic offset\n\ndef offset_232(value: int) -> int:\n    return value + 232  # deterministic offset\n\ndef offset_233(value: int) -> int:\n    return value + 233  # deterministic offset\n```"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "OK",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794941615,
+      "id": "chatcmpl-C84A9DC7-7A8A-474A-9FE6-5D518DDF379D",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 6144,
+        "total_tokens": 6145
+      }
+    },
+    "health": {
+      "queue_capacity": 2,
+      "requests": {
+        "completed": 6,
+        "rejected": 0,
+        "failed": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "admissionMs": 0.18975000421050936,
+          "formattingMs": 0.2078333345707506,
+          "promptTokens": 6144,
+          "decodeAfterFirstTokenMs": 54.30216666718479,
+          "expertCacheMisses": 724831,
+          "overallMs": 241237.43975000252,
+          "actualPrefillTokens": 6144,
+          "expertFetchedBytes": 1282568159232,
+          "expertLogicalReads": 724831,
+          "prefillMs": 241160.18998622894,
+          "outputTokens": 1,
+          "tokenizationMs": 21.10187499783933,
+          "firstGeneratedTokenMs": 241182.94079166662,
+          "queueWaitMs": 0.010958334314636886
+        },
+        "cancelled": 0
+      },
+      "diagnostics": {
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5206664024,
+        "memoryBudgetGiB": 5
+      },
+      "queued_requests": 0,
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "status": "ready",
+      "service": "QwenFieldfareServer",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  }
+]

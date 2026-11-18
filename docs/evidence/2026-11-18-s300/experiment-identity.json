@@ -1,0 +1,13 @@
+{
+  "base_commit": "83d28e28745d43000ad7e732e8ba2a069591575e",
+  "runner_source_sha256": {
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift": "763e6092b854012408b9c798b6b10bd90cf4ea50c083481648936578ce9d466a",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenPrefixState.swift": "8dea7a3022b7fb43f84837c320211e6ffa79f5913495c2e093277254586e6b39",
+    "Sources/QwenFieldfareServerSupport/Service.swift": "21a966fa0b490391280aabbb3ebe1be06a55d65ce4042d245e1aaf655ca7f899",
+    "Tests/QwenFieldfareServerTests/RealPrefixEquivalenceTests.swift": "34140becbe8b7664da4b0f2faa3b656ce9b6672839305609b78efe0b28faeadf",
+    "Package.resolved": "b8411551d7a805e4a51f9c92fd2d857f20660d8f8a1c70d1d96b1ba2b61c978b"
+  },
+  "release_test_binary_sha256": "7fb5dd757ab71dd5d649d5f04546bb96ba0390f39220318fc698516fc49702d4",
+  "control_server_sha256": "8728793fc353ce8f7129f4506dabc85d3783c7bc83abae4c2369916b3c54ed69",
+  "checkpoint_hashing": "No repeated checkpoint hash. Existing required loader integrity/extent checks enabled; prior identity evidence reused."
+}

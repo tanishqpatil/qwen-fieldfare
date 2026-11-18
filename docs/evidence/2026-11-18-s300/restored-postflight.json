@@ -1,0 +1,8 @@
+{
+  "pressure_level": 1,
+  "system_free_percent": 87,
+  "swap_used_mib": 271.69,
+  "initial_swap_used_mib": 279.69,
+  "conflicting_model_processes": [],
+  "observation": "after experiment and restored package checks; not a continuous peak monitor"
+}

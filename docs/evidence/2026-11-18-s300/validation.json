@@ -1,0 +1,22 @@
+{
+  "stage": "S3-00",
+  "status": "blocked; rejected candidate reverted",
+  "candidate_same_swift_gate": "FAILED; zero-based output465 replay1031/cached285",
+  "short_tool_pairs": 5,
+  "short_tool_raw_ids_match": true,
+  "sustained_pairs_completed_before_stop": 1,
+  "bounded_full_replay_residency_diagnostic": "completed; full replay history sensitivity reproduced",
+  "restored_package": {
+    "passed": 153,
+    "skipped": 3,
+    "total": 156
+  },
+  "restored_release_seconds": 41.88,
+  "numerical_checker_tests": 6,
+  "archived_known_issue_log": "131/132; unchanged historical evidence, not new inference validation",
+  "production_sources_package_pins_identical_to": "83d28e2",
+  "candidate_patch_archived": true,
+  "cache_configuration_ships": false,
+  "production_ready": false,
+  "push_or_merge": false
+}

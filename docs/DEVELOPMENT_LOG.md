@@ -1135,3 +1135,133 @@ S2-03 local checkpoint created with title `feat: manage exclusive local server
 mode in native macOS app`;recovery bookkeeping included in the same unpublished
 commit. S2-02 remains f2f5672. Working tree clean after checkpoint;no remote
 push/merge. S2-03 stop reached;next performance milestone not started.
+
+## S3-00 started
+
+Restored directives/plans/architecture/recovery/integration/benchmark procedure
+and source. Clean83d28e2 baseline (S2-02 f2f5672). Both server entry points use
+CoreBackend -> QwenQ4ActiveExpertStreamingRunner.generateResult,serialized by
+Admission. Native chat remains separate/exclusive. Before reuse implementation,
+add diagnostic-only replay counters/memory capture and record repeated-turn
+control;Core numerical sources remain byte-identical for that baseline.
+
+State review:forwardToken consumes token atabsolute position;generation emits a
+prediction beforefeeding it back. EOS is unconsumed;onEOSall returned non-EOS
+tokens were consumed,onoutput/context limit lastreturnedtoken is pending.
+KV append positions,DeltaNet andConvall must match consumedIDs. No recurrent
+rewind exists. Ordinaryhistorystrips empty thinking preamble fromearlier assistant
+turns;tool steps aftersame lastuser canpreserve it,but canonicalcall whitespace
+maydiffer. Full exacttokenprefix checkmust refuseany ahead/divergentstate;LCP
+alone is insufficient. No state snapshot or altered template is authorized by
+assumption; first attempt will keep existing stateinplace and reportactual misses.
+
+S3-00 original replay baseline completes before cache implementation:one retained
+server,warmup+11 measured requests,baseline Core/Bench/pins unchanged vs83d28e2.
+Short30/47 prompt tokens;initial826/849,3282/3305,5010 histories. Three sequential
+actual model audit_chunk calls(1141/25,1255/25,1369/25) and final tool result answer
+pass;cycle193.193920s,total712.904308s,server exit0. Initial fixture labels were
+rough targets,notactualcounts;calibrated1K/4K/6K supplemental baseline nowruns on
+samefrozenoriginalbinary. Fullrequest/publicsyntheticresponse/timing/expertlogical
+read/footprint records preserved. No physicalSSDtraffic or decodeceiling claim.
+Initialswap279.69MiB unchanged atfirstpostflight;free85%before/80%after. Current
+pressure1verified during calibrated run;initial preflight capturedfreepercentage
+but didnotcapturethe numericpressurelevel,which remains unavailable for that
+initial point. HardwareM5/32GB/macOS27.2.1/Swift6.4.2,134GiBdisk,noothermodelowner.
+Two model-freetemplateboundary tests andexplicitgeneration consumed-token/EOS/
+limit/context/sampling-position test pass. Currentstatecontract document records
+these invariants andstrictno-rewind rules;noactualcachecode yet.
+
+S3-00 calibrated replay baseline completed:1026/1049 and4038/4061 prompt tokens,
+6144 longer history; total619.645961s,exit0. Control preserved separately.
+Implemented in-place consumed-token ledger and active-runner integration; tensor
+forward body is unchanged (proof artifact). Defaultoff,strict full-prefix compare,
+no rewind,normalEOS staging then decoder/tool/HTTP terminalflush commit. Epoch
+clear blocks in-flight publication. CLI/sharedUI settings/clear/diagnostics added;
+legacy persisted settings preserve values and defaultoff. Candidate package160pass
++3skip,release36.67s before latest UI/harness additions. Focused UI/model-free
+checks pass; additional lifecycle tests pending final suite.
+
+First real exact-prefix HTTP tool trial:3 sequential natural hits,reused1166/
+1280/1394,fresh89/89/88,correct native calls and finalDONE,cycle54.005739s versus
+original193.193920s. This is one functional observation,not a promoted estimate.
+Token capacity10208bytes;no KV/recurrent/Metal snapshot. Raw-token equivalence
+and5 alternating tool-cycle pairs now running in a single runner with identical
+prompt arrays,greedy,empty expert cache+same warmup before each mode sequence.
+Release harness build43.22s; preflight normalpressure1/free86%,swap279.69MiB,
+AC80%,no competing model. Stop qualification on any raw-token disagreement.
+
+Raw-equivalence harness correction before qualification: original Python evidence
+recorder retained the same growing messages list for earlier tool rows and the
+short two-turn row. Timing,usage,responses and requests actually sent were valid;
+serialized earlier request snapshots were mutated later. Preserve originals and
+original workload source. Reconstruct tool turns by2/4/6/8 message boundaries from
+final public history,keep original ordered schema fields,and assert actual
+1141/1255/1369/1482 token counts before model construction. Recorder now deep-copies
+requests. First aborted comparison used wrong1483-token prompts (expected-call
+assertion failed); preserved aborted artifact. A second attempt rejected unrelated
+high-precision telemetry in strict ToolJSON before loading any model. Isolate
+ordered request-only corpus rather than weaken the production JSON parser.
+Corrected harness now running; initial expected real25-token calls/counts match.
+No kernel,fixture expectation or numerical non-regression rule was changed.
+
+S3-00 qualification BLOCKED: all five alternating short tool-cycle pairs agree
+on raw IDs/finish reasons (off194.04/194.30/193.69/194.05/194.36s;exact54.51/
+54.63/53.87/53.95/54.35s),but first sustained512 continuation diverges at output
+index465(zero-based),fullReplay1031 versus cached285. Both512/maxNewTokens;
+identical430-token continuation input,399-token actual reused prefix. First tool
+355/44 agrees in both modes. Stop at first mismatch;second sustained pair not run.
+Test exits1 after1332.333s;do not call this qualified or promote the feature.
+Pressure1 and swap279.69MiB unchanged;model process exited. No MLX fixture change.
+
+Bounded diagnostic plan: hypothesis is existing MoE expert-residency-dependent
+reduction ordering,not unsupported rewind. Decision: distinguish a consumed-state
+boundary bug from full replay itself depending on prior expert-cache history.
+One experiment only: regenerate the same public355/44 tool setup,then disable
+prefix reuse and fully replay the same430-token continuation after clearing only
+expert weights and repeating the fixed warmup. Compare its512-token digest with
+both already captured results. No kernel/precision/expert-policy change,no new
+broad numerical investigation. Regardless of attribution,the sustained candidate
+failure blocks shipping reuse. Preserve the candidate patch/evidence and restore
+safe replay if no narrowly scoped fix exists within the no-math-change mission.
+
+Bounded diagnostic completes56.347s,off/full replay430fresh/512output. Cold-expert
+replay digest540ba1ff7eee7ce8f5d48c0f878a5b5a49438a360ce9fef15d9ed1d2d3fe25b3
+matches prior cached result,not warm-expert replay6ad5b1517561e95688839adc58023094ba07bf52e7c2991187126cad6663dad0.
+This confirms existing replay depends on expert-residency history; subset reduction
+ordering is a code-level explanation,not first-operation instrumentation proof.
+Do not weaken the failed same-Swift gate or infer the original MLX cause from it.
+
+Rejected candidate archived as complete Package/Sources/Tests patch against83d28e2,
+SHA in candidate-archive.json;reverse-apply check passes before rollback. All
+production Sources/Package/pins restored byte-identically to83d28e2. CLI/UI cache
+controls,new telemetry/commit hooks and prototype-only tests are removed from the
+active build,not shipped. Failed test and diagnostic remain in reproducible patch
+and logs,not suppressed or relabelled as passing. Retain independent consumed-
+boundary test and two template-framing tests. No inference/kernel/sampler/tool-
+protocol/expert-policy change remains in production. S3-00 BLOCKED/not complete;
+no unsafe opt-in is exposed. Final restored suite/release/checker/docs/diff pending.
+Next requires separately scoped residency-independent-reduction design and gates
+or independent numerical-policy review;no implicit math change under this task.
+
+Final restored-tree gates pass:Scripts/test.sh153pass+3opt-in skips (156total:
+32Server/10Management/17Presentation/97Core including skips),debugbuild11.41s;
+release41.88s;checker6/6;historical131/132 log stability;Markdown30files anddiff
+checks. Sources/Package/pins byte-identical83d28e2;originalfixture SHA unchanged.
+No new MLX replay or candidate-equivalence claim. Final no model owner,pressure1,
+free87%,swap271.69MiB versus279.69MiB preflight. Complete report/derived paired
+statistics/failed log/diagnostic/patch retained. Safe investigation checkpoint
+only;S3-00 remains blocked,cache feature not delivered. Final Git review and
+local docs/evidence/boundary-test commit follow;no push or merge.
+
+Final cumulative review: only documentation,public benchmark/report scripts,three
+independent boundary tests and reviewed evidence remain. No generated model,
+weight,symlink or literal high-entropy bearer credential in63 evidence files.
+Candidate patch is explicitly rejected/reproduction-only. Scoped local checkpoint
+message:docs: record blocked exact-prefix qualification and replay-history sensitivity.
+Git log owns its resulting ID;no push/merge. S3-00 stays blocked and work stops.
+
+Staged diff review caught whitespace inherent in unified-patch blank context lines
+when archiving the patch as text. Store exact bytes as deterministicgzip instead;
+uncompressed SHA remains unchanged,decompression verified,no patch content edit
+or diff-check exclusion. Re-run full staged diff/Markdown checks after this
+container-only correction. The candidate failure remains visible in text logs.

@@ -1,0 +1,316 @@
+[
+  {
+    "label": "tool-step-1",
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "observed_prompt_tokens": 1141
+  },
+  {
+    "label": "tool-step-2",
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "observed_prompt_tokens": 1255
+  },
+  {
+    "label": "tool-step-3",
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "observed_prompt_tokens": 1369
+  },
+  {
+    "label": "tool-final",
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":3}",
+                "name": "audit_chunk"
+              },
+              "id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+          "content": "{\"index\": 3, \"status\": \"reviewed\", \"next_index\": null, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 32,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "observed_prompt_tokens": 1482
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "production_sources_and_package_identical_to": "83d28e2",
+  "changed_production_files": [],
+  "fixture": "docs/evidence/2026-11-17-parity/reference.json",
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "known_mlx_mismatch_unchanged": [
+    61,
+    14988,
+    10000
+  ],
+  "same_swift_candidate_qualification": "FAILED; sustained output index465 replay1031/cached285",
+  "strict_mlx_replay": "not repeated; preserved original failure,fixture,tests and evidence",
+  "no_claim": "Source identity and archived-log stability do not certify numerical accuracy or candidate equivalence."
+}

@@ -1,0 +1,14 @@
+Building for production...
+[Computing dependencies]
+[2 / 5] QwenFieldfareServerTests-product
+[10 / 13] QwenFieldfareServerTests-product
+[14 / 18] QwenFieldfareServerTests-product
+[16 / 18] QwenFieldfareServerTests-product
+Build complete! (5.08 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite RealPrefixEquivalenceTests started.
+➜ Test realGreedyReplayAndPrefixTokensAgree() skipped.
+✔ Suite RealPrefixEquivalenceTests passed after 0.001 seconds.
+✔ Test run with 1 test in 1 suite passed after 0.001 seconds.

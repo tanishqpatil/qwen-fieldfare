@@ -1,0 +1,21 @@
+Building for production...
+[Computing dependencies]
+[Pre-planning 1 / 1453]
+[Planning deferred tasks]
+[1 / 1]
+[9 / 37] QwenFieldfareBench-product
+[13 / 25] QwenFieldfareServerTests-product
+[23 / 34] QwenFieldfareServerManagementTests-product
+[25 / 34] QwenFieldfareServerManagementTests-product
+[25 / 34] QwenFieldfareServerTests-product
+[32 / 36] QwenFieldfareServerTests-product
+[34 / 36] QwenFieldfareServerTests-product
+[38 / 38] QwenFieldfareServerManagementTests-product
+Build complete! (6.90 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite PrefixResidencyDiagnosticTests started.
+➜ Test fullReplayWithColdExpertHistory() skipped.
+✔ Suite PrefixResidencyDiagnosticTests passed after 0.001 seconds.
+✔ Test run with 1 test in 1 suite passed after 0.001 seconds.

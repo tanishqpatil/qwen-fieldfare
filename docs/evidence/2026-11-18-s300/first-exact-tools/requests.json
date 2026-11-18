@@ -1,0 +1,925 @@
+[
+  {
+    "label": "warmup",
+    "measured": false,
+    "http": 200,
+    "wall_seconds": 0.9746822500019334,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Reply with exactly: ready"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "ready",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794943001,
+      "id": "chatcmpl-0C452DFC-A1C6-40AB-988D-FC9E5944804F",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 17,
+        "total_tokens": 18
+      }
+    },
+    "health": {
+      "tools": true,
+      "active_generations": 0,
+      "requests": {
+        "completed": 1,
+        "rejected": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "lastRequest": {
+          "overallMs": 974.4916666677454,
+          "prefillMs": 926.7939329147339,
+          "formattingMs": 0.004666668246500194,
+          "outcome": "completed",
+          "admissionMs": 0.13104166282573715,
+          "expertLogicalReads": 2318,
+          "promptTokens": 17,
+          "tokenizationMs": 0.43300000106683,
+          "prefixCache": {
+            "consumedTokens": 0,
+            "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+            "processedPromptTokens": 17,
+            "comparedPrefixTokens": 0,
+            "mode": "exact-prefix",
+            "invalidations": 1,
+            "reusedPrefixTokens": 0,
+            "hits": 0,
+            "misses": 1,
+            "reason": "modeChanged",
+            "valid": false,
+            "tokenStorageBytes": 128
+          },
+          "outputTokens": 1,
+          "queueWaitMs": 0.013875003787688911,
+          "decodeAfterFirstTokenMs": 44.8205833308748,
+          "expertCacheMisses": 2318,
+          "expertFetchedBytes": 4101636096,
+          "actualPrefillTokens": 17,
+          "firstGeneratedTokenMs": 929.2224583332427
+        }
+      },
+      "status": "ready",
+      "model": "qwen-fieldfare",
+      "service": "QwenFieldfareServer",
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "context": 8192,
+        "metalAllocatedBytes": 5291294720,
+        "physicalFootprintBytes": 5141603088,
+        "prefixCache": {
+          "consumedTokens": 18,
+          "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+          "processedPromptTokens": 17,
+          "comparedPrefixTokens": 0,
+          "mode": "exact-prefix",
+          "invalidations": 1,
+          "reusedPrefixTokens": 0,
+          "hits": 0,
+          "misses": 1,
+          "valid": true,
+          "tokenStorageBytes": 128
+        }
+      },
+      "queue_capacity": 2,
+      "queued_requests": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "tool-step-1",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 42.26455650000571,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_8DE9D85AD98241258052BADAB71D97A5",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_8DE9D85AD98241258052BADAB71D97A5",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_3F39157B2501483CA88922884286265B",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_3F39157B2501483CA88922884286265B",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":3}",
+                "name": "audit_chunk"
+              },
+              "id": "call_9D66913E8381452E8E27A4A356667949",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_9D66913E8381452E8E27A4A356667949",
+          "content": "{\"index\": 3, \"status\": \"reviewed\", \"next_index\": null, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "content": null,
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "function": {
+                  "arguments": "{\"index\":1}",
+                  "name": "audit_chunk"
+                },
+                "id": "call_8DE9D85AD98241258052BADAB71D97A5",
+                "type": "function"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1794943002,
+      "id": "chatcmpl-59E00E57-C7E3-47D8-898A-2F800B4BB7A9",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1141,
+        "total_tokens": 1166
+      }
+    },
+    "health": {
+      "tools": true,
+      "active_generations": 0,
+      "requests": {
+        "completed": 2,
+        "rejected": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "lastRequest": {
+          "overallMs": 42264.35279166617,
+          "prefillMs": 41287.073969841,
+          "formattingMs": 0.21554166596615687,
+          "outcome": "completed",
+          "admissionMs": 0.1497083285357803,
+          "expertLogicalReads": 127304,
+          "promptTokens": 1141,
+          "tokenizationMs": 3.795625001657754,
+          "prefixCache": {
+            "consumedTokens": 0,
+            "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+            "processedPromptTokens": 1141,
+            "comparedPrefixTokens": 0,
+            "mode": "exact-prefix",
+            "invalidations": 1,
+            "reusedPrefixTokens": 0,
+            "hits": 0,
+            "misses": 2,
+            "reason": "incompatibleIdentity",
+            "valid": false,
+            "tokenStorageBytes": 5088
+          },
+          "parserBufferMs": 971.3073333332432,
+          "outputTokens": 25,
+          "queueWaitMs": 0.01049999991664663,
+          "decodeAfterFirstTokenMs": 971.1786249972647,
+          "expertCacheMisses": 127304,
+          "expertFetchedBytes": 225260863488,
+          "actualPrefillTokens": 1141,
+          "firstGeneratedTokenMs": 41292.820541668334
+        }
+      },
+      "status": "ready",
+      "model": "qwen-fieldfare",
+      "service": "QwenFieldfareServer",
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "context": 8192,
+        "metalAllocatedBytes": 5291294720,
+        "physicalFootprintBytes": 5167965016,
+        "prefixCache": {
+          "consumedTokens": 1166,
+          "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+          "processedPromptTokens": 1141,
+          "comparedPrefixTokens": 0,
+          "mode": "exact-prefix",
+          "invalidations": 1,
+          "reusedPrefixTokens": 0,
+          "hits": 0,
+          "misses": 2,
+          "valid": true,
+          "tokenStorageBytes": 5088
+        }
+      },
+      "queue_capacity": 2,
+      "queued_requests": 0
+    },
+    "decode_tokens_per_second_after_first": 24.71224075804551
+  },
+  {
+    "label": "tool-step-2",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 4.278510042000562,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_8DE9D85AD98241258052BADAB71D97A5",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_8DE9D85AD98241258052BADAB71D97A5",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_3F39157B2501483CA88922884286265B",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_3F39157B2501483CA88922884286265B",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":3}",
+                "name": "audit_chunk"
+              },
+              "id": "call_9D66913E8381452E8E27A4A356667949",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_9D66913E8381452E8E27A4A356667949",
+          "content": "{\"index\": 3, \"status\": \"reviewed\", \"next_index\": null, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "content": null,
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "function": {
+                  "arguments": "{\"index\":2}",
+                  "name": "audit_chunk"
+                },
+                "id": "call_3F39157B2501483CA88922884286265B",
+                "type": "function"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1794943044,
+      "id": "chatcmpl-AA5D347F-2D28-4395-8CB3-8EBD037F36E3",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1255,
+        "total_tokens": 1280
+      }
+    },
+    "health": {
+      "tools": true,
+      "active_generations": 0,
+      "requests": {
+        "completed": 3,
+        "rejected": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "lastRequest": {
+          "overallMs": 4278.285000000324,
+          "prefillMs": 3336.729049682617,
+          "formattingMs": 0.13212500198278576,
+          "outcome": "completed",
+          "admissionMs": 0.19195833010599017,
+          "expertLogicalReads": 11669,
+          "promptTokens": 1255,
+          "tokenizationMs": 4.343125001469161,
+          "prefixCache": {
+            "consumedTokens": 0,
+            "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+            "processedPromptTokens": 89,
+            "comparedPrefixTokens": 1166,
+            "mode": "exact-prefix",
+            "invalidations": 1,
+            "reusedPrefixTokens": 1166,
+            "hits": 1,
+            "misses": 2,
+            "valid": false,
+            "tokenStorageBytes": 10208
+          },
+          "parserBufferMs": 936.6029583325144,
+          "outputTokens": 25,
+          "queueWaitMs": 0.008833332685753703,
+          "decodeAfterFirstTokenMs": 936.5288333356148,
+          "expertCacheMisses": 11669,
+          "expertFetchedBytes": 20647968768,
+          "actualPrefillTokens": 89,
+          "firstGeneratedTokenMs": 3341.4660833295784
+        }
+      },
+      "status": "ready",
+      "model": "qwen-fieldfare",
+      "service": "QwenFieldfareServer",
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "context": 8192,
+        "metalAllocatedBytes": 5291294720,
+        "physicalFootprintBytes": 5168227160,
+        "prefixCache": {
+          "consumedTokens": 1280,
+          "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+          "processedPromptTokens": 89,
+          "comparedPrefixTokens": 1166,
+          "mode": "exact-prefix",
+          "invalidations": 1,
+          "reusedPrefixTokens": 1166,
+          "hits": 1,
+          "misses": 2,
+          "valid": true,
+          "tokenStorageBytes": 10208
+        }
+      },
+      "queue_capacity": 2,
+      "queued_requests": 0
+    },
+    "decode_tokens_per_second_after_first": 25.62654682453258
+  },
+  {
+    "label": "tool-step-3",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 4.230371375000686,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_8DE9D85AD98241258052BADAB71D97A5",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_8DE9D85AD98241258052BADAB71D97A5",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_3F39157B2501483CA88922884286265B",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_3F39157B2501483CA88922884286265B",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":3}",
+                "name": "audit_chunk"
+              },
+              "id": "call_9D66913E8381452E8E27A4A356667949",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_9D66913E8381452E8E27A4A356667949",
+          "content": "{\"index\": 3, \"status\": \"reviewed\", \"next_index\": null, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "content": null,
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "function": {
+                  "arguments": "{\"index\":3}",
+                  "name": "audit_chunk"
+                },
+                "id": "call_9D66913E8381452E8E27A4A356667949",
+                "type": "function"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1794943048,
+      "id": "chatcmpl-CC6F1AFC-8C85-495B-9469-520BC915ED7B",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1369,
+        "total_tokens": 1394
+      }
+    },
+    "health": {
+      "tools": true,
+      "active_generations": 0,
+      "requests": {
+        "completed": 4,
+        "rejected": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "lastRequest": {
+          "overallMs": 4230.148041664506,
+          "prefillMs": 3319.784998893738,
+          "formattingMs": 0.13583333930000663,
+          "outcome": "completed",
+          "admissionMs": 0.20937500084983185,
+          "expertLogicalReads": 13088,
+          "promptTokens": 1369,
+          "tokenizationMs": 4.5721666610916145,
+          "prefixCache": {
+            "consumedTokens": 0,
+            "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+            "processedPromptTokens": 89,
+            "comparedPrefixTokens": 1280,
+            "mode": "exact-prefix",
+            "invalidations": 1,
+            "reusedPrefixTokens": 1280,
+            "hits": 2,
+            "misses": 2,
+            "valid": false,
+            "tokenStorageBytes": 10208
+          },
+          "parserBufferMs": 905.1709583291085,
+          "outputTokens": 25,
+          "queueWaitMs": 0.009708332072477788,
+          "decodeAfterFirstTokenMs": 905.0816666640458,
+          "expertCacheMisses": 13088,
+          "expertFetchedBytes": 23158849536,
+          "actualPrefillTokens": 89,
+          "firstGeneratedTokenMs": 3324.7708333365154
+        }
+      },
+      "status": "ready",
+      "model": "qwen-fieldfare",
+      "service": "QwenFieldfareServer",
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "context": 8192,
+        "metalAllocatedBytes": 5291294720,
+        "physicalFootprintBytes": 5168292696,
+        "prefixCache": {
+          "consumedTokens": 1394,
+          "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+          "processedPromptTokens": 89,
+          "comparedPrefixTokens": 1280,
+          "mode": "exact-prefix",
+          "invalidations": 1,
+          "reusedPrefixTokens": 1280,
+          "hits": 2,
+          "misses": 2,
+          "valid": true,
+          "tokenStorageBytes": 10208
+        }
+      },
+      "queue_capacity": 2,
+      "queued_requests": 0
+    },
+    "decode_tokens_per_second_after_first": 26.51694414323882
+  },
+  {
+    "label": "tool-final",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 3.2282782080001198,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_8DE9D85AD98241258052BADAB71D97A5",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_8DE9D85AD98241258052BADAB71D97A5",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_3F39157B2501483CA88922884286265B",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_3F39157B2501483CA88922884286265B",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":3}",
+                "name": "audit_chunk"
+              },
+              "id": "call_9D66913E8381452E8E27A4A356667949",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_9D66913E8381452E8E27A4A356667949",
+          "content": "{\"index\": 3, \"status\": \"reviewed\", \"next_index\": null, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 32,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "DONE",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794943052,
+      "id": "chatcmpl-111E3A7B-1120-43FF-8F31-609FB71D00D4",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 1482,
+        "total_tokens": 1483
+      }
+    },
+    "health": {
+      "tools": true,
+      "active_generations": 0,
+      "requests": {
+        "completed": 5,
+        "rejected": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "lastRequest": {
+          "overallMs": 3228.0616249991,
+          "prefillMs": 3181.9980144500732,
+          "formattingMs": 0.15483333118027076,
+          "outcome": "completed",
+          "admissionMs": 0.2505000011296943,
+          "expertLogicalReads": 9665,
+          "promptTokens": 1482,
+          "tokenizationMs": 4.922166663163807,
+          "prefixCache": {
+            "consumedTokens": 0,
+            "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+            "processedPromptTokens": 88,
+            "comparedPrefixTokens": 1394,
+            "mode": "exact-prefix",
+            "invalidations": 1,
+            "reusedPrefixTokens": 1394,
+            "hits": 3,
+            "misses": 2,
+            "valid": false,
+            "tokenStorageBytes": 10208
+          },
+          "outputTokens": 1,
+          "queueWaitMs": 0.0107916712295264,
+          "decodeAfterFirstTokenMs": 40.45758333813865,
+          "expertCacheMisses": 9665,
+          "expertFetchedBytes": 17101946880,
+          "actualPrefillTokens": 88,
+          "firstGeneratedTokenMs": 3187.393666667049
+        }
+      },
+      "status": "ready",
+      "model": "qwen-fieldfare",
+      "service": "QwenFieldfareServer",
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "context": 8192,
+        "metalAllocatedBytes": 5291294720,
+        "physicalFootprintBytes": 5168341848,
+        "prefixCache": {
+          "consumedTokens": 1483,
+          "session": "2EECD0BB-630C-4E3F-9B75-00BB248C80F9",
+          "processedPromptTokens": 88,
+          "comparedPrefixTokens": 1394,
+          "mode": "exact-prefix",
+          "invalidations": 1,
+          "reusedPrefixTokens": 1394,
+          "hits": 3,
+          "misses": 2,
+          "valid": true,
+          "tokenStorageBytes": 10208
+        }
+      },
+      "queue_capacity": 2,
+      "queued_requests": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  }
+]

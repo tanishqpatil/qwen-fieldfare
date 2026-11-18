@@ -1,6 +1,41 @@
 # Authoritative implementation backlog
 
-## Current milestone — S2-03 native server management
+## Current milestone — S3-00 exact-prefix state reuse
+
+Explicit authorization supersedes S2-03 stop. Measure replay baselines first,
+then one bounded in-place exact consumed-token prefix per active runner,default
+off,with validated commit/invalidation and shared CLI/UI controls. No state
+rewind approximation,kernel/math/precision/expert-policy changes or second owner.
+Stop at first validated reuse milestone;review/local commit only,no push/merge.
+
+S3-00 qualification failed on sustained same-Swift raw-token equivalence. The
+candidate is archived and production code restored to S2-03. Stop after restored
+validation/report; no cache controls ship and no math/kernel fix is authorized.
+See docs/evidence/2026-11-18-s300/README.md for the failed gate and bounded diagnostic.
+
+### S3-00 — blocked by sustained equivalence; candidate reverted
+
+- [x] Measure original replay: short,1K,4K,6K and three sequential tool results.
+- [x] Inspect/test consumed-token,absolute-position,EOS and pending-token contract.
+- [x] Prototype bounded in-place reuse,CLI/UI controls and transactional invalidation;
+  preserve complete implementation/tests in the rejected candidate patch.
+- [x] Five alternating short tool-cycle pairs agree on raw IDs/finish reasons.
+- [x] Stop on first sustained512 divergence: output index465,fullReplay1031/cached285.
+- [x] One full-replay-only diagnostic reproduces expert-residency history sensitivity.
+- [x] Restore all production Package/Sources/configuration to S2-03; no cache flag,
+  UI cache control or numerical kernel change ships. Preserve failed evidence.
+- [ ] Complete exact-prefix qualification and ship controls — **blocked**, not done.
+- [x] Restored-tree153 passes+3 skips,release41.88s,checker6,archived-log stability,
+  docs/diff/source-identity checks. Reviewed investigation checkpoint;no feature promotion.
+
+Short cycles show useful potential but no promotion: raw equivalence failed.
+Next safe task is a separately scoped proposal for residency-independent expert
+reduction and its numerical/reference gates,or independently reviewed acceptance
+policy; do not implement either under this no-math-change mission. Strict MLX
+131/132 remains a separate release blocker. See
+[S3-00 evidence](docs/evidence/2026-11-18-s300/README.md).
+
+## Historical milestone — S2-03 native server management
 
 Explicit user authorization supersedes S2-02 stop. Checkpoint S2-02, reuse the
 existing Core/backend/HTTP implementation in native server controls, preserve

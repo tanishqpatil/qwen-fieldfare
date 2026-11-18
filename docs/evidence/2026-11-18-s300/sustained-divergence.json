@@ -1,0 +1,12 @@
+{
+  "scope": "first sustained512 greedy continuation, zero-based output index",
+  "index": 465,
+  "full_replay_token": 1031,
+  "cached_token": 285,
+  "output_counts": [
+    512,
+    512
+  ],
+  "qualified": false,
+  "no_expected_fixture_changed": true
+}

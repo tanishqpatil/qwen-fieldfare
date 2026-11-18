@@ -1,0 +1,133 @@
+Building for debugging...
+[Computing dependencies]
+[33 / 177]
+[61 / 183] CNIOLLHTTP
+[80 / 189]
+[94 / 180] Crypto
+[101 / 175] NIOConcurrencyHelpers
+[109 / 166] NIOCore
+[117 / 177] NIOCore
+[118 / 177] yyjson
+[121 / 177] NIOCore
+[121 / 177] CNIOAtomics
+[122 / 176] NIOCore
+[137 / 201] EventSource
+[146 / 215]
+[155 / 215] NIOPosix
+[158 / 226] NIOPosix
+[161 / 226] HuggingFace
+[164 / 226] HuggingFace
+[166 / 226] HuggingFace
+[168 / 226] NIOPosix
+[173 / 227] NIOEmbedded
+[175 / 229] NIO
+[179 / 232] HuggingFace
+[187 / 244] NIOHTTP1
+[191 / 244] NIOHTTP1
+[196 / 243] NIOHTTP1
+[206 / 250] Hub
+[209 / 253] Hub
+[209 / 254] Tokenizers
+[218 / 264] Tokenizers
+[221 / 263] Tokenizers
+[224 / 266] Tokenizers
+[226 / 277]
+[237 / 277] QwenFieldfareCore
+[238 / 274] QwenFieldfareCore
+[243 / 279] QwenFieldfareCore
+[243 / 279] QwenFieldfarePack-product
+[253 / 299]
+[261 / 299] QwenFieldfareServerSupport
+[263 / 299] QwenFieldfareServerSupport
+[270 / 306] QwenFieldfareServerSupport
+[270 / 305] QwenFieldfareServerSupport
+[278 / 312] QwenFieldfareServerSupport
+[280 / 311] QwenFieldfareCoreTests-product
+[290 / 305] QwenFieldfareServerManagement
+[291 / 308] QwenFieldfareServerManagement
+[298 / 318] QwenFieldfareCoreTests-product
+[300 / 328] QwenFieldfareBench-product
+[307 / 345] QwenFieldfareServerManagementTests-product
+[308 / 345] QwenFieldfareServerTests-product
+[310 / 345] QwenFieldfareServerManagementTests-product
+[314 / 345] QwenFieldfareServerManagementTests-product
+[317 / 345] QwenFieldfareServerManagementTests-product
+[322 / 345] QwenFieldfareMac-product
+[323 / 345] QwenFieldfareMac-product
+[326 / 345] QwenFieldfareServerTests-product
+[334 / 350] QwenFieldfareCoreTests-product
+[336 / 350] QwenFieldfareServerManagementTests-product
+[338 / 350] QwenFieldfareServerManagementTests-product
+[343 / 352] QwenFieldfareServerTests-product
+[346 / 353] QwenFieldfareCoreTests-product
+[349 / 354] QwenFieldfarePack-product
+[356 / 360] QwenFieldfareCoreTests-product
+[358 / 360] QwenFieldfareMac-product
+[360 / 362] QwenFieldfareCoreTests-product
+Build complete! (10.35 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ConfigurationTests started.
+◇ Test defaultsAndHelpVersionNeedNoModelOrSecret() started.
+✔ Test defaultsAndHelpVersionNeedNoModelOrSecret() passed after 0.001 seconds.
+◇ Test invalidSettingsAreRecoverableAndSecretSafe() started.
+✔ Test invalidSettingsAreRecoverableAndSecretSafe() passed after 0.001 seconds.
+◇ Test restrictedKeyFileAndUnsafeTypes() started.
+✔ Test restrictedKeyFileAndUnsafeTypes() passed after 0.001 seconds.
+◇ Test configurableQueueSaturatesAtEachBound() started.
+✔ Test configurableQueueSaturatesAtEachBound() passed after 0.042 seconds.
+◇ Test installedOpenCodeToolHistoryWireFixture() started.
+✔ Test installedOpenCodeToolHistoryWireFixture() passed after 0.005 seconds.
+◇ Test openCodeNumericSchemaBoundsEnforced() started.
+✔ Test openCodeNumericSchemaBoundsEnforced() passed after 0.001 seconds.
+◇ Test prefixCacheDefaultsOffAndRejectsUnknownModes() started.
+✔ Test prefixCacheDefaultsOffAndRejectsUnknownModes() passed after 0.001 seconds.
+◇ Test successfulFlushProtectsCommitFromExpectedConnectionClose() started.
+✔ Test successfulFlushProtectsCommitFromExpectedConnectionClose() passed after 0.001 seconds.
+✔ Suite ConfigurationTests passed after 0.051 seconds.
+◇ Suite TelemetryTests started.
+◇ Test healthCountersAndTimingsRetainNoPayload() started.
+✔ Test healthCountersAndTimingsRetainNoPayload() passed after 0.015 seconds.
+◇ Test queuedCancellationIsCountedWithoutExecutingWork() started.
+✔ Test queuedCancellationIsCountedWithoutExecutingWork() passed after 0.007 seconds.
+◇ Test restartImmediatelyRebindsUsedPort() started.
+✔ Test restartImmediatelyRebindsUsedPort() passed after 0.001 seconds.
+◇ Test bufferingDurationAppearsOnlyForValidatedCalls() started.
+✔ Test bufferingDurationAppearsOnlyForValidatedCalls() passed after 0.016 seconds.
+◇ Test completeFlushCommitsBeforeAnEagerClientCloses() started.
+✔ Test completeFlushCommitsBeforeAnEagerClientCloses() passed after 0.028 seconds.
+✔ Suite TelemetryTests passed after 0.069 seconds.
+✔ Test run with 13 tests in 2 suites passed after 0.120 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenActiveStreamingMemoryConfigurationTests started.
+◇ Test eightKProfilesRetainExpectedSlotBudgets() started.
+✔ Test eightKProfilesRetainExpectedSlotBudgets() passed after 0.001 seconds.
+◇ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() started.
+✔ Test everySupportedPlanStaysWithinItsTargetAndKeepsRouterLocks() passed after 0.001 seconds.
+◇ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() started.
+✔ Test rejectsBudgetContextPairThatCannotKeepAllLayerLocks() passed after 0.001 seconds.
+◇ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() started.
+✔ Test moreContextNeverCreatesMoreSlotsAtTheSameBudget() passed after 0.001 seconds.
+✔ Suite QwenActiveStreamingMemoryConfigurationTests passed after 0.001 seconds.
+◇ Suite QwenPrefixStateTests started.
+◇ Test strictPrefixInPlaceAndNoUnsupportedRewind() started.
+✔ Test strictPrefixInPlaceAndNoUnsupportedRewind() passed after 0.001 seconds.
+◇ Test emptySuffixAheadAndSchemaChangesReplay() started.
+✔ Test emptySuffixAheadAndSchemaChangesReplay() passed after 0.001 seconds.
+◇ Test disabledLimitAndClearCannotPublishPendingState() started.
+✔ Test disabledLimitAndClearCannotPublishPendingState() passed after 0.001 seconds.
+◇ Test incorrectPositionsAndOversizedInputsAreRecoverable() started.
+✔ Test incorrectPositionsAndOversizedInputsAreRecoverable() passed after 0.001 seconds.
+✔ Suite QwenPrefixStateTests passed after 0.001 seconds.
+◇ Suite QwenRuntimeTelemetryTests started.
+◇ Test nearestRankPercentilesAndMean() started.
+✔ Test nearestRankPercentilesAndMean() passed after 0.001 seconds.
+◇ Test boundedAccumulatorDropsOldestSamplesAndResets() started.
+✔ Test boundedAccumulatorDropsOldestSamplesAndResets() passed after 0.001 seconds.
+◇ Test cacheDerivedMetricsUseDemandRequestsOnly() started.
+✔ Test cacheDerivedMetricsUseDemandRequestsOnly() passed after 0.001 seconds.
+✔ Suite QwenRuntimeTelemetryTests passed after 0.001 seconds.
+✔ Test run with 11 tests in 3 suites passed after 0.001 seconds.

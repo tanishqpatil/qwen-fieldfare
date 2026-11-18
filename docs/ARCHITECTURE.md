@@ -560,3 +560,26 @@ All Core and Bench source,dependency pins,teacher harness/reference remain
 byte-identical to f2f5672. Strict131/132 remains unresolved;no new parity replay.
 S2-03 is diagnostic/lifecycle work,not prefix reuse,kernel optimization or a
 measurement of improvement over the preserved long OpenCode workflow.
+
+## S3-00 exact-prefix investigation — rejected candidate
+
+Production still resets/replays every request: the in-place cache candidate
+failed sustained same-Swift raw-token equivalence and was fully reverted.
+No CLI/UI cache mode,clear endpoint,new model owner,state snapshot or inference
+math change ships. Existing S2-03 ownership and lifecycle remain unchanged.
+
+The candidate proved useful natural tool prefixes with one consumed-token ledger
+and existing KV/Conv/DeltaNet buffers. Its proposed EOS/pending-token,strict-prefix,
+transactional flush/epoch and cancellation contract is recorded in
+[EXACT_PREFIX_STATE_CONTRACT](EXACT_PREFIX_STATE_CONTRACT.md),not a current feature.
+Five short tool-cycle pairs matched,then a512-token continuation diverged at
+output index465. A full-replay-only cold/warm expert-history diagnostic reproduced
+the two outputs. Existing hit/miss MoE subset reduction ordering is the hypothesis;
+no first-operation attribution or numerical fix was attempted. Exact token history
+alone cannot guarantee equivalence to a replay whose expert residency differs.
+
+[Evidence and rejected patch](evidence/2026-11-18-s300/README.md) retain the failure,
+measurements and reproduction. Any future cache implementation needs a separately
+scoped numerical/history-invariance contract and relevant reference gates;no
+recurrent rewind or weakened expected tokens is accepted. MLX131/132 is independent
+and remains a release blocker. S3-00 is blocked,not delivered or promoted.

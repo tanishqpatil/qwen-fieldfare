@@ -1,6 +1,80 @@
 # Agent recovery memory
 
-## Current milestone — S2-03 native server management
+## Current milestone — S3-00 exact-prefix state reuse
+
+Explicit authorization supersedes S2-03 stop. Measure replay baselines first,
+then one bounded in-place exact consumed-token prefix per active runner,default
+off,with validated commit/invalidation and shared CLI/UI controls. No state
+rewind approximation,kernel/math/precision/expert-policy changes or second owner.
+Stop at first validated reuse milestone;review/local commit only,no push/merge.
+
+S3-00 qualification failed on sustained same-Swift raw-token equivalence. The
+candidate is archived and production code restored to S2-03. Stop after restored
+validation/report; no cache controls ship and no math/kernel fix is authorized.
+See docs/evidence/2026-11-18-s300/README.md for the failed gate and bounded diagnostic.
+
+
+## S3-00 result — BLOCKED, production candidate reverted
+
+Base83d28e2 clean before task. No push/merge. Original replay baselines completed
+before candidate: short30/47,1026/1049,4038/4061,6144 prompt tokens plus three
+sequential native calls1141/25,1255/25,1369/25 and final1482/1; original tool
+cycle193.193920s. All evidence in docs/evidence/2026-11-18-s300.
+
+Candidate implemented one consumed-token ledger/strict full-prefix/no-rewind,
+existing buffers in place,no snapshot. CLI/sharedUI modeoff/exact-prefix,
+redacted diagnostics,authenticated/owned clear and EOS+validatedflush+epoch commit.
+Model-free helper/lifecycle checks passed;latest full candidate160pass+3skip before
+later tests. Candidate forward tensor body byte-identical to83d28e2,proof SHA
+ce24e7a65d26e38c49a6f5fae31a6140cdfac79a15877f0a01c5d1742f65bac2.
+
+Five alternating real short tool-cycle pairs all match raw IDs/finish reasons.
+Off seconds194.0427/194.2983/193.6861/194.0473/194.3568;exact54.5145/54.6287/
+53.8740/53.9475/54.3539. Three naturalhits reuse1166/1280/1394,fresh89/89/88;
+maximum observed token capacity10208bytes across the qualification, no extraMetal
+snapshot. Do not promote: first sustained512 continuation diverges at output
+index465(zero-based),fullReplay1031/cached285;both512/maxNewTokens,identical430
+prompt tokens,399 reused. Failed real test exits1 after1332.333s. Stop at first
+failure;second sustained pair and later UI/client/promotion gates not run.
+
+One bounded attribution diagnostic (56.347s total) uses off/full replay only:
+clear expert weights,repeat fixed warmup,fully replay same430tokens. Its512-ID
+digest matches prior cached result540ba1ff7eee7ce8f5d48c0f878a5b5a49438a360ce9fef15d9ed1d2d3fe25b3,
+not warm replay6ad5b1517561e95688839adc58023094ba07bf52e7c2991187126cad6663dad0.
+This reproduces existing residency-history sensitivity without conversation reuse;
+hit/miss MoE reduction grouping is the code-level hypothesis,not a measured
+first-layer proof. No broad/layer3 investigation or math/policy fix attempted.
+
+All production Package/Sources,CLI/UI/config/telemetry and candidate-only tests
+now restored to83d28e2. Candidate preserved exactly in rejected-candidate.patch.gz
+(reverse-apply check passed before restoration),including failed raw test and
+bounded diagnostic. Reproduce on fresh83d28e2 plus current evidence;do not blindly
+apply to final tree with retained boundary tests. No cache option currently ships.
+Retained independent tests: template boundary2 and generation consumed-boundary1.
+Final restored suite153 passes+3opt-in skips (156total),release41.88s,checker6,
+archived-log stability,Markdown30files anddiff/source-identity checks pass.
+This reviewed documentation/evidence/boundary-test checkpoint preserves the
+blocked result;Git log owns the checkpoint ID. No feature promotion,push or merge.
+All model experiment processes exited. Final postflight pressure1/free87%,swap
+271.69MiB versus279.69MiB before;no increase at observed checkpoints.
+No repeated full-checkpoint hashing;required loader checks and prior identity
+remain intact. M5/32GB/macOS27.2.1/Swift6.4.2,AC power,134GiB free disk.
+
+Recorder caveat: original Python snapshots aliased growing short/tool message
+lists. Actual sent usage/timing/results are intact. Preserve original corpus and
+source;reconstructed ordered tool request-only fixtures use2/4/6/8 messages and
+verify1141/1255/1369/1482 counts. Fixed recorder deep-copies. First aborted invalid
+comparison and pre-model strictJSON telemetry-precision rejection preserved.
+Do not weaken the production JSON parser or expected outputs.
+
+Next safe task: separately scoped design for residency-independent expert
+reduction/reference gates or independently reviewed numerical acceptance policy.
+Neither is authorized within this no-math-change milestone. No further model/UI
+runs needed for the rejected candidate. Strict MLX131/132 remains unresolved;
+archived-log/checker does not prove cache equivalence. Stop/report after restored
+validation and a safe documentation/evidence checkpoint,not a feature commit.
+
+## Historical milestone — S2-03 native server management
 
 Explicit user authorization supersedes S2-02 stop. Checkpoint S2-02, reuse the
 existing Core/backend/HTTP implementation in native server controls, preserve
@@ -419,8 +493,9 @@ only in a saved/isolated diagnostic checkout, never overwrite the failing fixtur
 - Keep Qwen-only hybrid, raw weights external, SLRU, one owner, bounded 3/4/5 GiB
   allocation plans. Never truncate recurrent state as KV. Forced allocation and
   command-encoder crashes remain; full model contract/IO ownership unqualified.
-- No implemented server/tool protocol/OpenCode/Hermes support. Specific local
-  server is authorized for later stages; generic hosting/tools inside server are not.
+- Standalone and app-owned servers,native tool protocol and OpenCode are
+  qualified through S2-03;Hermes remains unqualified. Generic hosting and tools
+  inside the server are not authorized. S3-00 cache candidate was rejected.
 - Historical head-removal prefill, cache bookkeeping, causal replacement/prefetch
   and packed speed candidates were rejected; see decisions before retrying.
 

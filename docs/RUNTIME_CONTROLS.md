@@ -84,3 +84,12 @@ RAM or a measured peak. Native inspector timings refer to its last native run.
 See the integration guide for metric definitions,Keychain/private-file contract,
 external observation version requirements and remaining lifecycle limitations.
 The known131/132 numerical release blocker remains unchanged.
+
+## S3-00 qualification outcome
+
+Exact-prefix configuration,diagnostics and clear controls were prototyped but
+reverted after sustained raw-token divergence. Current shipped controls above
+are unchanged;native chat and both server entry points reset/replay. No cache
+setting or clear endpoint is available. See
+[S3-00 blocked investigation](evidence/2026-11-18-s300/README.md) before proposing
+further state-reuse work. The candidate patch is evidence,not a supported mode.

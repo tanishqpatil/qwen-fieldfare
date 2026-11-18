@@ -148,3 +148,27 @@ measured compatible headers88906/67237/67875/50269 fit, with no universal smalle
 cap established. Pack-builder input remains a separate compatibility/ownership
 task. Full tensor/config/quantization preflight and production readiness are not
 claimed. Active teacher parity evidence is not fallback numerical validation.
+
+## ADR-012 — Reject prefix promotion after sustained replay divergence
+
+2026-11-18,S3-00. A context-bounded,in-place consumed-token candidate with default
+off,strict complete-prefix checks,no recurrent rewind and validated flush/epoch
+commit achieved natural real tool-result hits. Five short-cycle raw-ID pairs
+matched,but first512-token continuation differed from same-Swift full replay at
+zero-based output465(1031 versus285). This fails the principal gate despite
+measured latency reduction. Stop at first mismatch;do not alter expected outputs,
+reference fixtures,kernels,precision or expert-cache policy to rescue the result.
+
+One bounded off/full-replay diagnostic clears expert weights,repeats the fixed
+warmup,and replays the same430 prompt IDs. It produces the cached512-ID digest,
+not the prior warm-expert replay digest. Existing residency-history sensitivity
+is reproduced without conversation reuse;hit/miss subset reduction ordering is
+a code-level hypothesis,not proof of the first differing operation. No broad
+numerical investigation is authorized by this finding.
+
+Archive the exact candidate and failing tests;restore production Sources/Package/
+pins to83d28e2. Keep independent consumed-boundary/template tests and all evidence.
+No cache flag/UI control ships;S3-00 is blocked,not completed. A future attempt
+requires separately scoped residency-independent reduction/reference validation
+or independently reviewed acceptance policy. The original MLX131/132 release
+blocker remains unchanged;this diagnostic neither resolves nor explains it.

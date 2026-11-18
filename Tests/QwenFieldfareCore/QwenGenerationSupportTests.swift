@@ -166,3 +166,28 @@ struct QwenGenerationSupportTests {
         #expect(first == 3 || first == 4)
     }
 }
+
+extension QwenGenerationSupportTests {
+    @Test func consumedSequenceAndSamplingPositionsAtEachFinishBoundary() throws {
+        for end in ["eos","output","context"] {
+            var consumed:[Int32]=[];var positions:[Int]=[];var draws:[Int]=[]
+            let result=try QwenGenerationLoop.run(initialToken:10,promptTokens:[7,8],maxSequenceLength:end == "context" ? 3:32,configuration:.greedy(maxNewTokens:end == "output" ? 2:8),checkCancellation:{},onToken:{_ in},nextToken:{token,position,seen,draw in
+                consumed.append(token);positions.append(position);draws.append(draw)
+                #expect(seen == Set([Int32(7),8]+consumed))
+                return token == 10 ? 11:248046
+            })
+            if end == "eos" {
+                #expect(result.tokens == [10,11] && consumed == [10,11])
+                #expect(positions == [2,3] && draws == [1,2])
+                #expect(result.finishReason == .endOfSequence(tokenID:248046))
+            } else if end == "output" {
+                #expect(result.tokens == [10,11] && consumed == [10])
+                #expect(positions == [2] && draws == [1])
+                #expect(result.finishReason == .maxNewTokens)
+            } else {
+                #expect(result.tokens == [10] && consumed.isEmpty && positions.isEmpty)
+                #expect(result.finishReason == .contextLength)
+            }
+        }
+    }
+}

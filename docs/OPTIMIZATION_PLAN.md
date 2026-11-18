@@ -1,5 +1,13 @@
 # Optimization analysis and priority order
 
+2026-11-18 execution result: S3-00 exact-prefix reuse is **blocked**. Five short
+raw-ID tool-cycle pairs matched,but sustained512 diverged. A bounded full-replay
+expert-history diagnostic reproduced both behaviors. Candidate fully reverted;
+production remains S2-03 reset/replay,no cache controls ship. See
+[evidence](evidence/2026-11-18-s300/README.md) and
+[consumed-state contract](EXACT_PREFIX_STATE_CONTRACT.md). Historical proposals
+and rejected optimizations below retain their original outcomes.
+
 Planning update (2026-11-05): see the
 [agent runtime and memory plan](AGENT_RUNTIME_PLAN.md) for the current proposed
 execution order, source audit, server/client requirements, and the newly

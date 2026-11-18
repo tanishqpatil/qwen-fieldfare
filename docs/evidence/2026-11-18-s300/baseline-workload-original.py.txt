@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""Public synthetic repeated-turn HTTP workloads; one model-owning server only."""
+import argparse,http.client,json,os,pathlib,secrets,signal,subprocess,tempfile,time,hashlib
+ROOT=pathlib.Path(__file__).resolve().parents[1]
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('--phase',default='baseline');p.add_argument('--server',default=str(ROOT/'.build/release/QwenFieldfareServer'));p.add_argument('--cache-mode',choices=['off','exact-prefix']);a=p.parse_args()
+OUT=ROOT/'docs/evidence/2026-11-18-s300'/a.phase;OUT.mkdir(parents=True,exist_ok=True)
+model=os.environ['QWENFIELDFARE_SERVER_CHECKPOINT'];run=pathlib.Path(tempfile.mkdtemp(prefix='qwen-prefix-bench-')).resolve();key=secrets.token_hex(32);keyfile=run/'key';keyfile.write_text(key+'\n');keyfile.chmod(0o600)
+command=[a.server,'--model',model,'--port','18095','--context','8192','--memory-gib','5','--queue-capacity','2','--api-key-file',str(keyfile)]
+if a.cache_mode:command += ['--prefix-cache',a.cache_mode]
+env=dict(os.environ);env.pop('QWENFIELDFARE_API_KEY',None)
+log=(OUT/'server.log').open('w');started=time.monotonic();server=subprocess.Popen(command,env=env,stdout=log,stderr=log)
+expected_completed=0
+records=[];summary={'phase':a.phase,'mode':a.cache_mode or 'original replay only; cache implementation absent','base_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'server_sha256':hashlib.sha256(pathlib.Path(a.server).read_bytes()).hexdigest(),'context':8192,'memory_gib':5,'profiling':False,'checkpoint':'external compatible Qwen3.6-35B-A3B MLX4bit; prior identity/integrity evidence reused; normal loader checks enabled','process_pid':server.pid}
+def call(path,body=None):
+ c=http.client.HTTPConnection('127.0.0.1',18095,timeout=900);t=time.monotonic()
+ c.request('POST' if body is not None else 'GET',path,body=json.dumps(body) if body is not None else None,headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'})
+ r=c.getresponse();data=r.read();c.close();return r.status,json.loads(data),time.monotonic()-t
+
+def save():
+ (OUT/'requests.json').write_text(json.dumps(records,indent=2)+'\n');(OUT/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+def request(label,messages,tools=None,limit=8,measured=True):
+ global expected_completed
+ body={'model':'qwen-fieldfare','messages':messages,'max_tokens':limit,'temperature':0,'top_k':1,'top_p':1,'presence_penalty':0,'repetition_penalty':1,'seed':42}
+ if tools:body['tools']=tools
+ status,response,wall=call('/v1/chat/completions',body)
+ item={'label':label,'measured':measured,'http':status,'wall_seconds':wall,'request':body,'response':response}
+ if status==200:
+  expected_completed+=1
+  for _ in range(100):
+   _,health,_=call('/health');timing=health['requests'].get('lastRequest',{})
+   if health['requests']['completed']>=expected_completed:break
+   time.sleep(.01)
+  item['health']=health
+  decode=timing.get('decodeAfterFirstTokenMs');count=response['usage']['completion_tokens']
+  item['decode_tokens_per_second_after_first']=(count-1)*1000/decode if decode and count>1 else None
+ records.append(item);save();print(label,status,response.get('usage'),round(wall,3),flush=True)
+ assert status==200,(label,response)
+ return response['choices'][0]['message']
+def code(n):return '\n\n'.join(f'def offset_{i}(value: int) -> int:\n    return value + {i}  # deterministic offset' for i in range(n))
+try:
+ for _ in range(900):
+  if server.poll() is not None:raise RuntimeError('Control server startup failed')
+  try:
+   status,health,_=call('/health')
+   if status==200:break
+  except OSError:time.sleep(.1)
+ else:raise RuntimeError('Readiness timeout')
+ summary['ready_seconds']=time.monotonic()-started;summary['loaded_health']=health;save()
+ request('warmup',[{'role':'user','content':'Reply with exactly: ready'}],measured=False)
+ short=[{'role':'system','content':'Be concise. Follow explicit answer limits.'},{'role':'user','content':'Reply with exactly: hello'}]
+ answer=request('single-turn',short);short += [answer,{'role':'user','content':'Reply with exactly: hello again'}];request('two-turn-short',short)
+ for label,n in [('approx-1k',32),('approx-4k',128),('longer',192)]:
+  messages=[{'role':'system','content':'You review Python code. Follow the requested concise format.'},{'role':'user','content':'Review this public synthetic module. Reply with exactly OK after reading.\n```python\n'+code(n)+'\n```'}]
+  answer=request(label+'-first',messages)
+  if label!='longer':request(label+'-followup',messages+[answer,{'role':'user','content':'Does offset_7 add seven? Reply with exactly YES.'}])
+ tool={'type':'function','function':{'name':'audit_chunk','description':'Read one numbered chunk of the public Python module. Use one call per turn and await the result.','parameters':{'type':'object','properties':{'index':{'type':'integer','enum':[1,2,3]}},'required':['index'],'additionalProperties':False}}}
+ messages=[{'role':'system','content':'Use one tool call per turn. Await each result. Never call two tools in the same response.'},{'role':'user','content':'Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\n'+code(32)}]
+ cycle=time.monotonic()
+ for index in [1,2,3]:
+  assistant=request(f'tool-step-{index}',messages,[tool],128)
+  calls=assistant.get('tool_calls',[])
+  assert len(calls)==1 and calls[0]['function']['name']=='audit_chunk','Expected one sequential native call'
+  assert json.loads(calls[0]['function']['arguments'])=={'index':index}
+  messages += [assistant,{'role':'tool','tool_call_id':calls[0]['id'],'content':json.dumps({'index':index,'status':'reviewed','next_index':index+1 if index<3 else None,'source':code(2)})}]
+ request('tool-final',messages,[tool],32)
+ summary['tool_cycle_seconds']=time.monotonic()-cycle;summary['passed']=True
+finally:
+ if server.poll() is None:server.send_signal(signal.SIGTERM);server.wait(timeout=60)
+ summary['server_exit']=server.returncode;summary['all_wall_seconds']=time.monotonic()-started;save();keyfile.unlink(missing_ok=True);log.close()
+print(json.dumps(summary,indent=2))

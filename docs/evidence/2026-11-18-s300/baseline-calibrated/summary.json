@@ -1,0 +1,37 @@
+{
+  "phase": "baseline-calibrated",
+  "mode": "original replay only; cache implementation absent",
+  "base_commit": "83d28e28745d43000ad7e732e8ba2a069591575e",
+  "server_sha256": "8728793fc353ce8f7129f4506dabc85d3783c7bc83abae4c2369916b3c54ed69",
+  "context": 8192,
+  "memory_gib": 5,
+  "profiling": false,
+  "profile": "calibrated",
+  "checkpoint": "external compatible Qwen3.6-35B-A3B MLX4bit; prior identity/integrity evidence reused; normal loader checks enabled",
+  "process_pid": 78668,
+  "ready_seconds": 3.7340016669986653,
+  "loaded_health": {
+    "queue_capacity": 2,
+    "requests": {
+      "cancelled": 0,
+      "rejected": 0,
+      "failed": 0,
+      "completed": 0
+    },
+    "diagnostics": {
+      "memoryBudgetGiB": 5,
+      "metalAllocatedBytes": 5291294720,
+      "physicalFootprintBytes": 1174411216,
+      "context": 8192
+    },
+    "queued_requests": 0,
+    "model": "qwen-fieldfare",
+    "tools": true,
+    "status": "ready",
+    "service": "QwenFieldfareServer",
+    "active_generations": 0
+  },
+  "passed": true,
+  "server_exit": 0,
+  "all_wall_seconds": 619.6459609999947
+}

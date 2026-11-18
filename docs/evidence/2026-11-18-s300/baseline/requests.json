@@ -1,0 +1,1427 @@
+[
+  {
+    "label": "warmup",
+    "measured": false,
+    "http": 200,
+    "wall_seconds": 1.520136541003012,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Reply with exactly: ready"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "ready",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794940470,
+      "id": "chatcmpl-75741505-F60F-4C72-A405-04F5EA6BFE4E",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 17,
+        "total_tokens": 18
+      }
+    },
+    "health": {
+      "queued_requests": 0,
+      "status": "ready",
+      "queue_capacity": 2,
+      "model": "qwen-fieldfare",
+      "service": "QwenFieldfareServer",
+      "tools": true,
+      "active_generations": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "formattingMs": 0.004125002305954695,
+          "decodeAfterFirstTokenMs": 59.65862499579089,
+          "queueWaitMs": 0.019583334506023675,
+          "outcome": "completed",
+          "tokenizationMs": 0.7039999982225709,
+          "overallMs": 1519.9231666701962,
+          "expertFetchedBytes": 4101636096,
+          "actualPrefillTokens": 17,
+          "admissionMs": 0.19229167082812637,
+          "expertLogicalReads": 2318,
+          "outputTokens": 1,
+          "prefillMs": 1445.9370374679565,
+          "expertCacheMisses": 2318,
+          "firstGeneratedTokenMs": 1459.7741666730144,
+          "promptTokens": 17
+        },
+        "completed": 1,
+        "failed": 0,
+        "rejected": 0
+      },
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5160035136
+      }
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "single-turn",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 1.2742772080018767,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Be concise. Follow explicit answer limits."
+        },
+        {
+          "role": "user",
+          "content": "Reply with exactly: hello"
+        },
+        {
+          "content": "hello",
+          "role": "assistant"
+        },
+        {
+          "role": "user",
+          "content": "Reply with exactly: hello again"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "hello",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794940472,
+      "id": "chatcmpl-27F08223-2F2D-4FBA-82F2-AF73CD6027F3",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 30,
+        "total_tokens": 31
+      }
+    },
+    "health": {
+      "queued_requests": 0,
+      "status": "ready",
+      "queue_capacity": 2,
+      "model": "qwen-fieldfare",
+      "service": "QwenFieldfareServer",
+      "tools": true,
+      "active_generations": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "formattingMs": 0.0025833287509158254,
+          "decodeAfterFirstTokenMs": 42.27320833160775,
+          "queueWaitMs": 0.010875002772081643,
+          "outcome": "completed",
+          "tokenizationMs": 0.300083338515833,
+          "overallMs": 1274.133625003742,
+          "expertFetchedBytes": 3441623040,
+          "actualPrefillTokens": 30,
+          "admissionMs": 0.08174999675247818,
+          "expertLogicalReads": 1945,
+          "outputTokens": 1,
+          "prefillMs": 1229.583978652954,
+          "expertCacheMisses": 1945,
+          "firstGeneratedTokenMs": 1231.6583749998244,
+          "promptTokens": 30
+        },
+        "completed": 2,
+        "failed": 0,
+        "rejected": 0
+      },
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5160559472
+      }
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "two-turn-short",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 1.62142783300078,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Be concise. Follow explicit answer limits."
+        },
+        {
+          "role": "user",
+          "content": "Reply with exactly: hello"
+        },
+        {
+          "content": "hello",
+          "role": "assistant"
+        },
+        {
+          "role": "user",
+          "content": "Reply with exactly: hello again"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "hello again",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794940473,
+      "id": "chatcmpl-3AAAB2C2-01A7-48BB-9E22-AD794EBEFAFE",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 47,
+        "total_tokens": 49
+      }
+    },
+    "health": {
+      "queued_requests": 0,
+      "status": "ready",
+      "queue_capacity": 2,
+      "model": "qwen-fieldfare",
+      "service": "QwenFieldfareServer",
+      "tools": true,
+      "active_generations": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 2667,
+          "admissionMs": 0.08295833686133847,
+          "expertLogicalReads": 2667,
+          "decodeAfterFirstTokenMs": 86.28387500357348,
+          "queueWaitMs": 0.006916663551237434,
+          "tokenizationMs": 0.28612499590963125,
+          "promptTokens": 47,
+          "expertFetchedBytes": 4719181824,
+          "formattingMs": 0.00704167177900672,
+          "outputTokens": 2,
+          "overallMs": 1621.2911250040634,
+          "firstGeneratedTokenMs": 1534.8161250003614,
+          "prefillMs": 1532.565951347351,
+          "actualPrefillTokens": 47
+        },
+        "completed": 3,
+        "failed": 0,
+        "rejected": 0
+      },
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5163377520
+      }
+    },
+    "decode_tokens_per_second_after_first": 11.5896510206407
+  },
+  {
+    "label": "approx-1k-first",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 31.807193624998035,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n```"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "OK",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794940475,
+      "id": "chatcmpl-B954E5CC-2E76-42E4-A591-A8152E16D4FA",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 826,
+        "total_tokens": 827
+      }
+    },
+    "health": {
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5181318024
+      },
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "queue_capacity": 2,
+      "service": "QwenFieldfareServer",
+      "queued_requests": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 87082,
+          "admissionMs": 0.10054166341433302,
+          "expertLogicalReads": 87082,
+          "decodeAfterFirstTokenMs": 50.75787500391016,
+          "queueWaitMs": 0.011083335266448557,
+          "tokenizationMs": 3.227000001061242,
+          "promptTokens": 826,
+          "formattingMs": 0.03275000199209899,
+          "expertFetchedBytes": 154089160704,
+          "outputTokens": 1,
+          "overallMs": 31807.009791664314,
+          "firstGeneratedTokenMs": 31756.06866666203,
+          "prefillMs": 31750.658988952637,
+          "actualPrefillTokens": 826
+        },
+        "completed": 4,
+        "failed": 0,
+        "rejected": 0
+      },
+      "status": "ready",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "approx-1k-followup",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 32.70937383400451,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n```"
+        },
+        {
+          "content": "OK",
+          "role": "assistant"
+        },
+        {
+          "role": "user",
+          "content": "Does offset_7 add seven? Reply with exactly YES."
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "YES",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794940506,
+      "id": "chatcmpl-710A70D1-DDAD-4EA6-8A58-DCFD7ABAC444",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 849,
+        "total_tokens": 850
+      }
+    },
+    "health": {
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5181940616
+      },
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "queue_capacity": 2,
+      "service": "QwenFieldfareServer",
+      "queued_requests": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 89800,
+          "admissionMs": 0.12212500587338582,
+          "expertLogicalReads": 89800,
+          "decodeAfterFirstTokenMs": 43.42233332863543,
+          "queueWaitMs": 0.011958327377215028,
+          "tokenizationMs": 3.5355833315406926,
+          "promptTokens": 849,
+          "formattingMs": 0.036958335840608925,
+          "expertFetchedBytes": 158898585600,
+          "outputTokens": 1,
+          "overallMs": 32709.178666671505,
+          "firstGeneratedTokenMs": 32665.558166670962,
+          "prefillMs": 32660.62307357788,
+          "actualPrefillTokens": 849
+        },
+        "completed": 5,
+        "failed": 0,
+        "rejected": 0
+      },
+      "status": "ready",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "approx-4k-first",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 129.70510254200053,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n\ndef offset_32(value: int) -> int:\n    return value + 32  # deterministic offset\n\ndef offset_33(value: int) -> int:\n    return value + 33  # deterministic offset\n\ndef offset_34(value: int) -> int:\n    return value + 34  # deterministic offset\n\ndef offset_35(value: int) -> int:\n    return value + 35  # deterministic offset\n\ndef offset_36(value: int) -> int:\n    return value + 36  # deterministic offset\n\ndef offset_37(value: int) -> int:\n    return value + 37  # deterministic offset\n\ndef offset_38(value: int) -> int:\n    return value + 38  # deterministic offset\n\ndef offset_39(value: int) -> int:\n    return value + 39  # deterministic offset\n\ndef offset_40(value: int) -> int:\n    return value + 40  # deterministic offset\n\ndef offset_41(value: int) -> int:\n    return value + 41  # deterministic offset\n\ndef offset_42(value: int) -> int:\n    return value + 42  # deterministic offset\n\ndef offset_43(value: int) -> int:\n    return value + 43  # deterministic offset\n\ndef offset_44(value: int) -> int:\n    return value + 44  # deterministic offset\n\ndef offset_45(value: int) -> int:\n    return value + 45  # deterministic offset\n\ndef offset_46(value: int) -> int:\n    return value + 46  # deterministic offset\n\ndef offset_47(value: int) -> int:\n    return value + 47  # deterministic offset\n\ndef offset_48(value: int) -> int:\n    return value + 48  # deterministic offset\n\ndef offset_49(value: int) -> int:\n    return value + 49  # deterministic offset\n\ndef offset_50(value: int) -> int:\n    return value + 50  # deterministic offset\n\ndef offset_51(value: int) -> int:\n    return value + 51  # deterministic offset\n\ndef offset_52(value: int) -> int:\n    return value + 52  # deterministic offset\n\ndef offset_53(value: int) -> int:\n    return value + 53  # deterministic offset\n\ndef offset_54(value: int) -> int:\n    return value + 54  # deterministic offset\n\ndef offset_55(value: int) -> int:\n    return value + 55  # deterministic offset\n\ndef offset_56(value: int) -> int:\n    return value + 56  # deterministic offset\n\ndef offset_57(value: int) -> int:\n    return value + 57  # deterministic offset\n\ndef offset_58(value: int) -> int:\n    return value + 58  # deterministic offset\n\ndef offset_59(value: int) -> int:\n    return value + 59  # deterministic offset\n\ndef offset_60(value: int) -> int:\n    return value + 60  # deterministic offset\n\ndef offset_61(value: int) -> int:\n    return value + 61  # deterministic offset\n\ndef offset_62(value: int) -> int:\n    return value + 62  # deterministic offset\n\ndef offset_63(value: int) -> int:\n    return value + 63  # deterministic offset\n\ndef offset_64(value: int) -> int:\n    return value + 64  # deterministic offset\n\ndef offset_65(value: int) -> int:\n    return value + 65  # deterministic offset\n\ndef offset_66(value: int) -> int:\n    return value + 66  # deterministic offset\n\ndef offset_67(value: int) -> int:\n    return value + 67  # deterministic offset\n\ndef offset_68(value: int) -> int:\n    return value + 68  # deterministic offset\n\ndef offset_69(value: int) -> int:\n    return value + 69  # deterministic offset\n\ndef offset_70(value: int) -> int:\n    return value + 70  # deterministic offset\n\ndef offset_71(value: int) -> int:\n    return value + 71  # deterministic offset\n\ndef offset_72(value: int) -> int:\n    return value + 72  # deterministic offset\n\ndef offset_73(value: int) -> int:\n    return value + 73  # deterministic offset\n\ndef offset_74(value: int) -> int:\n    return value + 74  # deterministic offset\n\ndef offset_75(value: int) -> int:\n    return value + 75  # deterministic offset\n\ndef offset_76(value: int) -> int:\n    return value + 76  # deterministic offset\n\ndef offset_77(value: int) -> int:\n    return value + 77  # deterministic offset\n\ndef offset_78(value: int) -> int:\n    return value + 78  # deterministic offset\n\ndef offset_79(value: int) -> int:\n    return value + 79  # deterministic offset\n\ndef offset_80(value: int) -> int:\n    return value + 80  # deterministic offset\n\ndef offset_81(value: int) -> int:\n    return value + 81  # deterministic offset\n\ndef offset_82(value: int) -> int:\n    return value + 82  # deterministic offset\n\ndef offset_83(value: int) -> int:\n    return value + 83  # deterministic offset\n\ndef offset_84(value: int) -> int:\n    return value + 84  # deterministic offset\n\ndef offset_85(value: int) -> int:\n    return value + 85  # deterministic offset\n\ndef offset_86(value: int) -> int:\n    return value + 86  # deterministic offset\n\ndef offset_87(value: int) -> int:\n    return value + 87  # deterministic offset\n\ndef offset_88(value: int) -> int:\n    return value + 88  # deterministic offset\n\ndef offset_89(value: int) -> int:\n    return value + 89  # deterministic offset\n\ndef offset_90(value: int) -> int:\n    return value + 90  # deterministic offset\n\ndef offset_91(value: int) -> int:\n    return value + 91  # deterministic offset\n\ndef offset_92(value: int) -> int:\n    return value + 92  # deterministic offset\n\ndef offset_93(value: int) -> int:\n    return value + 93  # deterministic offset\n\ndef offset_94(value: int) -> int:\n    return value + 94  # deterministic offset\n\ndef offset_95(value: int) -> int:\n    return value + 95  # deterministic offset\n\ndef offset_96(value: int) -> int:\n    return value + 96  # deterministic offset\n\ndef offset_97(value: int) -> int:\n    return value + 97  # deterministic offset\n\ndef offset_98(value: int) -> int:\n    return value + 98  # deterministic offset\n\ndef offset_99(value: int) -> int:\n    return value + 99  # deterministic offset\n\ndef offset_100(value: int) -> int:\n    return value + 100  # deterministic offset\n\ndef offset_101(value: int) -> int:\n    return value + 101  # deterministic offset\n\ndef offset_102(value: int) -> int:\n    return value + 102  # deterministic offset\n\ndef offset_103(value: int) -> int:\n    return value + 103  # deterministic offset\n\ndef offset_104(value: int) -> int:\n    return value + 104  # deterministic offset\n\ndef offset_105(value: int) -> int:\n    return value + 105  # deterministic offset\n\ndef offset_106(value: int) -> int:\n    return value + 106  # deterministic offset\n\ndef offset_107(value: int) -> int:\n    return value + 107  # deterministic offset\n\ndef offset_108(value: int) -> int:\n    return value + 108  # deterministic offset\n\ndef offset_109(value: int) -> int:\n    return value + 109  # deterministic offset\n\ndef offset_110(value: int) -> int:\n    return value + 110  # deterministic offset\n\ndef offset_111(value: int) -> int:\n    return value + 111  # deterministic offset\n\ndef offset_112(value: int) -> int:\n    return value + 112  # deterministic offset\n\ndef offset_113(value: int) -> int:\n    return value + 113  # deterministic offset\n\ndef offset_114(value: int) -> int:\n    return value + 114  # deterministic offset\n\ndef offset_115(value: int) -> int:\n    return value + 115  # deterministic offset\n\ndef offset_116(value: int) -> int:\n    return value + 116  # deterministic offset\n\ndef offset_117(value: int) -> int:\n    return value + 117  # deterministic offset\n\ndef offset_118(value: int) -> int:\n    return value + 118  # deterministic offset\n\ndef offset_119(value: int) -> int:\n    return value + 119  # deterministic offset\n\ndef offset_120(value: int) -> int:\n    return value + 120  # deterministic offset\n\ndef offset_121(value: int) -> int:\n    return value + 121  # deterministic offset\n\ndef offset_122(value: int) -> int:\n    return value + 122  # deterministic offset\n\ndef offset_123(value: int) -> int:\n    return value + 123  # deterministic offset\n\ndef offset_124(value: int) -> int:\n    return value + 124  # deterministic offset\n\ndef offset_125(value: int) -> int:\n    return value + 125  # deterministic offset\n\ndef offset_126(value: int) -> int:\n    return value + 126  # deterministic offset\n\ndef offset_127(value: int) -> int:\n    return value + 127  # deterministic offset\n```"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "OK",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794940539,
+      "id": "chatcmpl-1DFFD872-51D0-4D9B-BC89-6330F3E2DDEC",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 3282,
+        "total_tokens": 3283
+      }
+    },
+    "health": {
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5236007840
+      },
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "queue_capacity": 2,
+      "service": "QwenFieldfareServer",
+      "queued_requests": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 374903,
+          "admissionMs": 0.16787500499049202,
+          "expertLogicalReads": 374903,
+          "decodeAfterFirstTokenMs": 48.019708337960765,
+          "queueWaitMs": 0.007541661034338176,
+          "tokenizationMs": 11.221875000046566,
+          "promptTokens": 3282,
+          "formattingMs": 0.11591666407184675,
+          "expertFetchedBytes": 663380361216,
+          "outputTokens": 1,
+          "overallMs": 129704.86604166945,
+          "firstGeneratedTokenMs": 129656.61841666588,
+          "prefillMs": 129645.8580493927,
+          "actualPrefillTokens": 3282
+        },
+        "completed": 6,
+        "failed": 0,
+        "rejected": 0
+      },
+      "status": "ready",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "approx-4k-followup",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 127.29032370800269,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n\ndef offset_32(value: int) -> int:\n    return value + 32  # deterministic offset\n\ndef offset_33(value: int) -> int:\n    return value + 33  # deterministic offset\n\ndef offset_34(value: int) -> int:\n    return value + 34  # deterministic offset\n\ndef offset_35(value: int) -> int:\n    return value + 35  # deterministic offset\n\ndef offset_36(value: int) -> int:\n    return value + 36  # deterministic offset\n\ndef offset_37(value: int) -> int:\n    return value + 37  # deterministic offset\n\ndef offset_38(value: int) -> int:\n    return value + 38  # deterministic offset\n\ndef offset_39(value: int) -> int:\n    return value + 39  # deterministic offset\n\ndef offset_40(value: int) -> int:\n    return value + 40  # deterministic offset\n\ndef offset_41(value: int) -> int:\n    return value + 41  # deterministic offset\n\ndef offset_42(value: int) -> int:\n    return value + 42  # deterministic offset\n\ndef offset_43(value: int) -> int:\n    return value + 43  # deterministic offset\n\ndef offset_44(value: int) -> int:\n    return value + 44  # deterministic offset\n\ndef offset_45(value: int) -> int:\n    return value + 45  # deterministic offset\n\ndef offset_46(value: int) -> int:\n    return value + 46  # deterministic offset\n\ndef offset_47(value: int) -> int:\n    return value + 47  # deterministic offset\n\ndef offset_48(value: int) -> int:\n    return value + 48  # deterministic offset\n\ndef offset_49(value: int) -> int:\n    return value + 49  # deterministic offset\n\ndef offset_50(value: int) -> int:\n    return value + 50  # deterministic offset\n\ndef offset_51(value: int) -> int:\n    return value + 51  # deterministic offset\n\ndef offset_52(value: int) -> int:\n    return value + 52  # deterministic offset\n\ndef offset_53(value: int) -> int:\n    return value + 53  # deterministic offset\n\ndef offset_54(value: int) -> int:\n    return value + 54  # deterministic offset\n\ndef offset_55(value: int) -> int:\n    return value + 55  # deterministic offset\n\ndef offset_56(value: int) -> int:\n    return value + 56  # deterministic offset\n\ndef offset_57(value: int) -> int:\n    return value + 57  # deterministic offset\n\ndef offset_58(value: int) -> int:\n    return value + 58  # deterministic offset\n\ndef offset_59(value: int) -> int:\n    return value + 59  # deterministic offset\n\ndef offset_60(value: int) -> int:\n    return value + 60  # deterministic offset\n\ndef offset_61(value: int) -> int:\n    return value + 61  # deterministic offset\n\ndef offset_62(value: int) -> int:\n    return value + 62  # deterministic offset\n\ndef offset_63(value: int) -> int:\n    return value + 63  # deterministic offset\n\ndef offset_64(value: int) -> int:\n    return value + 64  # deterministic offset\n\ndef offset_65(value: int) -> int:\n    return value + 65  # deterministic offset\n\ndef offset_66(value: int) -> int:\n    return value + 66  # deterministic offset\n\ndef offset_67(value: int) -> int:\n    return value + 67  # deterministic offset\n\ndef offset_68(value: int) -> int:\n    return value + 68  # deterministic offset\n\ndef offset_69(value: int) -> int:\n    return value + 69  # deterministic offset\n\ndef offset_70(value: int) -> int:\n    return value + 70  # deterministic offset\n\ndef offset_71(value: int) -> int:\n    return value + 71  # deterministic offset\n\ndef offset_72(value: int) -> int:\n    return value + 72  # deterministic offset\n\ndef offset_73(value: int) -> int:\n    return value + 73  # deterministic offset\n\ndef offset_74(value: int) -> int:\n    return value + 74  # deterministic offset\n\ndef offset_75(value: int) -> int:\n    return value + 75  # deterministic offset\n\ndef offset_76(value: int) -> int:\n    return value + 76  # deterministic offset\n\ndef offset_77(value: int) -> int:\n    return value + 77  # deterministic offset\n\ndef offset_78(value: int) -> int:\n    return value + 78  # deterministic offset\n\ndef offset_79(value: int) -> int:\n    return value + 79  # deterministic offset\n\ndef offset_80(value: int) -> int:\n    return value + 80  # deterministic offset\n\ndef offset_81(value: int) -> int:\n    return value + 81  # deterministic offset\n\ndef offset_82(value: int) -> int:\n    return value + 82  # deterministic offset\n\ndef offset_83(value: int) -> int:\n    return value + 83  # deterministic offset\n\ndef offset_84(value: int) -> int:\n    return value + 84  # deterministic offset\n\ndef offset_85(value: int) -> int:\n    return value + 85  # deterministic offset\n\ndef offset_86(value: int) -> int:\n    return value + 86  # deterministic offset\n\ndef offset_87(value: int) -> int:\n    return value + 87  # deterministic offset\n\ndef offset_88(value: int) -> int:\n    return value + 88  # deterministic offset\n\ndef offset_89(value: int) -> int:\n    return value + 89  # deterministic offset\n\ndef offset_90(value: int) -> int:\n    return value + 90  # deterministic offset\n\ndef offset_91(value: int) -> int:\n    return value + 91  # deterministic offset\n\ndef offset_92(value: int) -> int:\n    return value + 92  # deterministic offset\n\ndef offset_93(value: int) -> int:\n    return value + 93  # deterministic offset\n\ndef offset_94(value: int) -> int:\n    return value + 94  # deterministic offset\n\ndef offset_95(value: int) -> int:\n    return value + 95  # deterministic offset\n\ndef offset_96(value: int) -> int:\n    return value + 96  # deterministic offset\n\ndef offset_97(value: int) -> int:\n    return value + 97  # deterministic offset\n\ndef offset_98(value: int) -> int:\n    return value + 98  # deterministic offset\n\ndef offset_99(value: int) -> int:\n    return value + 99  # deterministic offset\n\ndef offset_100(value: int) -> int:\n    return value + 100  # deterministic offset\n\ndef offset_101(value: int) -> int:\n    return value + 101  # deterministic offset\n\ndef offset_102(value: int) -> int:\n    return value + 102  # deterministic offset\n\ndef offset_103(value: int) -> int:\n    return value + 103  # deterministic offset\n\ndef offset_104(value: int) -> int:\n    return value + 104  # deterministic offset\n\ndef offset_105(value: int) -> int:\n    return value + 105  # deterministic offset\n\ndef offset_106(value: int) -> int:\n    return value + 106  # deterministic offset\n\ndef offset_107(value: int) -> int:\n    return value + 107  # deterministic offset\n\ndef offset_108(value: int) -> int:\n    return value + 108  # deterministic offset\n\ndef offset_109(value: int) -> int:\n    return value + 109  # deterministic offset\n\ndef offset_110(value: int) -> int:\n    return value + 110  # deterministic offset\n\ndef offset_111(value: int) -> int:\n    return value + 111  # deterministic offset\n\ndef offset_112(value: int) -> int:\n    return value + 112  # deterministic offset\n\ndef offset_113(value: int) -> int:\n    return value + 113  # deterministic offset\n\ndef offset_114(value: int) -> int:\n    return value + 114  # deterministic offset\n\ndef offset_115(value: int) -> int:\n    return value + 115  # deterministic offset\n\ndef offset_116(value: int) -> int:\n    return value + 116  # deterministic offset\n\ndef offset_117(value: int) -> int:\n    return value + 117  # deterministic offset\n\ndef offset_118(value: int) -> int:\n    return value + 118  # deterministic offset\n\ndef offset_119(value: int) -> int:\n    return value + 119  # deterministic offset\n\ndef offset_120(value: int) -> int:\n    return value + 120  # deterministic offset\n\ndef offset_121(value: int) -> int:\n    return value + 121  # deterministic offset\n\ndef offset_122(value: int) -> int:\n    return value + 122  # deterministic offset\n\ndef offset_123(value: int) -> int:\n    return value + 123  # deterministic offset\n\ndef offset_124(value: int) -> int:\n    return value + 124  # deterministic offset\n\ndef offset_125(value: int) -> int:\n    return value + 125  # deterministic offset\n\ndef offset_126(value: int) -> int:\n    return value + 126  # deterministic offset\n\ndef offset_127(value: int) -> int:\n    return value + 127  # deterministic offset\n```"
+        },
+        {
+          "content": "OK",
+          "role": "assistant"
+        },
+        {
+          "role": "user",
+          "content": "Does offset_7 add seven? Reply with exactly YES."
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "YES",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794940669,
+      "id": "chatcmpl-DFE65F36-5ADE-44DF-80FC-92844A385544",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 3305,
+        "total_tokens": 3306
+      }
+    },
+    "health": {
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5146616712
+      },
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "queue_capacity": 2,
+      "service": "QwenFieldfareServer",
+      "queued_requests": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 377287,
+          "admissionMs": 0.15100000018719584,
+          "expertLogicalReads": 377287,
+          "decodeAfterFirstTokenMs": 38.682124999468215,
+          "queueWaitMs": 0.011000003723893315,
+          "tokenizationMs": 14.921083333319984,
+          "promptTokens": 3305,
+          "formattingMs": 0.11845833068946376,
+          "expertFetchedBytes": 667598782464,
+          "outputTokens": 1,
+          "overallMs": 127290.05216666701,
+          "firstGeneratedTokenMs": 127251.1757083339,
+          "prefillMs": 127234.47608947754,
+          "actualPrefillTokens": 3305
+        },
+        "completed": 7,
+        "failed": 0,
+        "rejected": 0
+      },
+      "status": "ready",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "longer-first",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 189.98026166600175,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You review Python code. Follow the requested concise format."
+        },
+        {
+          "role": "user",
+          "content": "Review this public synthetic module. Reply with exactly OK after reading.\n```python\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset\n\ndef offset_32(value: int) -> int:\n    return value + 32  # deterministic offset\n\ndef offset_33(value: int) -> int:\n    return value + 33  # deterministic offset\n\ndef offset_34(value: int) -> int:\n    return value + 34  # deterministic offset\n\ndef offset_35(value: int) -> int:\n    return value + 35  # deterministic offset\n\ndef offset_36(value: int) -> int:\n    return value + 36  # deterministic offset\n\ndef offset_37(value: int) -> int:\n    return value + 37  # deterministic offset\n\ndef offset_38(value: int) -> int:\n    return value + 38  # deterministic offset\n\ndef offset_39(value: int) -> int:\n    return value + 39  # deterministic offset\n\ndef offset_40(value: int) -> int:\n    return value + 40  # deterministic offset\n\ndef offset_41(value: int) -> int:\n    return value + 41  # deterministic offset\n\ndef offset_42(value: int) -> int:\n    return value + 42  # deterministic offset\n\ndef offset_43(value: int) -> int:\n    return value + 43  # deterministic offset\n\ndef offset_44(value: int) -> int:\n    return value + 44  # deterministic offset\n\ndef offset_45(value: int) -> int:\n    return value + 45  # deterministic offset\n\ndef offset_46(value: int) -> int:\n    return value + 46  # deterministic offset\n\ndef offset_47(value: int) -> int:\n    return value + 47  # deterministic offset\n\ndef offset_48(value: int) -> int:\n    return value + 48  # deterministic offset\n\ndef offset_49(value: int) -> int:\n    return value + 49  # deterministic offset\n\ndef offset_50(value: int) -> int:\n    return value + 50  # deterministic offset\n\ndef offset_51(value: int) -> int:\n    return value + 51  # deterministic offset\n\ndef offset_52(value: int) -> int:\n    return value + 52  # deterministic offset\n\ndef offset_53(value: int) -> int:\n    return value + 53  # deterministic offset\n\ndef offset_54(value: int) -> int:\n    return value + 54  # deterministic offset\n\ndef offset_55(value: int) -> int:\n    return value + 55  # deterministic offset\n\ndef offset_56(value: int) -> int:\n    return value + 56  # deterministic offset\n\ndef offset_57(value: int) -> int:\n    return value + 57  # deterministic offset\n\ndef offset_58(value: int) -> int:\n    return value + 58  # deterministic offset\n\ndef offset_59(value: int) -> int:\n    return value + 59  # deterministic offset\n\ndef offset_60(value: int) -> int:\n    return value + 60  # deterministic offset\n\ndef offset_61(value: int) -> int:\n    return value + 61  # deterministic offset\n\ndef offset_62(value: int) -> int:\n    return value + 62  # deterministic offset\n\ndef offset_63(value: int) -> int:\n    return value + 63  # deterministic offset\n\ndef offset_64(value: int) -> int:\n    return value + 64  # deterministic offset\n\ndef offset_65(value: int) -> int:\n    return value + 65  # deterministic offset\n\ndef offset_66(value: int) -> int:\n    return value + 66  # deterministic offset\n\ndef offset_67(value: int) -> int:\n    return value + 67  # deterministic offset\n\ndef offset_68(value: int) -> int:\n    return value + 68  # deterministic offset\n\ndef offset_69(value: int) -> int:\n    return value + 69  # deterministic offset\n\ndef offset_70(value: int) -> int:\n    return value + 70  # deterministic offset\n\ndef offset_71(value: int) -> int:\n    return value + 71  # deterministic offset\n\ndef offset_72(value: int) -> int:\n    return value + 72  # deterministic offset\n\ndef offset_73(value: int) -> int:\n    return value + 73  # deterministic offset\n\ndef offset_74(value: int) -> int:\n    return value + 74  # deterministic offset\n\ndef offset_75(value: int) -> int:\n    return value + 75  # deterministic offset\n\ndef offset_76(value: int) -> int:\n    return value + 76  # deterministic offset\n\ndef offset_77(value: int) -> int:\n    return value + 77  # deterministic offset\n\ndef offset_78(value: int) -> int:\n    return value + 78  # deterministic offset\n\ndef offset_79(value: int) -> int:\n    return value + 79  # deterministic offset\n\ndef offset_80(value: int) -> int:\n    return value + 80  # deterministic offset\n\ndef offset_81(value: int) -> int:\n    return value + 81  # deterministic offset\n\ndef offset_82(value: int) -> int:\n    return value + 82  # deterministic offset\n\ndef offset_83(value: int) -> int:\n    return value + 83  # deterministic offset\n\ndef offset_84(value: int) -> int:\n    return value + 84  # deterministic offset\n\ndef offset_85(value: int) -> int:\n    return value + 85  # deterministic offset\n\ndef offset_86(value: int) -> int:\n    return value + 86  # deterministic offset\n\ndef offset_87(value: int) -> int:\n    return value + 87  # deterministic offset\n\ndef offset_88(value: int) -> int:\n    return value + 88  # deterministic offset\n\ndef offset_89(value: int) -> int:\n    return value + 89  # deterministic offset\n\ndef offset_90(value: int) -> int:\n    return value + 90  # deterministic offset\n\ndef offset_91(value: int) -> int:\n    return value + 91  # deterministic offset\n\ndef offset_92(value: int) -> int:\n    return value + 92  # deterministic offset\n\ndef offset_93(value: int) -> int:\n    return value + 93  # deterministic offset\n\ndef offset_94(value: int) -> int:\n    return value + 94  # deterministic offset\n\ndef offset_95(value: int) -> int:\n    return value + 95  # deterministic offset\n\ndef offset_96(value: int) -> int:\n    return value + 96  # deterministic offset\n\ndef offset_97(value: int) -> int:\n    return value + 97  # deterministic offset\n\ndef offset_98(value: int) -> int:\n    return value + 98  # deterministic offset\n\ndef offset_99(value: int) -> int:\n    return value + 99  # deterministic offset\n\ndef offset_100(value: int) -> int:\n    return value + 100  # deterministic offset\n\ndef offset_101(value: int) -> int:\n    return value + 101  # deterministic offset\n\ndef offset_102(value: int) -> int:\n    return value + 102  # deterministic offset\n\ndef offset_103(value: int) -> int:\n    return value + 103  # deterministic offset\n\ndef offset_104(value: int) -> int:\n    return value + 104  # deterministic offset\n\ndef offset_105(value: int) -> int:\n    return value + 105  # deterministic offset\n\ndef offset_106(value: int) -> int:\n    return value + 106  # deterministic offset\n\ndef offset_107(value: int) -> int:\n    return value + 107  # deterministic offset\n\ndef offset_108(value: int) -> int:\n    return value + 108  # deterministic offset\n\ndef offset_109(value: int) -> int:\n    return value + 109  # deterministic offset\n\ndef offset_110(value: int) -> int:\n    return value + 110  # deterministic offset\n\ndef offset_111(value: int) -> int:\n    return value + 111  # deterministic offset\n\ndef offset_112(value: int) -> int:\n    return value + 112  # deterministic offset\n\ndef offset_113(value: int) -> int:\n    return value + 113  # deterministic offset\n\ndef offset_114(value: int) -> int:\n    return value + 114  # deterministic offset\n\ndef offset_115(value: int) -> int:\n    return value + 115  # deterministic offset\n\ndef offset_116(value: int) -> int:\n    return value + 116  # deterministic offset\n\ndef offset_117(value: int) -> int:\n    return value + 117  # deterministic offset\n\ndef offset_118(value: int) -> int:\n    return value + 118  # deterministic offset\n\ndef offset_119(value: int) -> int:\n    return value + 119  # deterministic offset\n\ndef offset_120(value: int) -> int:\n    return value + 120  # deterministic offset\n\ndef offset_121(value: int) -> int:\n    return value + 121  # deterministic offset\n\ndef offset_122(value: int) -> int:\n    return value + 122  # deterministic offset\n\ndef offset_123(value: int) -> int:\n    return value + 123  # deterministic offset\n\ndef offset_124(value: int) -> int:\n    return value + 124  # deterministic offset\n\ndef offset_125(value: int) -> int:\n    return value + 125  # deterministic offset\n\ndef offset_126(value: int) -> int:\n    return value + 126  # deterministic offset\n\ndef offset_127(value: int) -> int:\n    return value + 127  # deterministic offset\n\ndef offset_128(value: int) -> int:\n    return value + 128  # deterministic offset\n\ndef offset_129(value: int) -> int:\n    return value + 129  # deterministic offset\n\ndef offset_130(value: int) -> int:\n    return value + 130  # deterministic offset\n\ndef offset_131(value: int) -> int:\n    return value + 131  # deterministic offset\n\ndef offset_132(value: int) -> int:\n    return value + 132  # deterministic offset\n\ndef offset_133(value: int) -> int:\n    return value + 133  # deterministic offset\n\ndef offset_134(value: int) -> int:\n    return value + 134  # deterministic offset\n\ndef offset_135(value: int) -> int:\n    return value + 135  # deterministic offset\n\ndef offset_136(value: int) -> int:\n    return value + 136  # deterministic offset\n\ndef offset_137(value: int) -> int:\n    return value + 137  # deterministic offset\n\ndef offset_138(value: int) -> int:\n    return value + 138  # deterministic offset\n\ndef offset_139(value: int) -> int:\n    return value + 139  # deterministic offset\n\ndef offset_140(value: int) -> int:\n    return value + 140  # deterministic offset\n\ndef offset_141(value: int) -> int:\n    return value + 141  # deterministic offset\n\ndef offset_142(value: int) -> int:\n    return value + 142  # deterministic offset\n\ndef offset_143(value: int) -> int:\n    return value + 143  # deterministic offset\n\ndef offset_144(value: int) -> int:\n    return value + 144  # deterministic offset\n\ndef offset_145(value: int) -> int:\n    return value + 145  # deterministic offset\n\ndef offset_146(value: int) -> int:\n    return value + 146  # deterministic offset\n\ndef offset_147(value: int) -> int:\n    return value + 147  # deterministic offset\n\ndef offset_148(value: int) -> int:\n    return value + 148  # deterministic offset\n\ndef offset_149(value: int) -> int:\n    return value + 149  # deterministic offset\n\ndef offset_150(value: int) -> int:\n    return value + 150  # deterministic offset\n\ndef offset_151(value: int) -> int:\n    return value + 151  # deterministic offset\n\ndef offset_152(value: int) -> int:\n    return value + 152  # deterministic offset\n\ndef offset_153(value: int) -> int:\n    return value + 153  # deterministic offset\n\ndef offset_154(value: int) -> int:\n    return value + 154  # deterministic offset\n\ndef offset_155(value: int) -> int:\n    return value + 155  # deterministic offset\n\ndef offset_156(value: int) -> int:\n    return value + 156  # deterministic offset\n\ndef offset_157(value: int) -> int:\n    return value + 157  # deterministic offset\n\ndef offset_158(value: int) -> int:\n    return value + 158  # deterministic offset\n\ndef offset_159(value: int) -> int:\n    return value + 159  # deterministic offset\n\ndef offset_160(value: int) -> int:\n    return value + 160  # deterministic offset\n\ndef offset_161(value: int) -> int:\n    return value + 161  # deterministic offset\n\ndef offset_162(value: int) -> int:\n    return value + 162  # deterministic offset\n\ndef offset_163(value: int) -> int:\n    return value + 163  # deterministic offset\n\ndef offset_164(value: int) -> int:\n    return value + 164  # deterministic offset\n\ndef offset_165(value: int) -> int:\n    return value + 165  # deterministic offset\n\ndef offset_166(value: int) -> int:\n    return value + 166  # deterministic offset\n\ndef offset_167(value: int) -> int:\n    return value + 167  # deterministic offset\n\ndef offset_168(value: int) -> int:\n    return value + 168  # deterministic offset\n\ndef offset_169(value: int) -> int:\n    return value + 169  # deterministic offset\n\ndef offset_170(value: int) -> int:\n    return value + 170  # deterministic offset\n\ndef offset_171(value: int) -> int:\n    return value + 171  # deterministic offset\n\ndef offset_172(value: int) -> int:\n    return value + 172  # deterministic offset\n\ndef offset_173(value: int) -> int:\n    return value + 173  # deterministic offset\n\ndef offset_174(value: int) -> int:\n    return value + 174  # deterministic offset\n\ndef offset_175(value: int) -> int:\n    return value + 175  # deterministic offset\n\ndef offset_176(value: int) -> int:\n    return value + 176  # deterministic offset\n\ndef offset_177(value: int) -> int:\n    return value + 177  # deterministic offset\n\ndef offset_178(value: int) -> int:\n    return value + 178  # deterministic offset\n\ndef offset_179(value: int) -> int:\n    return value + 179  # deterministic offset\n\ndef offset_180(value: int) -> int:\n    return value + 180  # deterministic offset\n\ndef offset_181(value: int) -> int:\n    return value + 181  # deterministic offset\n\ndef offset_182(value: int) -> int:\n    return value + 182  # deterministic offset\n\ndef offset_183(value: int) -> int:\n    return value + 183  # deterministic offset\n\ndef offset_184(value: int) -> int:\n    return value + 184  # deterministic offset\n\ndef offset_185(value: int) -> int:\n    return value + 185  # deterministic offset\n\ndef offset_186(value: int) -> int:\n    return value + 186  # deterministic offset\n\ndef offset_187(value: int) -> int:\n    return value + 187  # deterministic offset\n\ndef offset_188(value: int) -> int:\n    return value + 188  # deterministic offset\n\ndef offset_189(value: int) -> int:\n    return value + 189  # deterministic offset\n\ndef offset_190(value: int) -> int:\n    return value + 190  # deterministic offset\n\ndef offset_191(value: int) -> int:\n    return value + 191  # deterministic offset\n```"
+        }
+      ],
+      "max_tokens": 8,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "OK",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794940796,
+      "id": "chatcmpl-83781E7C-4814-410F-8F0D-4DDAEA880741",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 5010,
+        "total_tokens": 5011
+      }
+    },
+    "health": {
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5184594872
+      },
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "queue_capacity": 2,
+      "service": "QwenFieldfareServer",
+      "queued_requests": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 585363,
+          "admissionMs": 0.18937500135507435,
+          "expertLogicalReads": 585363,
+          "decodeAfterFirstTokenMs": 50.7940833340399,
+          "queueWaitMs": 0.010083334927912802,
+          "tokenizationMs": 17.52245833631605,
+          "promptTokens": 5010,
+          "formattingMs": 0.1790000023902394,
+          "expertFetchedBytes": 1035783438336,
+          "outputTokens": 1,
+          "overallMs": 189980.03299999982,
+          "firstGeneratedTokenMs": 189929.01279166836,
+          "prefillMs": 189909.67905521393,
+          "actualPrefillTokens": 5010
+        },
+        "completed": 8,
+        "failed": 0,
+        "rejected": 0
+      },
+      "status": "ready",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  },
+  {
+    "label": "tool-step-1",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 42.35011979200499,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":3}",
+                "name": "audit_chunk"
+              },
+              "id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+          "content": "{\"index\": 3, \"status\": \"reviewed\", \"next_index\": null, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "content": null,
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "function": {
+                  "arguments": "{\"index\":1}",
+                  "name": "audit_chunk"
+                },
+                "id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+                "type": "function"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1794940986,
+      "id": "chatcmpl-7969AF12-D0BF-4D7F-9858-14E32ABE2BD5",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1141,
+        "total_tokens": 1166
+      }
+    },
+    "health": {
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5184840632
+      },
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "queue_capacity": 2,
+      "service": "QwenFieldfareServer",
+      "queued_requests": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 127324,
+          "admissionMs": 0.17120833217632025,
+          "expertLogicalReads": 127324,
+          "decodeAfterFirstTokenMs": 958.0099999948288,
+          "queueWaitMs": 0.0106250008684583,
+          "tokenizationMs": 5.284624996420462,
+          "promptTokens": 1141,
+          "formattingMs": 0.2694166687433608,
+          "expertFetchedBytes": 225296252928,
+          "outputTokens": 25,
+          "parserBufferMs": 958.1396249996033,
+          "overallMs": 42349.92608333414,
+          "firstGeneratedTokenMs": 41391.53120833362,
+          "prefillMs": 41383.756041526794,
+          "actualPrefillTokens": 1141
+        },
+        "completed": 9,
+        "failed": 0,
+        "rejected": 0
+      },
+      "status": "ready",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": 25.051930564534345
+  },
+  {
+    "label": "tool-step-2",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 46.96815470800357,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":3}",
+                "name": "audit_chunk"
+              },
+              "id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+          "content": "{\"index\": 3, \"status\": \"reviewed\", \"next_index\": null, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "content": null,
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "function": {
+                  "arguments": "{\"index\":2}",
+                  "name": "audit_chunk"
+                },
+                "id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+                "type": "function"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1794941028,
+      "id": "chatcmpl-E73DC5E1-4874-4598-9F5B-61F491E6723B",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1255,
+        "total_tokens": 1280
+      }
+    },
+    "health": {
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5184938936
+      },
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "queue_capacity": 2,
+      "service": "QwenFieldfareServer",
+      "queued_requests": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 139013,
+          "admissionMs": 0.18704166723182425,
+          "expertLogicalReads": 139013,
+          "decodeAfterFirstTokenMs": 928.9338333328487,
+          "queueWaitMs": 0.0109999964479357,
+          "tokenizationMs": 4.72750000335509,
+          "promptTokens": 1255,
+          "formattingMs": 0.13154166663298383,
+          "expertFetchedBytes": 245979611136,
+          "outputTokens": 25,
+          "parserBufferMs": 929.0307916671736,
+          "overallMs": 46967.939916663454,
+          "firstGeneratedTokenMs": 46038.692041664035,
+          "prefillMs": 46032.06491470337,
+          "actualPrefillTokens": 1255
+        },
+        "completed": 10,
+        "failed": 0,
+        "rejected": 0
+      },
+      "status": "ready",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": 25.83607049157881
+  },
+  {
+    "label": "tool-step-3",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 50.30312233300356,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":3}",
+                "name": "audit_chunk"
+              },
+              "id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+          "content": "{\"index\": 3, \"status\": \"reviewed\", \"next_index\": null, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 128,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "content": null,
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "function": {
+                  "arguments": "{\"index\":3}",
+                  "name": "audit_chunk"
+                },
+                "id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+                "type": "function"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1794941075,
+      "id": "chatcmpl-02DA6631-C1BC-4618-9FF5-83E81D69C48A",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1369,
+        "total_tokens": 1394
+      }
+    },
+    "health": {
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5185004472
+      },
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "queue_capacity": 2,
+      "service": "QwenFieldfareServer",
+      "queued_requests": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 151966,
+          "admissionMs": 0.22429166710935533,
+          "expertLogicalReads": 151966,
+          "decodeAfterFirstTokenMs": 904.2315416663769,
+          "queueWaitMs": 0.012041666195727885,
+          "tokenizationMs": 5.062750002252869,
+          "promptTokens": 1369,
+          "formattingMs": 0.1422916611772962,
+          "expertFetchedBytes": 268899581952,
+          "outputTokens": 25,
+          "parserBufferMs": 904.3367083359044,
+          "overallMs": 50302.926000003936,
+          "firstGeneratedTokenMs": 49398.37950000219,
+          "prefillMs": 49391.32797718048,
+          "actualPrefillTokens": 1369
+        },
+        "completed": 11,
+        "failed": 0,
+        "rejected": 0
+      },
+      "status": "ready",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": 26.541874391786017
+  },
+  {
+    "label": "tool-final",
+    "measured": true,
+    "http": 200,
+    "wall_seconds": 53.568284165994555,
+    "request": {
+      "model": "qwen-fieldfare",
+      "messages": [
+        {
+          "role": "system",
+          "content": "Use one tool call per turn. Await each result. Never call two tools in the same response."
+        },
+        {
+          "role": "user",
+          "content": "Audit the module in three sequential steps: call audit_chunk index1 now, after its result call index2, then after that result call index3. After the third result reply DONE.\nModule:\ndef offset_0(value: int) -> int:\n    return value + 0  # deterministic offset\n\ndef offset_1(value: int) -> int:\n    return value + 1  # deterministic offset\n\ndef offset_2(value: int) -> int:\n    return value + 2  # deterministic offset\n\ndef offset_3(value: int) -> int:\n    return value + 3  # deterministic offset\n\ndef offset_4(value: int) -> int:\n    return value + 4  # deterministic offset\n\ndef offset_5(value: int) -> int:\n    return value + 5  # deterministic offset\n\ndef offset_6(value: int) -> int:\n    return value + 6  # deterministic offset\n\ndef offset_7(value: int) -> int:\n    return value + 7  # deterministic offset\n\ndef offset_8(value: int) -> int:\n    return value + 8  # deterministic offset\n\ndef offset_9(value: int) -> int:\n    return value + 9  # deterministic offset\n\ndef offset_10(value: int) -> int:\n    return value + 10  # deterministic offset\n\ndef offset_11(value: int) -> int:\n    return value + 11  # deterministic offset\n\ndef offset_12(value: int) -> int:\n    return value + 12  # deterministic offset\n\ndef offset_13(value: int) -> int:\n    return value + 13  # deterministic offset\n\ndef offset_14(value: int) -> int:\n    return value + 14  # deterministic offset\n\ndef offset_15(value: int) -> int:\n    return value + 15  # deterministic offset\n\ndef offset_16(value: int) -> int:\n    return value + 16  # deterministic offset\n\ndef offset_17(value: int) -> int:\n    return value + 17  # deterministic offset\n\ndef offset_18(value: int) -> int:\n    return value + 18  # deterministic offset\n\ndef offset_19(value: int) -> int:\n    return value + 19  # deterministic offset\n\ndef offset_20(value: int) -> int:\n    return value + 20  # deterministic offset\n\ndef offset_21(value: int) -> int:\n    return value + 21  # deterministic offset\n\ndef offset_22(value: int) -> int:\n    return value + 22  # deterministic offset\n\ndef offset_23(value: int) -> int:\n    return value + 23  # deterministic offset\n\ndef offset_24(value: int) -> int:\n    return value + 24  # deterministic offset\n\ndef offset_25(value: int) -> int:\n    return value + 25  # deterministic offset\n\ndef offset_26(value: int) -> int:\n    return value + 26  # deterministic offset\n\ndef offset_27(value: int) -> int:\n    return value + 27  # deterministic offset\n\ndef offset_28(value: int) -> int:\n    return value + 28  # deterministic offset\n\ndef offset_29(value: int) -> int:\n    return value + 29  # deterministic offset\n\ndef offset_30(value: int) -> int:\n    return value + 30  # deterministic offset\n\ndef offset_31(value: int) -> int:\n    return value + 31  # deterministic offset"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":1}",
+                "name": "audit_chunk"
+              },
+              "id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_B32C5A8792F44BF1BB74A6FDB5B328FB",
+          "content": "{\"index\": 1, \"status\": \"reviewed\", \"next_index\": 2, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":2}",
+                "name": "audit_chunk"
+              },
+              "id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_C512E72F00DB4CE9B23F3DC7829C1C94",
+          "content": "{\"index\": 2, \"status\": \"reviewed\", \"next_index\": 3, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        },
+        {
+          "content": null,
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "function": {
+                "arguments": "{\"index\":3}",
+                "name": "audit_chunk"
+              },
+              "id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+              "type": "function"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_8BCFA7FD674541668BF92D13FAFF4613",
+          "content": "{\"index\": 3, \"status\": \"reviewed\", \"next_index\": null, \"source\": \"def offset_0(value: int) -> int:\\n    return value + 0  # deterministic offset\\n\\ndef offset_1(value: int) -> int:\\n    return value + 1  # deterministic offset\"}"
+        }
+      ],
+      "max_tokens": 32,
+      "temperature": 0,
+      "top_k": 1,
+      "top_p": 1,
+      "presence_penalty": 0,
+      "repetition_penalty": 1,
+      "seed": 42,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "audit_chunk",
+            "description": "Read one numbered chunk of the public Python module. Use one call per turn and await the result.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "enum": [
+                    1,
+                    2,
+                    3
+                  ]
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "content": "DONE",
+            "role": "assistant"
+          }
+        }
+      ],
+      "created": 1794941126,
+      "id": "chatcmpl-A519BE17-969C-46C1-B9F1-3570C54E959A",
+      "model": "qwen-fieldfare",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 1482,
+        "total_tokens": 1483
+      }
+    },
+    "health": {
+      "diagnostics": {
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291294720,
+        "context": 8192,
+        "physicalFootprintBytes": 5185004472
+      },
+      "model": "qwen-fieldfare",
+      "tools": true,
+      "queue_capacity": 2,
+      "service": "QwenFieldfareServer",
+      "queued_requests": 0,
+      "requests": {
+        "cancelled": 0,
+        "lastRequest": {
+          "outcome": "completed",
+          "expertCacheMisses": 161798,
+          "admissionMs": 0.2552499936427921,
+          "expertLogicalReads": 161798,
+          "decodeAfterFirstTokenMs": 41.60445833258564,
+          "queueWaitMs": 0.01066667027771473,
+          "tokenizationMs": 5.238083329459187,
+          "promptTokens": 1482,
+          "formattingMs": 0.15912500384729356,
+          "expertFetchedBytes": 286297030656,
+          "outputTokens": 1,
+          "overallMs": 53568.02495833108,
+          "firstGeneratedTokenMs": 53526.22495833202,
+          "prefillMs": 53518.983006477356,
+          "actualPrefillTokens": 1482
+        },
+        "completed": 12,
+        "failed": 0,
+        "rejected": 0
+      },
+      "status": "ready",
+      "active_generations": 0
+    },
+    "decode_tokens_per_second_after_first": null
+  }
+]

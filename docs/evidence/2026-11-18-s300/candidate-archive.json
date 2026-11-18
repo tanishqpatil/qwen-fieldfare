@@ -1,0 +1,9 @@
+{
+  "base_commit": "83d28e28745d43000ad7e732e8ba2a069591575e",
+  "patch": "rejected-candidate.patch.gz",
+  "sha256": "ad122835d99198ed25f17d33d386c36f3819bd8b5a20b371dfdf0347882c3f58",
+  "status": "not qualified; sustained raw token divergence; preserve for reproduction, do not apply as production feature",
+  "coverage": "Tracked Package/Sources/Tests candidate changes plus new ledger,unit,integration,real-equivalence and bounded-attribution tests. Boundary-investigation test separately retained in final tree.",
+  "uncompressed_sha256": "c81342339ba1dd784d4ac73d78a06d8025209dcdab4160a1147612e2e0d37b39",
+  "encoding": "gzip,mtime0; exact original patch bytes preserved"
+}

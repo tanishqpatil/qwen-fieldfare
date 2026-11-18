@@ -1,0 +1,11 @@
+{
+  "fresh_prompt_tokens" : 430,
+  "matches_prior_cached" : true,
+  "matches_prior_warm_replay" : false,
+  "output_sha256" : "540ba1ff7eee7ce8f5d48c0f878a5b5a49438a360ce9fef15d9ed1d2d3fe25b3",
+  "output_tokens" : 512,
+  "prefix_mode" : "off",
+  "prompt_tokens" : 430,
+  "qualification" : "FAILED; attribution diagnostic does not relax raw equivalence",
+  "seconds" : 34.048454208335897
+}

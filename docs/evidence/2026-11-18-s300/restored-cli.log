@@ -1,0 +1,28 @@
+command: QwenFieldfareServer --version
+exit: 0
+QwenFieldfareServer S2-02 (development build)
+
+
+command: QwenFieldfareServer --help
+exit: 0
+Usage: QwenFieldfareServer --model PATH [options]
+  --host 127.0.0.1       Loopback only (external binds rejected)
+  --port 8080            TCP port 1–65535 (0 selects an ephemeral port)
+  --model-id qwen-fieldfare
+  --context 8192         Positive context supported by the selected memory plan
+  --memory-gib 5         Active-streaming Metal target: 3, 4 or 5 GiB
+  --queue-capacity 2     Waiting generations: 0–8; one active generation
+  --api-key-file PATH    Owned regular file, no group/other access, max 512-byte key
+  --help, -h            Print this help without loading a model
+  --version            Print development version without loading a model
+Authentication: QWENFIELDFARE_API_KEY OR --api-key-file (never a key in argv).
+Readiness: authenticated GET /health after initialization; model loaded once.
+Stop: SIGINT/SIGTERM; stop admission, cancel and drain before process exit.
+App, Bench and server Q4 runners share an exclusive per-user inference lease.
+Tools execute only in clients. Strict numerical parity remains unresolved.
+
+
+command: QwenFieldfareServer --prefix-cache exact-prefix
+exit: 1
+
+QwenFieldfareServer: Unknown, repeated or missing option; use --help

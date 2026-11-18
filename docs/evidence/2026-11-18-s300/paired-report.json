@@ -1,0 +1,166 @@
+{
+  "qualification_passed": false,
+  "failures": [
+    "Sustained raw-token divergence in pair 0, step 3",
+    "Sustained pair 1 not completed; experiment stopped at first discrepancy"
+  ],
+  "pairs": [
+    {
+      "round": 0,
+      "modes": {
+        "off": {
+          "prefill_seconds": 191.16800606250763,
+          "generation_validation_seconds": 194.04267345834523,
+          "first_generated_token_seconds": 191.17410941667185,
+          "fresh_prompt_tokens": 5247,
+          "reused_tokens": 0,
+          "expert_misses": 580532,
+          "logical_fetched_bytes": 1027235119104
+        },
+        "exact-prefix": {
+          "prefill_seconds": 51.63348591327667,
+          "generation_validation_seconds": 54.51448899999377,
+          "first_generated_token_seconds": 51.635051708333776,
+          "fresh_prompt_tokens": 1407,
+          "reused_tokens": 3840,
+          "expert_misses": 161726,
+          "logical_fetched_bytes": 286169628672
+        }
+      },
+      "prefill_reduction_percent": 72.9905191894957,
+      "generation_validation_reduction_percent": 71.90592768672799
+    },
+    {
+      "round": 1,
+      "modes": {
+        "off": {
+          "prefill_seconds": 191.39901900291443,
+          "generation_validation_seconds": 194.29829583333049,
+          "first_generated_token_seconds": 191.4038664999971,
+          "fresh_prompt_tokens": 5247,
+          "reused_tokens": 0,
+          "expert_misses": 580532,
+          "logical_fetched_bytes": 1027235119104
+        },
+        "exact-prefix": {
+          "prefill_seconds": 51.717682123184204,
+          "generation_validation_seconds": 54.628703750007844,
+          "first_generated_token_seconds": 51.718224333337275,
+          "fresh_prompt_tokens": 1407,
+          "reused_tokens": 3840,
+          "expert_misses": 161726,
+          "logical_fetched_bytes": 286169628672
+        }
+      },
+      "prefill_reduction_percent": 72.97912894611194,
+      "generation_validation_reduction_percent": 71.88410556268158
+    },
+    {
+      "round": 2,
+      "modes": {
+        "off": {
+          "prefill_seconds": 190.812047123909,
+          "generation_validation_seconds": 193.68613258333062,
+          "first_generated_token_seconds": 190.81809408333356,
+          "fresh_prompt_tokens": 5247,
+          "reused_tokens": 0,
+          "expert_misses": 580532,
+          "logical_fetched_bytes": 1027235119104
+        },
+        "exact-prefix": {
+          "prefill_seconds": 51.02342414855957,
+          "generation_validation_seconds": 53.873989208332205,
+          "first_generated_token_seconds": 51.02497429167124,
+          "fresh_prompt_tokens": 1407,
+          "reused_tokens": 3840,
+          "expert_misses": 161726,
+          "logical_fetched_bytes": 286169628672
+        }
+      },
+      "prefill_reduction_percent": 73.25985181877634,
+      "generation_validation_reduction_percent": 72.18490116469556
+    },
+    {
+      "round": 3,
+      "modes": {
+        "off": {
+          "prefill_seconds": 191.18125200271606,
+          "generation_validation_seconds": 194.04732433333993,
+          "first_generated_token_seconds": 191.18729658333905,
+          "fresh_prompt_tokens": 5247,
+          "reused_tokens": 0,
+          "expert_misses": 580532,
+          "logical_fetched_bytes": 1027235119104
+        },
+        "exact-prefix": {
+          "prefill_seconds": 51.08583915233612,
+          "generation_validation_seconds": 53.94745958333078,
+          "first_generated_token_seconds": 51.087390249995224,
+          "fresh_prompt_tokens": 1407,
+          "reused_tokens": 3840,
+          "expert_misses": 161726,
+          "logical_fetched_bytes": 286169628672
+        }
+      },
+      "prefill_reduction_percent": 73.27884475219864,
+      "generation_validation_reduction_percent": 72.19881296035892
+    },
+    {
+      "round": 4,
+      "modes": {
+        "off": {
+          "prefill_seconds": 191.46436893939972,
+          "generation_validation_seconds": 194.35676104167214,
+          "first_generated_token_seconds": 191.4703470000095,
+          "fresh_prompt_tokens": 5247,
+          "reused_tokens": 0,
+          "expert_misses": 580532,
+          "logical_fetched_bytes": 1027235119104
+        },
+        "exact-prefix": {
+          "prefill_seconds": 51.457937836647034,
+          "generation_validation_seconds": 54.35394037500373,
+          "first_generated_token_seconds": 51.459511333334376,
+          "fresh_prompt_tokens": 1407,
+          "reused_tokens": 3840,
+          "expert_misses": 161726,
+          "logical_fetched_bytes": 286169628672
+        }
+      },
+      "prefill_reduction_percent": 73.12401355840055,
+      "generation_validation_reduction_percent": 72.03393384223476
+    }
+  ],
+  "paired_prefill_reduction": {
+    "mean_percent": 73.12647165299663,
+    "paired_t_95_percent": [
+      72.94955433802453,
+      73.30338896796873
+    ]
+  },
+  "paired_generation_validation_reduction": {
+    "mean_percent": 72.04153624333976,
+    "paired_t_95_percent": [
+      71.85682295543894,
+      72.22624953124058
+    ]
+  },
+  "observed_metal_bytes": [
+    5291294720
+  ],
+  "maximum_observed_footprint_bytes": 5972403752,
+  "maximum_token_element_capacity_bytes": 10208,
+  "sustained_continuation_counts": [
+    512,
+    512
+  ],
+  "limits": [
+    "No hidden-state bitwise assertion",
+    "No physical SSD measurement",
+    "No exact process-memory peak",
+    "Same-runner generation+validation timing excludes HTTP/client tools",
+    "Five-pair interval describes the short fixture/host only; failed sustained gate blocks promotion",
+    "Candidate reverted; no cache configuration ships",
+    "Strict MLX 131/132 remains unresolved"
+  ]
+}

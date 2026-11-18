@@ -1,0 +1,47 @@
+Building for debugging...
+[Computing dependencies]
+[Constructing description]
+[Pre-planning 1 / 1453]
+[Planning deferred tasks]
+[1 / 1]
+[8 / 89] Atomics
+[15 / 61] QwenFieldfareCore
+[18 / 64] QwenFieldfareCore
+[31 / 63] QwenFieldfarePack-product
+[42 / 89]
+[51 / 89] QwenFieldfareServerSupport
+[53 / 89] QwenFieldfareServerSupport
+[58 / 93] QwenFieldfareServerManagement
+[61 / 93] QwenFieldfareCoreTests-product
+[65 / 97] QwenFieldfareCoreTests-product
+[74 / 98] QwenFieldfareServer-product
+[77 / 99] QwenFieldfareServerManagement
+[84 / 106] QwenFieldfareCoreTests-product
+[87 / 102] QwenFieldfareBench-product
+[88 / 109] QwenFieldfareServerTests-product
+[96 / 123] QwenFieldfareServerTests-product
+[99 / 123] QwenFieldfareCoreTests-product
+[103 / 123] QwenFieldfareServerManagementTests-product
+[107 / 123] QwenFieldfareMac-product
+[108 / 123] QwenFieldfareMac-product
+[110 / 123] QwenFieldfareBench-product
+[117 / 126] QwenFieldfareCoreTests-product
+[119 / 126] QwenFieldfareServerTests-product
+[123 / 127] QwenFieldfareCoreTests-product
+[131 / 131] QwenFieldfareBench-product
+[134 / 134] QwenFieldfareMac-product
+Build complete! (6.15 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenPrefixStateTests started.
+◇ Test strictPrefixInPlaceAndNoUnsupportedRewind() started.
+✔ Test strictPrefixInPlaceAndNoUnsupportedRewind() passed after 0.001 seconds.
+◇ Test emptySuffixAheadAndSchemaChangesReplay() started.
+✔ Test emptySuffixAheadAndSchemaChangesReplay() passed after 0.001 seconds.
+◇ Test disabledLimitAndClearCannotPublishPendingState() started.
+✔ Test disabledLimitAndClearCannotPublishPendingState() passed after 0.001 seconds.
+◇ Test incorrectPositionsAndOversizedInputsAreRecoverable() started.
+✔ Test incorrectPositionsAndOversizedInputsAreRecoverable() passed after 0.001 seconds.
+✔ Suite QwenPrefixStateTests passed after 0.001 seconds.
+✔ Test run with 4 tests in 1 suite passed after 0.001 seconds.

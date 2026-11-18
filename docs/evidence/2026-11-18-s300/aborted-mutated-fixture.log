@@ -1,0 +1,16 @@
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite RealPrefixEquivalenceTests started.
+◇ Test realGreedyReplayAndPrefixTokensAgree() started.
+✘ Test realGreedyReplayAndPrefixTokensAgree() recorded an issue at RealPrefixEquivalenceTests.swift:46:17: Expectation failed: parsed.calls.count == 1
+↳ parsed.calls.count == 1 → false
+↳   parsed.calls.count → 0
+✘ Test realGreedyReplayAndPrefixTokensAgree() recorded an issue at RealPrefixEquivalenceTests.swift:47:17: Expectation failed: parsed.calls.first?.arguments["index"] == .number(String(step+1))
+↳ parsed.calls.first?.arguments["index"] == .number(String(step+1)) → false
+↳   parsed.calls.first?.arguments["index"] → nil
+↳   .number(String(step+1)) → .number("1")
+↳     some → .number("1")
+↳       number → "1"
+Note: Some test targets reported failures:
+  - QwenFieldfareServerTests (Swift Testing)
