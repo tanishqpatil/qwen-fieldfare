@@ -2,7 +2,7 @@
 
 **Date**: 2026-11-18  
 **Platform**: Apple MacBook Pro M5 (32 GB unified memory)  
-**OS**: macOS Darwin 24 (arm64e)  
+**OS**: macOS 27.2.1 (Darwin Kernel Version 27.2.0, Build 26B131, arm64)  
 **Python Environment**: `/Users/tanishq/venvs/mlx-dspark/bin/python`  
 **MLX Version**: `0.32.4`  
 **MLX-VLM Version**: `0.7.12`  

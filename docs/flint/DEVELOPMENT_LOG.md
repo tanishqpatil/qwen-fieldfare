@@ -95,3 +95,50 @@
   6. **Comprehensive Test Suite Expansion**:
      - Added 10 new unit tests covering Case A official INT4, Case A with `mlx_export` embedding bits, Case B partial overrides (140 projections), single override, extraneous projections on dense layers, unsupported group sizes, missing/invalid `model_type`, missing/false `norm_topk_prob`, duplicate `no_rope_layer_indices`, and malformed embedding quantization.
      - Executed `swift test`: **22 tests passed across 2 suites in 0.008s**.
+
+
+---
+
+## 2026-11-18 — F1-03: Safe, Bounded Safetensors Access & Physical Tensor Validation
+
+- **Author**: Inference Systems Architect
+- **Branch**: `feature/recursive-flint-40b-a2p5b`
+- **Authorized Directory**: `/Users/tanishq/dev/product/flint-fieldfare-isolated`
+- **Target Machine**: Apple MacBook Pro M5, 32 GB unified memory, macOS 27.2.1, Apple Swift 6.4.2.
+- **Actions Completed**:
+  1. **Safetensors Reader Implementation (`FlintSafetensorsFile.swift`)**:
+     - Created `FlintSafetensorsFile.swift` owning POSIX file descriptors (`open` with `O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC`, `close(descriptor)` in `deinit`).
+     - Implemented bounded header parsing with 100 MB upper bound, 8-byte little-endian header length decoding, UTF-8 non-NUL verification, and arithmetic overflow detection.
+     - Implemented range validation: checked for negative offsets, inverted ranges, payload-overflowing offsets, shape-to-dtype byte count mismatches, and zero overlapping allocations across tensors.
+     - Implemented safe, thread-safe random-access reads via `preadExact` using contiguous memory buffers.
+     - Implemented file identity tracking via `stat`/`fstat` (device, inode, size, mtime, ctime) and `verifyUnchanged()` mutation detection.
+  2. **Metadata Cross-Validation (`FlintModelDirectory.crossValidate`)**:
+     - Added `openShards(canonicalPath:shardNames:)` returning descriptor-owning files for all referenced shards.
+     - Implemented `crossValidate(config:configData:shardFiles:weightMap:)`:
+       - Cross-checks `mlx_export.embedding_bits` against `quantization.model.embed_tokens.bits` and `config.embeddingBits`.
+       - Cross-checks `mlx_export.routed_expert_bits` against detected `config.routedExpertBits`.
+       - Verifies that all weight map entries physically exist in their assigned shards without omissions.
+       - Validates representative physical tensor shapes and dtypes against architectural layout.
+  3. **Physical Checkpoint Validation & Independent Byte Verification**:
+     - Inspected and validated live checkpoint `/Users/tanishq/models/flint-mixed-3-4bit` across all 4 shards (1,751 tensors, 17.84 GB).
+     - Confirmed SHA-256 reference digests matching Python / `mlx.core.load` ground truth for 8 empirical tensors:
+       - `model.layers.2.self_attn.softmax_offset`: `e55d79b0bd25bc2d585bc4bf6706ae3d6d62e2561c9b0ec8f9918041f6404404`
+       - `model.layers.0.input_layernorm.weight`: `f33f5b184b24b4e62c37c757ee2d90396173e9ef2ef28af130b266ca021cc4a5`
+       - `model.embed_tokens.weight` (first 256 bytes): `c5b8b890109befaf2efd23d462ece554855d2c73d1c14301a8c62afff75bed71`
+       - Layer 2, expert 0 `gate_proj.weight`: `a4fa16c82f9b2f8094462209ea1ed8def8d50730030347d96d582d9ce14f7820`
+       - Layer 20, expert 128 `gate_proj.weight`: `a3fcc07e846e6c78e5a57c7e89870e97bbb56afe2a0ddb7979043c127acbd678`
+       - Layer 48, expert 255 `down_proj.weight`: `2e823253c72b37404f447e5656a08995746460f39b417474eeed19078d9fd15b`
+       - Layer 2, expert 0 `gate_proj.scales`: `7cc18d29413197ee959987c119bbb6e0ed834af8af8107cb3e9e937d9ee267d7`
+       - Layer 2, expert 0 `gate_proj.biases`: `4629cee3a9d13041dafcf227f7ac56e5c2388a2619ed197595e176a1fd1bab2d`
+  4. **Physical Tensor Inventory Artifact**:
+     - Authored `docs/flint/PHYSICAL_TENSOR_INVENTORY.md` containing shard distribution, dtype counts (1,265 BF16, 486 U32), per-expert record sizes ($1,376,256\text{ B} = 1.3125\text{ MiB}$ for 3-bit vs $1,769,472\text{ B} = 1.6875\text{ MiB}$ for 4-bit), and the exact closed-form byte-offset formula for random-access expert streaming.
+  5. **Benchmark & Evidence Cleanup**:
+     - Updated `benchmark_flint_mlx.py` with configurable output path, actual `generation_tokens`, and `finish_reason`.
+     - Updated `docs/flint/evidence/2026-11-18-baseline/README.md` with verified Darwin kernel 27.2.0 (macOS 27.2.1).
+  6. **Unit Test Suite Execution**:
+     - Added 23 unit tests in `FlintSafetensorsFileTests.swift`.
+     - Executed full test suite: **45 tests passed across 3 suites in 0.017 seconds**.
+  7. **Strict Repository Isolation Maintained**:
+     - Verified `/Users/tanishq/dev/product/qwen-fieldfare` has 0 modifications and remained completely untouched.
+     - Symlink `/Users/tanishq/dev/product/flint-fieldfare` left untouched.
+- **Verdict on F1-03**: Safe, bounded Safetensors access and physical tensor validation fully implemented, tested, and documented. Ready for F1-04 authorization.

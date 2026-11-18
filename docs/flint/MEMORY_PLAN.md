@@ -80,7 +80,7 @@ The choice between all-resident execution and bounded expert streaming represent
 ## 5. Theoretical SSD I/O Bandwidth vs Expert-Cache Hit Rate
 
 Flint evaluates $K = 6$ routed experts per MoE layer across 47 MoE layers = **282 expert evaluations per token**.  
-Each 3-bit expert record is $1,376,256\text{ bytes} \approx 1.3125\text{ MiB}$ (1.376 MB decimal).  
+Each 3-bit expert record is $1,376,256\text{ bytes} \approx 1.3125\text{ MiB}$ (1.376 MB decimal) — verified physically in `docs/flint/PHYSICAL_TENSOR_INVENTORY.md`.  
 Cold payload per token (0% cache hit):
 $$\text{Payload}_{\text{cold}} = 282 \times 1.3125\text{ MiB} = \mathbf{370.125\text{ MiB / token}}\quad (388.11\text{ MB / token})$$
 

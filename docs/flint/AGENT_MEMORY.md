@@ -17,14 +17,21 @@ This document is the authoritative recovery guide for agents operating on FlintF
   - Derived SSD streaming bandwidth formula vs hit rate (370.125 MiB/tok cold).
   - Clearly separated empirical measurements from theoretical streaming design targets (~3.2 GiB).
   - Architecture decisions ADR-F001 through ADR-F007 recorded in `docs/flint/DECISIONS.md`.
-- **F1 (Metadata & Weight Loading Infrastructure)**: **IN PROGRESS (Review #002 hardening complete)**.
-  - `FlintModelDirectory` strictly hardened:
-    - Case A (Official INT4): Base 4-bit, group 64, zero switch_mlp overrides.
-    - Case B (Mixed 3/4-Bit): Strict 141 switch_mlp projection validation with bit depth and group size agreement.
-    - Eliminates all configuration ambiguity: requires `model_type == "flint"`, `norm_topk_prob == true`, duplicate-free `no_rope_layer_indices` matching 14 full-attention layers, and explicit embedding quantization validation.
-    - Safe `pread` buffer handling via `Data.withUnsafeMutableBytes` and `baseAddress.advanced(by:)`.
-  - `FlintInferenceLease`: dedicated lock at `/tmp/flintfieldfare-inference-\(uid).lock`.
-  - Focused test suite: 22 comprehensive positive and negative tests passing in 0.008s.
+- **F1 (Metadata & Weight Loading Infrastructure)**: **F1-01, F1-02, F1-03 COMPLETED**.
+  - `FlintModelDirectory` (F1-01): Strict Case A (INT4) & Case B (141 overrides) validation, safe pread contiguous buffers.
+  - `FlintInferenceLease` (F1-02): Dedicated lock at `/tmp/flintfieldfare-inference-\(uid).lock`.
+  - `FlintSafetensorsFile` & Cross-Validation (F1-03):
+    - POSIX descriptor ownership (`O_RDONLY | O_NONBLOCK | O_NOFOLLOW | O_CLOEXEC`, `close(descriptor)` on deinit).
+    - Bounded header parsing (100 MB max bound, 8-byte LE header length decoding, UTF-8 non-NUL verification).
+    - Offset & range validation (negative, out-of-bounds, inverted, arithmetic overflow, and zero overlapping allocations across tensors).
+    - Safe random-access `preadExact` using contiguous memory buffers.
+    - Identity verification via `stat`/`fstat` and mutation detection via `verifyUnchanged()`.
+    - Cross-validation against config metadata (`mlx_export` vs `quantization` vs Safetensors shapes/dtypes).
+    - Empirical validation of live checkpoint `/Users/tanishq/models/flint-mixed-3-4bit` (4 shards, 1,751 tensors, 17.84 GB).
+    - Bitwise SHA-256 match against independent Python/MLX ground truth across 8 empirical tensors.
+    - Physical tensor inventory report: `docs/flint/PHYSICAL_TENSOR_INVENTORY.md` ($1,376,256\text{ B} = 1.3125\text{ MiB}$ per 3-bit expert, closed-form offset formula).
+  - Test Suite: **45 tests passing across 3 suites in 0.017 seconds**.
+- **F1-04 (Resident Weight Extraction & Storage)**: Pending authorization.
 - **F2 (Mathematical Primitives & Metal Kernels)**: Pending.
 - **F3 (First Real Flint Token Forward)**: Pending.
 - **F4 (Bounded Expert Streaming)**: Pending.
@@ -35,12 +42,12 @@ This document is the authoritative recovery guide for agents operating on FlintF
 3. **Symlink Invariant**: Leave the existing `/Users/tanishq/dev/product/flint-fieldfare` symlink untouched until explicit user/reviewer authorization is granted.
 
 ## Key Architectural Invariants
-1. **Never use Qwen Recurrent/DeltaNet code for Flint**: Flint is a pure Transformer MoE (14 full-attention, 35 sliding-attention with window 513).
+1. **Never use Qwen Recurrent/DeltaNet code for Flint**: Flint is a pure Transformer MoE (5 full-attention, 42 sliding-attention with window 513).
 2. **Fixed Router-Order Reduction**: Always accumulate into `contributions[position * 2048 + row]` where `position \in [0, 5]` and sum in order $0 \to 5$. Never accumulate by cache residency.
 3. **Learned Attention Sinks**: `softmax_offset[32]` is an extra logit in softmax denominator without a value vector.
 4. **Dedicated Lease Lock**: `/tmp/flintfieldfare-inference-\(getuid()).lock`.
 5. **Never Commit Weights**: Checkpoint files remain strictly external.
 
 ## Immediate Next Steps
-1. Submit Review #002 report.
-2. Await gate review and explicit authorization before proceeding to F1-03 (`FlintResidentLoader.swift`).
+1. Submit Review #003 / F1-03 Completion Report.
+2. Await reviewer evaluation and authorization for F1-04 (`FlintResidentLoader.swift`).

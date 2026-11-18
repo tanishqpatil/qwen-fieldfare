@@ -77,14 +77,16 @@ for run_idx in range(1, 4):
     rss_gb = get_rss_mb() / 1024
     
     prompt_tokens = getattr(res, "prompt_tokens", len(processor.encode(short_prompt)))
-    gen_tokens = getattr(res, "generation_tokens", 64)
+    gen_tokens = getattr(res, "generation_tokens", len(processor.encode(res.text)) if hasattr(res, "text") else 0)
     prompt_tps = getattr(res, "prompt_tps", 0.0)
     gen_tps = getattr(res, "generation_tps", 0.0)
+    finish_reason = getattr(res, "finish_reason", "unknown")
     
     run_data = {
         "run": run_idx,
         "prompt_tokens": prompt_tokens,
         "gen_tokens": gen_tokens,
+        "finish_reason": finish_reason,
         "total_time_s": total_time,
         "prompt_tps": prompt_tps,
         "generation_tps": gen_tps,
@@ -155,14 +157,16 @@ for run_idx in range(1, 4):
     rss_gb = get_rss_mb() / 1024
     
     prompt_tokens = getattr(res, "prompt_tokens", len(encoded_long))
-    gen_tokens = getattr(res, "generation_tokens", 32)
+    gen_tokens = getattr(res, "generation_tokens", len(processor.encode(res.text)) if hasattr(res, "text") else 0)
     prompt_tps = getattr(res, "prompt_tps", 0.0)
     gen_tps = getattr(res, "generation_tps", 0.0)
+    finish_reason = getattr(res, "finish_reason", "unknown")
     
     run_data = {
         "run": run_idx,
         "prompt_tokens": prompt_tokens,
         "gen_tokens": gen_tokens,
+        "finish_reason": finish_reason,
         "total_time_s": total_time,
         "prompt_tps": prompt_tps,
         "generation_tps": gen_tps,
@@ -193,7 +197,8 @@ output_summary = {
     "long_prompt_runs": long_results
 }
 
-out_file = "/Users/tanishq/.gemini/antigravity/brain/63300d2d-4186-4d4e-9ca1-3c2de49faa3a/scratch/mlx_flint_benchmark_results.json"
+default_out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mlx_flint_benchmark_results.json")
+out_file = os.environ.get("FLINT_BENCHMARK_OUTPUT", sys.argv[1] if len(sys.argv) > 1 else default_out)
 with open(out_file, "w") as f:
     json.dump(output_summary, f, indent=2)
 

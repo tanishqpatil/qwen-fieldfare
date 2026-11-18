@@ -21,7 +21,7 @@
 
 ## Attention Specification
 
-- **Total Attention Layers**: 49
+- **Total Attention Layers**: 49 (All layers 0 through 48 feature self-attention)
 - **Query Heads**: 32
 - **Key/Value Heads**: 4 (Grouped-Query Attention, 8 query heads per KV head)
 - **Head Dimension**: 128 (Total Query dim: 4,096; Total KV dim: 512)
@@ -35,7 +35,7 @@
   - Positional Embedding: **NONE** (`no_rope_layer_indices`)
   - Window Size: Infinite (causal over full sequence)
 - **Sliding-Window Attention Layers (35 layers)**:
-  - Indices: All layers other than the 14 full-attention layers
+  - Indices: All 35 attention layers other than the 14 full-attention layers
   - Positional Embedding: RoPE (`rope_theta = 10000.0`, `traditional = false`, split-half rotation)
   - Window Size: 513 tokens (current token plus 512 preceding tokens)
 
@@ -81,3 +81,21 @@
     `<tool_call>{name}<arg_key>{k1}</arg_key><arg_value>{v1}</arg_value>...</tool_call>`
   - Client responds with:
     `<|observation|><tool_response>{result}</tool_response>`
+
+## Physical Checkpoint Layout & Per-Expert Record Specification
+
+Refer to `docs/flint/PHYSICAL_TENSOR_INVENTORY.md` for complete physical details.
+
+- **Checkpoints Supported**:
+  - Case A: Official INT4 (`bits = 4`, `group_size = 64` uniform across all projections)
+  - Case B: Mixed 3/4-bit (`flint-mixed-3-4bit`: 4-bit attention, INT8 embeddings, 3-bit MoE experts with `group_size = 64`)
+- **Per-Expert Payload (3-bit MoE)**:
+  - `gate_proj.weight`: U32 `[512, 192]` = 393,216 bytes (scales: 32,768 B, biases: 32,768 B)
+  - `up_proj.weight`: U32 `[512, 192]` = 393,216 bytes (scales: 32,768 B, biases: 32,768 B)
+  - `down_proj.weight`: U32 `[2048, 48]` = 393,216 bytes (scales: 32,768 B, biases: 32,768 B)
+  - **Total Per-Expert Record Size**: $1,376,256\text{ bytes} = 1.3125\text{ MiB}$ exactly.
+- **Closed-Form Expert Offset for Expert $e \in [0, 255]$**:
+  - $\text{offset}_{\text{expert\_weights}} = \text{base\_offset} + e \times 393,216$
+  - $\text{offset}_{\text{expert\_scales}} = \text{base\_offset} + e \times 32,768$
+  - $\text{offset}_{\text{expert\_biases}} = \text{base\_offset} + e \times 32,768$
+

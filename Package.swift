@@ -127,6 +127,7 @@ let package = Package(
             sources: [
                 "Infrastructure/ModelIO/FlintInferenceLease.swift",
                 "Infrastructure/ModelIO/FlintModelDirectory.swift",
+                "Infrastructure/ModelIO/FlintSafetensorsFile.swift",
             ]
         ),
         .testTarget(
@@ -136,6 +137,7 @@ let package = Package(
             sources: [
                 "FlintInferenceLeaseTests.swift",
                 "FlintModelDirectoryTests.swift",
+                "FlintSafetensorsFileTests.swift",
             ]
         ),
     ]

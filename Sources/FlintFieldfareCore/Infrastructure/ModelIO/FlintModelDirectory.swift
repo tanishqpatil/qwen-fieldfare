@@ -74,6 +74,7 @@ public enum FlintModelDirectory {
     public struct ValidatedDirectory: Sendable {
         public let canonicalPath: String
         public let config: FlintConfig
+        public let configData: Data
         public let weightMap: [String: String]
         public let shards: [String]
     }
@@ -109,6 +110,9 @@ public enum FlintModelDirectory {
             throw FlintModelDirectoryError.missingFile("config.json")
         }
         let configData = try readFileBounded(at: configURL)
+        guard (try? JSONSerialization.jsonObject(with: configData)) is [String: Any] else {
+            throw FlintModelDirectoryError.invalidMetadata("config.json root must be a JSON object")
+        }
         let config = try parseAndValidateConfig(data: configData)
 
         // Validate model.safetensors.index.json
@@ -170,9 +174,132 @@ public enum FlintModelDirectory {
         return ValidatedDirectory(
             canonicalPath: canonical,
             config: config,
+            configData: configData,
             weightMap: weightMap,
             shards: shardNames
         )
+    }
+
+    /// Opens all Safetensors shard files declared by the validated directory.
+    public static func openShards(canonicalPath: String, shardNames: [String]) throws -> [String: FlintSafetensorsFile] {
+        var shardFiles: [String: FlintSafetensorsFile] = [:]
+        for name in shardNames {
+            let url = URL(fileURLWithPath: canonicalPath, isDirectory: true).appendingPathComponent(name)
+            shardFiles[name] = try FlintSafetensorsFile(url: url)
+        }
+        return shardFiles
+    }
+
+    /// Cross-validates metadata and physical Safetensors headers to prevent contradictory or corrupt layouts.
+    public static func crossValidate(
+        config: FlintConfig,
+        configData: Data,
+        shardFiles: [String: FlintSafetensorsFile],
+        weightMap: [String: String]
+    ) throws {
+        guard let rawConfigDict = (try? JSONSerialization.jsonObject(with: configData)) as? [String: Any] else {
+            throw FlintSafetensorsError.malformedHeader("configData is not a valid JSON dictionary")
+        }
+        // 1. Cross-check mlx_export metadata consistency
+        if let mlxExport = rawConfigDict["mlx_export"] as? [String: Any] {
+            if let mlxEmbedBits = mlxExport["embedding_bits"] as? Int {
+                guard mlxEmbedBits == config.embeddingBits else {
+                    throw FlintSafetensorsError.metadataConflict(
+                        "mlx_export.embedding_bits (\(mlxEmbedBits)) conflicts with config embeddingBits (\(config.embeddingBits))"
+                    )
+                }
+                if let quant = (rawConfigDict["quantization"] ?? rawConfigDict["quantization_config"]) as? [String: Any],
+                   let embedQuant = quant["model.embed_tokens"] as? [String: Any],
+                   let quantEmbedBits = embedQuant["bits"] as? Int {
+                    guard quantEmbedBits == mlxEmbedBits else {
+                        throw FlintSafetensorsError.metadataConflict(
+                            "mlx_export.embedding_bits (\(mlxEmbedBits)) conflicts with quantization.model.embed_tokens.bits (\(quantEmbedBits))"
+                        )
+                    }
+                }
+            }
+
+            if let mlxRoutedBits = mlxExport["routed_expert_bits"] as? Int {
+                guard mlxRoutedBits == config.routedExpertBits else {
+                    throw FlintSafetensorsError.metadataConflict(
+                        "mlx_export.routed_expert_bits (\(mlxRoutedBits)) conflicts with detected routedExpertBits (\(config.routedExpertBits))"
+                    )
+                }
+            }
+        }
+
+        // 2. Cross-check that every tensor in weight_map exists in its assigned shard
+        for (tensorName, shardName) in weightMap {
+            guard let shardFile = shardFiles[shardName] else {
+                throw FlintSafetensorsError.tensorNotFound(name: "shard '\(shardName)' not open for tensor '\(tensorName)'")
+            }
+            guard shardFile.header.tensors[tensorName] != nil else {
+                throw FlintSafetensorsError.tensorNotFound(name: "\(tensorName) missing from shard \(shardName)")
+            }
+        }
+
+        // 3. Verify physical layout of representative tensors against config
+        func verifyTensor(name: String, expectedShape: [Int], expectedDtype: String) throws {
+            guard let shardName = weightMap[name], let shardFile = shardFiles[shardName] else {
+                throw FlintSafetensorsError.tensorNotFound(name: name)
+            }
+            guard let tensorInfo = shardFile.header.tensors[name] else {
+                throw FlintSafetensorsError.tensorNotFound(name: "\(name) in shard \(shardName)")
+            }
+            guard tensorInfo.shape == expectedShape else {
+                throw FlintSafetensorsError.metadataConflict(
+                    "physical tensor '\(name)' shape \(tensorInfo.shape) does not match expected shape \(expectedShape)"
+                )
+            }
+            guard tensorInfo.dtype == expectedDtype else {
+                throw FlintSafetensorsError.metadataConflict(
+                    "physical tensor '\(name)' dtype \(tensorInfo.dtype) does not match expected dtype \(expectedDtype)"
+                )
+            }
+        }
+
+        // Embedding:
+        if config.embeddingBits == 8 {
+            try verifyTensor(name: "model.embed_tokens.weight", expectedShape: [150144, 512], expectedDtype: "U32")
+        } else if config.embeddingBits == 4 {
+            try verifyTensor(name: "model.embed_tokens.weight", expectedShape: [150144, 256], expectedDtype: "U32")
+        }
+        try verifyTensor(name: "model.embed_tokens.scales", expectedShape: [150144, 32], expectedDtype: "BF16")
+        try verifyTensor(name: "model.embed_tokens.biases", expectedShape: [150144, 32], expectedDtype: "BF16")
+
+        // LM Head:
+        try verifyTensor(name: "lm_head.weight", expectedShape: [150144, 256], expectedDtype: "U32")
+        try verifyTensor(name: "lm_head.scales", expectedShape: [150144, 32], expectedDtype: "BF16")
+        try verifyTensor(name: "lm_head.biases", expectedShape: [150144, 32], expectedDtype: "BF16")
+
+        // Norms & Attention:
+        try verifyTensor(name: "model.norm.weight", expectedShape: [2048], expectedDtype: "BF16")
+        try verifyTensor(name: "model.layers.0.input_layernorm.weight", expectedShape: [2048], expectedDtype: "BF16")
+        try verifyTensor(name: "model.layers.0.self_attn.q_proj.weight", expectedShape: [4096, 256], expectedDtype: "U32")
+        try verifyTensor(name: "model.layers.0.self_attn.q_norm.weight", expectedShape: [128], expectedDtype: "BF16")
+        try verifyTensor(name: "model.layers.0.self_attn.softmax_offset", expectedShape: [32], expectedDtype: "BF16")
+
+        // Dense MLP (Layer 0):
+        try verifyTensor(name: "model.layers.0.mlp.gate_proj.weight", expectedShape: [6144, 256], expectedDtype: "U32")
+        try verifyTensor(name: "model.layers.0.mlp.down_proj.weight", expectedShape: [2048, 768], expectedDtype: "U32")
+
+        // MoE Router & Shared Expert (Layer 2):
+        try verifyTensor(name: "model.layers.2.mlp.gate.weight", expectedShape: [256, 2048], expectedDtype: "BF16")
+        try verifyTensor(name: "model.layers.2.mlp.shared_expert.gate_proj.weight", expectedShape: [1024, 256], expectedDtype: "U32")
+        try verifyTensor(name: "model.layers.2.mlp.shared_expert.down_proj.weight", expectedShape: [2048, 128], expectedDtype: "U32")
+
+        // MoE Routed Experts (Layer 2 & Layer 48):
+        let gateUpU32Words = config.routedExpertBits == 3 ? 192 : 256
+        let downU32Words = config.routedExpertBits == 3 ? 48 : 64
+
+        try verifyTensor(name: "model.layers.2.mlp.switch_mlp.gate_proj.weight", expectedShape: [256, 512, gateUpU32Words], expectedDtype: "U32")
+        try verifyTensor(name: "model.layers.2.mlp.switch_mlp.up_proj.weight", expectedShape: [256, 512, gateUpU32Words], expectedDtype: "U32")
+        try verifyTensor(name: "model.layers.2.mlp.switch_mlp.down_proj.weight", expectedShape: [256, 2048, downU32Words], expectedDtype: "U32")
+        try verifyTensor(name: "model.layers.2.mlp.switch_mlp.gate_proj.scales", expectedShape: [256, 512, 32], expectedDtype: "BF16")
+        try verifyTensor(name: "model.layers.2.mlp.switch_mlp.down_proj.scales", expectedShape: [256, 2048, 8], expectedDtype: "BF16")
+
+        try verifyTensor(name: "model.layers.48.mlp.switch_mlp.gate_proj.weight", expectedShape: [256, 512, gateUpU32Words], expectedDtype: "U32")
+        try verifyTensor(name: "model.layers.48.mlp.switch_mlp.down_proj.weight", expectedShape: [256, 2048, downU32Words], expectedDtype: "U32")
     }
 
     private static func readFileBounded(at url: URL) throws -> Data {

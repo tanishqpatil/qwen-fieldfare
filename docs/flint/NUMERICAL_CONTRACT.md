@@ -62,3 +62,19 @@ Flint inference requires strict precision control across the entire compute grap
   - MoE output and residual
   - Final layer norm and logits
 - Tests compare Swift/Metal outputs directly against these captured goldens.
+
+## 4. Physical Tensor Byte Checksum Ground Truth (F1-03)
+
+Before numerical arithmetic is evaluated, the raw byte storage is verified against independent Python / `mlx.core.load` SHA-256 reference digests.
+
+| Tensor Identifier | Slice Range | Target SHA-256 Digest | Status |
+| :--- | :--- | :--- | :--- |
+| `model.layers.2.self_attn.softmax_offset` | `0..<64` | `e55d79b0bd25bc2d585bc4bf6706ae3d6d62e2561c9b0ec8f9918041f6404404` | MATCH |
+| `model.layers.0.input_layernorm.weight` | `0..<4096` | `f33f5b184b24b4e62c37c757ee2d90396173e9ef2ef28af130b266ca021cc4a5` | MATCH |
+| `model.embed_tokens.weight` | `0..<256` | `c5b8b890109befaf2efd23d462ece554855d2c73d1c14301a8c62afff75bed71` | MATCH |
+| `model.layers.2.mlp.switch_mlp.gate_proj.weight` (e0) | `0..<393216` | `a4fa16c82f9b2f8094462209ea1ed8def8d50730030347d96d582d9ce14f7820` | MATCH |
+| `model.layers.20.mlp.switch_mlp.gate_proj.weight` (e128) | `50331648..<50724864` | `a3fcc07e846e6c78e5a57c7e89870e97bbb56afe2a0ddb7979043c127acbd678` | MATCH |
+| `model.layers.48.mlp.switch_mlp.down_proj.weight` (e255) | `100270080..<100663296` | `2e823253c72b37404f447e5656a08995746460f39b417474eeed19078d9fd15b` | MATCH |
+| `model.layers.2.mlp.switch_mlp.gate_proj.scales` (e0) | `0..<32768` | `7cc18d29413197ee959987c119bbb6e0ed834af8af8107cb3e9e937d9ee267d7` | MATCH |
+| `model.layers.2.mlp.switch_mlp.gate_proj.biases` (e0) | `0..<32768` | `4629cee3a9d13041dafcf227f7ac56e5c2388a2619ed197595e176a1fd1bab2d` | MATCH |
+

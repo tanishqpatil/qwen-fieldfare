@@ -39,6 +39,7 @@
 ## Checkpoint Integrity & Safety
 
 - Local model files are treated as **strictly immutable** by FlintFieldfare.
-- Reads use bounded file descriptor offsets (`preadFully`).
-- Descriptors are verified with file size, inode, and modification times via `stat`/`fstat`.
+- Reads use bounded file descriptor offsets (`preadExact` in `FlintSafetensorsFile`).
+- Descriptors are verified with file size, inode, and modification times via `stat`/`fstat` (`verifyUnchanged()`).
 - No model weights are staged, committed, or pushed to any Git remote.
+- See `docs/flint/PHYSICAL_TENSOR_INVENTORY.md` for complete per-shard and per-expert byte inventories.

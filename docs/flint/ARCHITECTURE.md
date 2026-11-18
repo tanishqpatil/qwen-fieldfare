@@ -19,10 +19,12 @@ FlintFieldfare applies the **bounded expert streaming** architecture:
 | **Safetensors Inspection** | Implemented | Bounded header parsing without loading full tensor payloads |
 | **Flint Checkpoint Audit** | Implemented | Verified 1,751 tensors, U32 packed format, BF16 parameters |
 | **Model Specification** | Implemented | 49 layers, 14 full/35 sliding attention, sink offsets, top-6 routing |
-| **Memory Plan** | Implemented | Verified ~1.28 GB resident, ~1.31 GB expert cache, ~3.2 GB total working set |
-| **FlintModelDirectory** | Implemented (F1) | Swift type validating `config.json`, strict Case A/B quantization, shards |
-| **FlintInferenceLease** | Implemented (F1) | Single-process POSIX lock at `/tmp/flintfieldfare-inference-\(uid).lock` |
-| **FlintResidentLoader** | Proposed (F1) | Safe binary loader for permanently resident weights (~1.28 GiB) |
+| **Memory Plan** | Implemented | Empirical 19.5 GB baseline on 64 GB, ~1.28 GB resident, ~1.31 GB expert cache, ~3.2 GB working set budget |
+| **FlintModelDirectory** | Implemented (F1-01) | Swift type validating `config.json`, strict Case A/B quantization, shards |
+| **FlintInferenceLease** | Implemented (F1-02) | Single-process POSIX lock at `/tmp/flintfieldfare-inference-\(uid).lock` |
+| **FlintSafetensorsFile** | Implemented (F1-03) | Bounded reader, POSIX pread, 8-byte LE validation, zero-overlap check, metadata cross-check |
+| **Physical Tensor Inventory** | Implemented (F1-03) | 4 shards, 1,751 tensors, 17.84 GB, 1.3125 MiB per-expert record, closed-form offset formula |
+| **FlintResidentLoader** | Proposed (F1-04) | Safe binary loader for permanently resident weights (~1.28 GiB) |
 | **Flint Metal Attention** | Proposed (F2) | Q/K RMSNorm, learned sink `softmax_offset`, sliding window 513 |
 | **Flint Metal MoE** | Proposed (F2) | FP32 sigmoid top-6 router, fixed router-order position reduction |
 | **Flint Forward Runner** | Proposed (F3) | 49-layer forward evaluation and greedy generation |
@@ -46,8 +48,8 @@ Package.swift
 │   │   │   └── ModelIO/
 │   │   │       ├── FlintModelDirectory.swift # Config & directory validator
 │   │   │       ├── FlintInferenceLease.swift # Isolated lease lock
-│   │   │       ├── FlintSafetensorsHeader.swift # Bounded header reader
-│   │   │       └── FlintResidentLoader.swift # Resident weight owner
+│   │   │       ├── FlintSafetensorsFile.swift # Safe, bounded Safetensors reader
+│   │   │       └── FlintResidentLoader.swift # Resident weight owner (F1-04)
 │   │   ├── Kernels/
 │   │   │   ├── Attention/
 │   │   │   │   └── FlintAttentionKernel.swift
