@@ -1,0 +1,20 @@
+2026-11-18T11:25:25+05:30
+7370a1d43d5c50d7fb4356f7651f50a4feeae47c
+arm64
+ProductName:		macOS
+ProductVersion:		27.2.1
+BuildVersion:		26B131
+Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)
+Target: arm64-apple-macosx27.2.0
+Mac17,2
+34359738368
+1
+total = 3072.00M  used = 2125.06M  free = 946.94M  (encrypted)
+The system has 34359738368 (2097152 pages with a page size of 16384).
+System-wide memory free percentage: 85%
+Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk3s5   926Gi   769Gi   129Gi    86%    5.0M  1.4G    0%   /System/Volumes/Data
+Now drawing from 'AC Power'
+Battery 80%, AC attached, no charging
+1
+total = 3072.00M  used = 2069.06M  free = 1002.94M  (encrypted)

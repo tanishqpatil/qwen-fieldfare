@@ -1,0 +1,1282 @@
+{
+  "binary_sha256": "b877d9bf883e8f711281dafe089defc5a8b76c3e302b3ead5087714072d7eb24",
+  "checkpoint_integrity": "standard model loader checks; reused checkpoint identity",
+  "context": 8192,
+  "lifecycle": {
+    "active_disconnect": true,
+    "active_shutdown_restart_default_off": true,
+    "clear_queue_order_and_queued_disconnect": true,
+    "context_rejection_invalidates": true,
+    "json_sse_early_result_mismatch_and_replay": true,
+    "starts_empty": true
+  },
+  "measurements": [
+    {
+      "decode_tokens_per_second_after_first": 19.142144781636187,
+      "finish": "tool_calls",
+      "http_seconds": 56.69578075000027,
+      "label": "http-tool-json",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5181940616,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 1166,
+          "fullReplays": 1,
+          "hits": 0,
+          "invalidations": 1,
+          "lastInvalidationReason": "modeChanged",
+          "maximumTokens": 8192,
+          "misses": 1,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1141,
+          "reusedPrefixTokens": 0,
+          "session": "0516C3B9-A9BF-4717-9774-C6949E5E1575",
+          "tokenStorageBytes": 5088,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 3072.00M  used = 2029.44M  free = 1042.56M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 1141,
+        "admissionMs": 0.1624583310331218,
+        "decodeAfterFirstTokenMs": 1253.7779999984195,
+        "expertCacheHits": 245461,
+        "expertCacheMisses": 127659,
+        "expertFetchedBytes": 225889026048,
+        "expertLogicalReads": 127659,
+        "firstGeneratedTokenMs": 55441.348874999676,
+        "formattingMs": 0.22358333080774173,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 56695.54358332971,
+        "parserBufferMs": 1253.9040833362378,
+        "prefillMs": 55424.86310005188,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 1,
+          "hits": 0,
+          "invalidations": 1,
+          "lastInvalidationReason": "modeChanged",
+          "maximumTokens": 8192,
+          "misses": 1,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1141,
+          "reason": "modeChanged",
+          "reusedPrefixTokens": 0,
+          "session": "0516C3B9-A9BF-4717-9774-C6949E5E1575",
+          "tokenStorageBytes": 5088,
+          "valid": false
+        },
+        "promptTokens": 1141,
+        "queueWaitMs": 0.015958336007315665,
+        "tokenizationMs": 5.483375003677793
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1141,
+        "total_tokens": 1166
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 19.214428754996657,
+      "finish": "tool_calls",
+      "http_seconds": 5.435147542004415,
+      "label": "http-tool-sse",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5182235528,
+        "prefixCache": {
+          "comparedPrefixTokens": 1166,
+          "consumedTokens": 1280,
+          "fullReplays": 1,
+          "hits": 1,
+          "invalidations": 1,
+          "lastInvalidationReason": "modeChanged",
+          "maximumTokens": 8192,
+          "misses": 1,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 89,
+          "reusedPrefixTokens": 1166,
+          "session": "0516C3B9-A9BF-4717-9774-C6949E5E1575",
+          "tokenStorageBytes": 10208,
+          "valid": true
+        }
+      },
+      "stream": true,
+      "swap": [
+        "1",
+        "total = 3072.00M  used = 2029.88M  free = 1042.12M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 89,
+        "admissionMs": 0.2287500028614886,
+        "decodeAfterFirstTokenMs": 1249.0613333357032,
+        "expertCacheHits": 24912,
+        "expertCacheMisses": 11568,
+        "expertFetchedBytes": 20469252096,
+        "expertLogicalReads": 11568,
+        "firstGeneratedTokenMs": 4185.486291666166,
+        "formattingMs": 0.1402916677761823,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 5434.989458335622,
+        "parserBufferMs": 1249.1661666645086,
+        "prefillMs": 4180.410027503967,
+        "prefixCache": {
+          "comparedPrefixTokens": 1166,
+          "consumedTokens": 0,
+          "fullReplays": 1,
+          "hits": 1,
+          "invalidations": 1,
+          "lastInvalidationReason": "modeChanged",
+          "maximumTokens": 8192,
+          "misses": 1,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 89,
+          "reusedPrefixTokens": 1166,
+          "session": "0516C3B9-A9BF-4717-9774-C6949E5E1575",
+          "tokenStorageBytes": 10208,
+          "valid": false
+        },
+        "promptTokens": 1255,
+        "queueWaitMs": 0.013999997463542968,
+        "tokenizationMs": 4.638416663510725
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1255,
+        "total_tokens": 1280
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 18.189615946178666,
+      "finish": "tool_calls",
+      "http_seconds": 65.09040070899937,
+      "label": "changed-earlier-tool-result",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5187511176,
+        "prefixCache": {
+          "comparedPrefixTokens": 1244,
+          "consumedTokens": 1400,
+          "fullReplays": 2,
+          "hits": 1,
+          "invalidations": 2,
+          "lastInvalidationReason": "prefixMismatch",
+          "maximumTokens": 8192,
+          "misses": 2,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1375,
+          "reusedPrefixTokens": 0,
+          "session": "0516C3B9-A9BF-4717-9774-C6949E5E1575",
+          "tokenStorageBytes": 10208,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 3072.00M  used = 2021.88M  free = 1050.12M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 1375,
+        "admissionMs": 0.2341250001336448,
+        "decodeAfterFirstTokenMs": 1319.4341249982244,
+        "expertCacheHits": 295272,
+        "expertCacheMisses": 152728,
+        "expertFetchedBytes": 270247919616,
+        "expertLogicalReads": 152728,
+        "firstGeneratedTokenMs": 63770.355708336865,
+        "formattingMs": 0.14470833411905915,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 65090.080666668655,
+        "parserBufferMs": 1319.5405416627182,
+        "prefillMs": 63763.44299316406,
+        "prefixCache": {
+          "comparedPrefixTokens": 1244,
+          "consumedTokens": 0,
+          "fullReplays": 2,
+          "hits": 1,
+          "invalidations": 2,
+          "lastInvalidationReason": "prefixMismatch",
+          "maximumTokens": 8192,
+          "misses": 2,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1375,
+          "reason": "prefixMismatch",
+          "reusedPrefixTokens": 0,
+          "session": "0516C3B9-A9BF-4717-9774-C6949E5E1575",
+          "tokenStorageBytes": 10208,
+          "valid": false
+        },
+        "promptTokens": 1375,
+        "queueWaitMs": 0.011625001206994057,
+        "tokenizationMs": 4.970708330802154
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1375,
+        "total_tokens": 1400
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 19.524505084204048,
+      "finish": "tool_calls",
+      "http_seconds": 64.55463579099887,
+      "label": "changed-result-forced-replay",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5187527560,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 1400,
+          "fullReplays": 3,
+          "hits": 1,
+          "invalidations": 3,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 3,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1375,
+          "reusedPrefixTokens": 0,
+          "session": "0516C3B9-A9BF-4717-9774-C6949E5E1575",
+          "tokenStorageBytes": 10208,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 3072.00M  used = 2005.88M  free = 1066.12M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 1375,
+        "admissionMs": 0.24195833248086274,
+        "decodeAfterFirstTokenMs": 1229.2245000062394,
+        "expertCacheHits": 295392,
+        "expertCacheMisses": 152608,
+        "expertFetchedBytes": 270035582976,
+        "expertLogicalReads": 152608,
+        "firstGeneratedTokenMs": 63324.814958330535,
+        "formattingMs": 0.15412500215461478,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 64554.31362499803,
+        "parserBufferMs": 1229.3100000024424,
+        "prefillMs": 63316.803097724915,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 3,
+          "hits": 1,
+          "invalidations": 3,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 3,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1375,
+          "reason": "explicitClear",
+          "reusedPrefixTokens": 0,
+          "session": "0516C3B9-A9BF-4717-9774-C6949E5E1575",
+          "tokenStorageBytes": 10208,
+          "valid": false
+        },
+        "promptTokens": 1375,
+        "queueWaitMs": 0.015416670066770166,
+        "tokenizationMs": 5.67412500095088
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1375,
+        "total_tokens": 1400
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": null,
+      "finish": "stop",
+      "http_seconds": 1.0747392080011196,
+      "label": "restarted-default-off",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5154792256,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 1,
+          "hits": 0,
+          "invalidations": 0,
+          "maximumTokens": 8192,
+          "misses": 0,
+          "mode": "off",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 17,
+          "reason": "disabled",
+          "reusedPrefixTokens": 0,
+          "session": "805F67F1-8028-4167-8466-0238807E35AC",
+          "tokenStorageBytes": 0,
+          "valid": false
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 3072.00M  used = 1998.50M  free = 1073.50M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 17,
+        "admissionMs": 0.13820833555655554,
+        "decodeAfterFirstTokenMs": 36.49479166051606,
+        "expertCacheHits": 3513,
+        "expertCacheMisses": 2247,
+        "expertFetchedBytes": 3976003584,
+        "expertLogicalReads": 2247,
+        "firstGeneratedTokenMs": 1037.4629166690283,
+        "formattingMs": 0.005458336090669036,
+        "outcome": "completed",
+        "outputTokens": 1,
+        "overallMs": 1074.5062083296943,
+        "prefillMs": 1031.7180156707764,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 1,
+          "hits": 0,
+          "invalidations": 0,
+          "maximumTokens": 8192,
+          "misses": 0,
+          "mode": "off",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 17,
+          "reason": "disabled",
+          "reusedPrefixTokens": 0,
+          "session": "805F67F1-8028-4167-8466-0238807E35AC",
+          "tokenStorageBytes": 0,
+          "valid": false
+        },
+        "promptTokens": 17,
+        "queueWaitMs": 0.022499996703118086,
+        "tokenizationMs": 0.6087500005378388
+      },
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 17,
+        "total_tokens": 18
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 20.671816078332267,
+      "finish": "tool_calls",
+      "http_seconds": 53.38452954099921,
+      "label": "1k-setup",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5181940592,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 1166,
+          "fullReplays": 1,
+          "hits": 0,
+          "invalidations": 2,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 1,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1141,
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 5088,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 3072.00M  used = 1950.50M  free = 1121.50M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 1141,
+        "admissionMs": 0.19874999998137355,
+        "decodeAfterFirstTokenMs": 1161.00104166253,
+        "expertCacheHits": 245461,
+        "expertCacheMisses": 127659,
+        "expertFetchedBytes": 225889026048,
+        "expertLogicalReads": 127659,
+        "firstGeneratedTokenMs": 52222.48241666966,
+        "formattingMs": 0.16016666631912813,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 53384.35704166477,
+        "parserBufferMs": 1161.093124996114,
+        "prefillMs": 52212.22698688507,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 1,
+          "hits": 0,
+          "invalidations": 2,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 1,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1141,
+          "reason": "explicitClear",
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 5088,
+          "valid": false
+        },
+        "promptTokens": 1141,
+        "queueWaitMs": 0.013958335330244154,
+        "tokenizationMs": 5.658125002810266
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1141,
+        "total_tokens": 1166
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 23.95422248269209,
+      "finish": "tool_calls",
+      "http_seconds": 4.648206040998048,
+      "label": "1k-reuse",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5182137200,
+        "prefixCache": {
+          "comparedPrefixTokens": 1166,
+          "consumedTokens": 1280,
+          "fullReplays": 1,
+          "hits": 1,
+          "invalidations": 2,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 1,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 89,
+          "reusedPrefixTokens": 1166,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 10208,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 3072.00M  used = 1950.50M  free = 1121.50M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 89,
+        "admissionMs": 0.20445833797566593,
+        "decodeAfterFirstTokenMs": 1001.9110416687909,
+        "expertCacheHits": 24912,
+        "expertCacheMisses": 11568,
+        "expertFetchedBytes": 20469252096,
+        "expertLogicalReads": 11568,
+        "firstGeneratedTokenMs": 3645.7854166656034,
+        "formattingMs": 0.14291666593635455,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 4647.9814583362895,
+        "parserBufferMs": 1001.9934583324357,
+        "prefillMs": 3640.0190591812134,
+        "prefixCache": {
+          "comparedPrefixTokens": 1166,
+          "consumedTokens": 0,
+          "fullReplays": 1,
+          "hits": 1,
+          "invalidations": 2,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 1,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 89,
+          "reusedPrefixTokens": 1166,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 10208,
+          "valid": false
+        },
+        "promptTokens": 1255,
+        "queueWaitMs": 0.012708333088085055,
+        "tokenizationMs": 5.3350833331933245
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1255,
+        "total_tokens": 1280
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 26.217608792934925,
+      "finish": "tool_calls",
+      "http_seconds": 49.96076991699374,
+      "label": "1k-full-replay",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5184742256,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 1280,
+          "fullReplays": 2,
+          "hits": 1,
+          "invalidations": 3,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 2,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1255,
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 10208,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 3072.00M  used = 1344.38M  free = 1727.62M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 1255,
+        "admissionMs": 0.1768749934853986,
+        "decodeAfterFirstTokenMs": 915.4152916671592,
+        "expertCacheHits": 270711,
+        "expertCacheMisses": 138889,
+        "expertFetchedBytes": 245760196608,
+        "expertLogicalReads": 138889,
+        "firstGeneratedTokenMs": 49044.76695833,
+        "formattingMs": 0.12108333612559363,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 49960.557374994096,
+        "parserBufferMs": 915.5163333343808,
+        "prefillMs": 49036.90803050995,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 2,
+          "hits": 1,
+          "invalidations": 3,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 2,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 1255,
+          "reason": "explicitClear",
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 10208,
+          "valid": false
+        },
+        "promptTokens": 1255,
+        "queueWaitMs": 0.011291667760815471,
+        "tokenizationMs": 5.004874998121522
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 1255,
+        "total_tokens": 1280
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 20.826241353341025,
+      "finish": "tool_calls",
+      "http_seconds": 156.6820900419989,
+      "label": "4k-setup",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5245133728,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 4027,
+          "fullReplays": 3,
+          "hits": 1,
+          "invalidations": 4,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 3,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 4002,
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 20448,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 2048.00M  used = 1156.06M  free = 891.94M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 4002,
+        "admissionMs": 0.23020833759801462,
+        "decodeAfterFirstTokenMs": 1152.3922916676383,
+        "expertCacheHits": 810272,
+        "expertCacheMisses": 478368,
+        "expertFetchedBytes": 846458781696,
+        "expertLogicalReads": 478368,
+        "firstGeneratedTokenMs": 155529.19487500185,
+        "formattingMs": 0.19629166490631178,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 156681.8465000033,
+        "parserBufferMs": 1152.4733333280892,
+        "prefillMs": 155512.10403442383,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 3,
+          "hits": 1,
+          "invalidations": 4,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 3,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 4002,
+          "reason": "explicitClear",
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 20448,
+          "valid": false
+        },
+        "promptTokens": 4002,
+        "queueWaitMs": 0.012999997125007212,
+        "tokenizationMs": 15.301250001357403
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 4002,
+        "total_tokens": 4027
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 20.644499778422215,
+      "finish": "tool_calls",
+      "http_seconds": 5.094119708999642,
+      "label": "4k-reuse",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5161444232,
+        "prefixCache": {
+          "comparedPrefixTokens": 4027,
+          "consumedTokens": 4141,
+          "fullReplays": 3,
+          "hits": 2,
+          "invalidations": 4,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 3,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 89,
+          "reusedPrefixTokens": 4027,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 20448,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 2048.00M  used = 1156.06M  free = 891.94M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 89,
+        "admissionMs": 0.23650000366615131,
+        "decodeAfterFirstTokenMs": 1162.5372499984223,
+        "expertCacheHits": 25039,
+        "expertCacheMisses": 11441,
+        "expertFetchedBytes": 20244529152,
+        "expertLogicalReads": 11441,
+        "firstGeneratedTokenMs": 3931.0595000060857,
+        "formattingMs": 0.22687499586027116,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 5093.895833335409,
+        "parserBufferMs": 1162.6292083310545,
+        "prefillMs": 3913.774013519287,
+        "prefixCache": {
+          "comparedPrefixTokens": 4027,
+          "consumedTokens": 0,
+          "fullReplays": 3,
+          "hits": 2,
+          "invalidations": 4,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 3,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 89,
+          "reusedPrefixTokens": 4027,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 20448,
+          "valid": false
+        },
+        "promptTokens": 4116,
+        "queueWaitMs": 0.008416667697019875,
+        "tokenizationMs": 16.74450000427896
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 4116,
+        "total_tokens": 4141
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 22.579739998943992,
+      "finish": "tool_calls",
+      "http_seconds": 160.4813794579968,
+      "label": "4k-full-replay",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5164262280,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 4141,
+          "fullReplays": 4,
+          "hits": 2,
+          "invalidations": 5,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 4,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 4116,
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 20448,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 2048.00M  used = 1148.06M  free = 899.94M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 4116,
+        "admissionMs": 0.22304167214315385,
+        "decodeAfterFirstTokenMs": 1062.8997500025434,
+        "expertCacheHits": 835102,
+        "expertCacheMisses": 490018,
+        "expertFetchedBytes": 867073130496,
+        "expertLogicalReads": 490018,
+        "firstGeneratedTokenMs": 159417.98866666795,
+        "formattingMs": 0.21941666636848822,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 160481.19083333586,
+        "parserBufferMs": 1063.0011249959352,
+        "prefillMs": 159400.67505836487,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 4,
+          "hits": 2,
+          "invalidations": 5,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 4,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 4116,
+          "reason": "explicitClear",
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 20448,
+          "valid": false
+        },
+        "promptTokens": 4116,
+        "queueWaitMs": 0.012625001545529813,
+        "tokenizationMs": 15.375875002064276
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 4116,
+        "total_tokens": 4141
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 19.7167058519428,
+      "finish": "tool_calls",
+      "http_seconds": 247.50842658300098,
+      "label": "long-setup",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5218870176,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 6025,
+          "fullReplays": 5,
+          "hits": 2,
+          "invalidations": 6,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 5,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 6000,
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 49120,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 2048.00M  used = 1140.06M  free = 907.94M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 6000,
+        "admissionMs": 0.2440416719764471,
+        "decodeAfterFirstTokenMs": 1217.2418749978533,
+        "expertCacheHits": 1197468,
+        "expertCacheMisses": 730532,
+        "expertFetchedBytes": 1292655919104,
+        "expertLogicalReads": 730532,
+        "firstGeneratedTokenMs": 246290.55970833724,
+        "formattingMs": 0.26933333720080554,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 247508.11929166957,
+        "parserBufferMs": 1217.3572083338513,
+        "prefillMs": 246271.42000198364,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 5,
+          "hits": 2,
+          "invalidations": 6,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 5,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 6000,
+          "reason": "explicitClear",
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 49120,
+          "valid": false
+        },
+        "promptTokens": 6000,
+        "queueWaitMs": 0.012666663678828627,
+        "tokenizationMs": 21.505083328520413
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 6000,
+        "total_tokens": 6025
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 20.91213580981289,
+      "finish": "tool_calls",
+      "http_seconds": 5.305603833003261,
+      "label": "long-reuse",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5219132320,
+        "prefixCache": {
+          "comparedPrefixTokens": 6025,
+          "consumedTokens": 6139,
+          "fullReplays": 5,
+          "hits": 3,
+          "invalidations": 6,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 5,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 89,
+          "reusedPrefixTokens": 6025,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 49120,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 2048.00M  used = 1140.06M  free = 907.94M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 89,
+        "admissionMs": 0.29091667238390073,
+        "decodeAfterFirstTokenMs": 1147.658958332613,
+        "expertCacheHits": 25165,
+        "expertCacheMisses": 11315,
+        "expertFetchedBytes": 20021575680,
+        "expertLogicalReads": 11315,
+        "firstGeneratedTokenMs": 4157.413958339021,
+        "formattingMs": 0.28520833438960835,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 5305.371208334691,
+        "parserBufferMs": 1147.759749997931,
+        "prefillMs": 4134.992957115173,
+        "prefixCache": {
+          "comparedPrefixTokens": 6025,
+          "consumedTokens": 0,
+          "fullReplays": 5,
+          "hits": 3,
+          "invalidations": 6,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 5,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 89,
+          "reusedPrefixTokens": 6025,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 49120,
+          "valid": false
+        },
+        "promptTokens": 6114,
+        "queueWaitMs": 0.012249998690094799,
+        "tokenizationMs": 21.761999996670056
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 6114,
+        "total_tokens": 6139
+      }
+    },
+    {
+      "decode_tokens_per_second_after_first": 20.867740802258847,
+      "finish": "tool_calls",
+      "http_seconds": 243.880835457996,
+      "label": "long-full-replay",
+      "state": {
+        "context": 8192,
+        "memoryBudgetGiB": 5,
+        "metalAllocatedBytes": 5291360256,
+        "physicalFootprintBytes": 5221901216,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 6139,
+          "fullReplays": 6,
+          "hits": 3,
+          "invalidations": 7,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 6,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 6114,
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 49120,
+          "valid": true
+        }
+      },
+      "stream": false,
+      "swap": [
+        "1",
+        "total = 2048.00M  used = 1140.06M  free = 907.94M  (encrypted)"
+      ],
+      "timing": {
+        "actualPrefillTokens": 6114,
+        "admissionMs": 0.2555833343649283,
+        "decodeAfterFirstTokenMs": 1150.1005416648695,
+        "expertCacheHits": 1222260,
+        "expertCacheMisses": 742220,
+        "expertFetchedBytes": 1313337507840,
+        "expertLogicalReads": 742220,
+        "firstGeneratedTokenMs": 242730.20616667054,
+        "formattingMs": 0.27954167308053,
+        "outcome": "completed",
+        "outputTokens": 25,
+        "overallMs": 243880.58995833853,
+        "parserBufferMs": 1150.1815833325963,
+        "prefillMs": 242707.0939540863,
+        "prefixCache": {
+          "comparedPrefixTokens": 0,
+          "consumedTokens": 0,
+          "fullReplays": 6,
+          "hits": 3,
+          "invalidations": 7,
+          "lastInvalidationReason": "explicitClear",
+          "maximumTokens": 8192,
+          "misses": 6,
+          "mode": "exact-prefix",
+          "pendingOutputToken": false,
+          "processedPromptTokens": 6114,
+          "reason": "explicitClear",
+          "reusedPrefixTokens": 0,
+          "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+          "tokenStorageBytes": 49120,
+          "valid": false
+        },
+        "promptTokens": 6114,
+        "queueWaitMs": 0.011416668712627143,
+        "tokenizationMs": 21.571666664385702
+      },
+      "usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 6114,
+        "total_tokens": 6139
+      }
+    }
+  ],
+  "memory_gib": 5,
+  "servers": [
+    {
+      "exit": 0,
+      "initial": {
+        "active_generations": 0,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 1167562824,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 0,
+            "hits": 0,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 0,
+            "reason": "modeChanged",
+            "reusedPrefixTokens": 0,
+            "session": "0516C3B9-A9BF-4717-9774-C6949E5E1575",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "model": "qwen-fieldfare",
+        "queue_capacity": 2,
+        "queued_requests": 0,
+        "requests": {
+          "cancelled": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "service": "QwenFieldfareServer",
+        "status": "ready",
+        "tools": true
+      },
+      "phase": "opt-in",
+      "ready_seconds": 4.320015457997215,
+      "shutdown_seconds": 0.17435241700150073,
+      "swap_after_requests": [
+        "1",
+        "total = 3072.00M  used = 1998.50M  free = 1073.50M  (encrypted)"
+      ],
+      "swap_before_requests": [
+        "1",
+        "total = 3072.00M  used = 2061.06M  free = 1010.94M  (encrypted)"
+      ]
+    },
+    {
+      "exit": 0,
+      "initial": {
+        "active_generations": 0,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 1167382600,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 0,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 0,
+            "reason": "cold",
+            "reusedPrefixTokens": 0,
+            "session": "805F67F1-8028-4167-8466-0238807E35AC",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "model": "qwen-fieldfare",
+        "queue_capacity": 2,
+        "queued_requests": 0,
+        "requests": {
+          "cancelled": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "service": "QwenFieldfareServer",
+        "status": "ready",
+        "tools": true
+      },
+      "phase": "default-restart",
+      "ready_seconds": 4.032136374997208,
+      "shutdown_seconds": 0.10994070900051156,
+      "swap_after_requests": [
+        "1",
+        "total = 3072.00M  used = 1998.50M  free = 1073.50M  (encrypted)"
+      ],
+      "swap_before_requests": [
+        "1",
+        "total = 3072.00M  used = 1998.50M  free = 1073.50M  (encrypted)"
+      ]
+    },
+    {
+      "exit": 0,
+      "initial": {
+        "active_generations": 0,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 1167415320,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 0,
+            "hits": 0,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 0,
+            "reason": "modeChanged",
+            "reusedPrefixTokens": 0,
+            "session": "E9871B9C-45A5-402C-A3D5-13F641FABBDD",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "model": "qwen-fieldfare",
+        "queue_capacity": 2,
+        "queued_requests": 0,
+        "requests": {
+          "cancelled": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "service": "QwenFieldfareServer",
+        "status": "ready",
+        "tools": true
+      },
+      "phase": "performance",
+      "ready_seconds": 0.769422958001087,
+      "shutdown_seconds": 0.18889833400317002,
+      "swap_after_requests": [
+        "1",
+        "total = 2048.00M  used = 1140.06M  free = 907.94M  (encrypted)"
+      ],
+      "swap_before_requests": [
+        "1",
+        "total = 3072.00M  used = 1998.50M  free = 1073.50M  (encrypted)"
+      ]
+    },
+    {
+      "initial": {
+        "active_generations": 0,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 1167382456,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 0,
+            "hits": 0,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 0,
+            "reason": "modeChanged",
+            "reusedPrefixTokens": 0,
+            "session": "35C6B6F4-6BC5-4F13-B51B-C9E547548F17",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "model": "qwen-fieldfare",
+        "queue_capacity": 2,
+        "queued_requests": 0,
+        "requests": {
+          "cancelled": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "service": "QwenFieldfareServer",
+        "status": "ready",
+        "tools": true
+      },
+      "phase": "opencode",
+      "ready_seconds": 3.756582583002455,
+      "swap_before_requests": [
+        "1",
+        "total = 2048.00M  used = 1140.06M  free = 907.94M  (encrypted)"
+      ]
+    }
+  ],
+  "status": "CLI lifecycle and all HTTP pairs passed. The initial OpenCode attempt ended before recording an outcome and was rerun separately."
+}

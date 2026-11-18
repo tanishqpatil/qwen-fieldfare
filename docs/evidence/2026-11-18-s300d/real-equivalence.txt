@@ -1,0 +1,64 @@
+Building for production...
+[Computing dependencies]
+[Pre-planning 1 / 1453]
+[Planning deferred tasks]
+[1 / 106] swift-transformers_Hub
+[22 / 95] _NIODataStructures
+[31 / 102] _NIOBase64
+[33 / 102] _NIODataStructures
+[43 / 110] Crypto
+[61 / 120] ContainersPreview
+[74 / 131] QwenFieldfarePresentationTests-product
+[75 / 132] Atomics
+[79 / 133] QwenFieldfarePresentationTests-product
+[81 / 133] QwenFieldfarePresentationTests-product
+[87 / 138] DequeModule
+[96 / 144] NIOCore
+[108 / 157] NIOPosix
+[114 / 162] EventSource
+[119 / 166] HuggingFace
+[121 / 167] Jinja
+[126 / 169] NIOEmbedded
+[131 / 171] NIOPosix
+[139 / 177] NIO
+[147 / 183] HuggingFace
+[153 / 188] Hub
+[156 / 190] Hub
+[162 / 195] Tokenizers
+[164 / 196] NIOHTTP1
+[169 / 198] Tokenizers
+[175 / 203] QwenFieldfareCore
+[177 / 205] QwenFieldfareCore
+[188 / 217] QwenFieldfareBench-product
+[199 / 227] QwenFieldfarePack-product
+[201 / 227] QwenFieldfarePack-product
+[201 / 227] QwenFieldfareBench-product
+[203 / 227] QwenFieldfareBench-product
+[203 / 227] QwenFieldfareServerSupport
+[212 / 229] QwenFieldfareServer-product
+[216 / 232] QwenFieldfareServer-product
+[218 / 232] QwenFieldfareServer-product
+[218 / 232] QwenFieldfareServerManagement
+[226 / 240] QwenFieldfareCoreTests-product
+[230 / 242] QwenFieldfareCoreTests-product
+[230 / 242] QwenFieldfareServerManagementTests-product
+[232 / 242] QwenFieldfareServerManagementTests-product
+[232 / 242] QwenFieldfareMac-product
+[235 / 244] QwenFieldfareMac-product
+[244 / 248] QwenFieldfareServerTests-product
+[246 / 248] QwenFieldfareServerTests-product
+[251 / 253] QwenFieldfareServerManagementTests-product
+[260 / 262] QwenFieldfareCoreTests-product
+[261 / 261] QwenFieldfareServer-product
+[265 / 266] QwenFieldfareMac-product
+[267 / 267] QwenFieldfareBench-product
+[270 / 270] QwenFieldfarePack-product
+Build complete! (47.98 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite RealPrefixEquivalenceTests started.
+◇ Test realGreedyReplayAndPrefixTokensAgree() started.
+✔ Test realGreedyReplayAndPrefixTokensAgree() passed after 377.356 seconds.
+✔ Suite RealPrefixEquivalenceTests passed after 377.356 seconds.
+✔ Test run with 1 test in 1 suite passed after 377.356 seconds.

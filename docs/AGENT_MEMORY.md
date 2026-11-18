@@ -1,6 +1,34 @@
 # Agent recovery memory
 
-## Current milestone — S3-00c reduction decision
+## Current milestone — S3-00d exact-prefix qualification
+
+Base 7370a1d on `feature/local-coding-agent-server`. Fixed router-order
+production arithmetic remains the full-replay control. The initial
+same-runtime test matched 512/512 generated IDs and all seven sampled full
+logit and hidden-state captures, including output 465, while reusing 399
+consumed tokens. The archived short cycle and real CLI lifecycle passed
+including earlier-tool-result mismatch, queued and active disconnects,
+clear during generation, context rejection and default-off restart.
+Native persistence, real 399-token reuse, clear, restart and chat
+exclusivity passed. The 1,255 / 4,116 / 6,114-token HTTP controls finished
+at 49.04 / 159.42 / 242.73 s first-token time versus 3.65 / 3.93 / 4.16 s
+using reuse. OpenCode 1.19.5 completed a real read, edit and passing
+test run in 154.4 s with reuse; continuation hits were 3,080 / 3,302 / 3,355
+tokens. The cache-off control took 567.1 s, a 72.8% wall-time reduction
+on this paired workflow. The first OpenCode attempt ended without a
+completion record. Qualification passed and stops here. See the
+[S3-00d evidence](evidence/2026-11-18-s300d/README.md).
+Strict MLX remains 131/132 at token 61 (expected 14988, got 10000).
+
+One server runner owns one exact-prefix ledger. Mode defaults to off.
+A publication requires EOS, decoder and protocol validation, terminal
+flush and the current invalidation epoch. Mode or cache clear invalidates
+metadata asynchronously. The next miss resets KV, Conv and DeltaNet.
+There is no state snapshot or change to expert residency policy.
+Preserve the historical S3-00 rejection. This milestone authorizes
+reviewed commits and a push to the feature branch. Main stays unmerged.
+
+## Historical milestone — S3-00c reduction decision
 
 S3-00c selects the original fixed router-order expert reduction as the
 production full-replay baseline. The grouped-tail experiment is closed.

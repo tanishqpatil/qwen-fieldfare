@@ -1,6 +1,21 @@
 # Authoritative implementation backlog
 
-## Current milestone — S3-00c reduction decision
+## Current milestone — S3-00d restore exact-prefix state reuse
+
+- [x] Restore the one-runner ledger and opt-in CLI/native server controls over fixed router order.
+- [x] Run model-free state-contract and terminal-delivery lifecycle tests.
+- [x] Recheck the archived 430-token prompt and 512-output sustained boundary with full-logit and hidden-state samples.
+- [x] Complete the short tool-cycle, real mismatch and queue/disconnect/clear/restart/overflow qualification.
+- [x] Measure short, 1K, 4K and longer repeated workloads and qualify the real OpenCode read/edit/test cycle.
+- [x] Verify native settings persistence and owned server controls on the supported Mac.
+- [x] Complete final validation and review the scoped implementation and evidence for feature-branch publication.
+
+Qualification passed on the local Mac at 8K. Opt-in remains required.
+See the [qualification evidence](docs/evidence/2026-11-18-s300d/README.md),
+[state contract](docs/EXACT_PREFIX_STATE_CONTRACT.md) and
+[independent strict numerical gate](docs/NUMERICAL_NON_REGRESSION.md).
+
+## Historical milestone — S3-00c reduction decision
 
 S3-00c selects the original fixed router-order expert reduction as the
 production full-replay baseline. The grouped-tail experiment is closed.
@@ -129,10 +144,10 @@ Read AGENTS.md, this file and docs/AGENT_MEMORY.md at session start. Inspect
 related source and baseline before edits. Preserve unrelated work and historical
 logs. Update status whenever work changes; statuses are pending, in progress,
 blocked, completed or rejected. Every stage must pass applicable acceptance
-before the next begins. The current S2-03 stop overrides the historical Stage1 boundary. Stop
-at a new applicable hardware/checkpoint/environment/correctness blocker; the
-known 131/132 baseline does not block independent engineering. Never call an
-unverified stage complete. No remote push/merge or destructive Git operation.
+before the next begins. Follow the current milestone boundary. Stop at a new
+applicable hardware, checkpoint, environment or correctness blocker. The known
+131/132 baseline permits independent engineering. Verify the milestone before
+publishing to its development or feature branch. Main is never merged automatically.
 
 Modify only task-related source/tests/docs. Keep app/bench working, checked
 allocations, exact model semantics, one model owner, raw weights external and
@@ -462,7 +477,7 @@ from broader lifecycle/soak qualification. Current S2-03 UI is delivered above; 
 
 ### S5-01 — Define exact retained-state and invalidation contract
 
-- Stage/priority/status: 5 / P0 / **pending**.
+- Stage/priority/status: 5 / P0 / **implemented in S3-00d for the local server**.
 - Files: `Core generation; docs/ARCHITECTURE.md`.
 - Dependencies: S4-02.
 - Acceptance: One session; exact tokens/positions/KV/Conv/DeltaNet/pending token; no truncation.
@@ -471,7 +486,7 @@ from broader lifecycle/soak qualification. Current S2-03 UI is delivered above; 
 
 ### S5-02 — Implement opt-in exact-prefix continuation and safe replay
 
-- Stage/priority/status: 5 / P0 / **pending**.
+- Stage/priority/status: 5 / P0 / **implemented in S3-00d for the local server**.
 - Files: `Active runner; generation session owner`.
 - Dependencies: S5-01.
 - Acceptance: Reuse only proven continuation; reset on divergence/cancel/error/overflow/tools/template changes.
@@ -480,7 +495,7 @@ from broader lifecycle/soak qualification. Current S2-03 UI is delivered above; 
 
 ### S5-03 — Qualify equivalence and measured repeated-turn benefit
 
-- Stage/priority/status: 5 / P0 / **pending**.
+- Stage/priority/status: 5 / P0 / **qualified in S3-00d for the tested 8K server workloads**.
 - Files: `Bench; Tests/; docs/PERFORMANCE_BASELINES.md`.
 - Dependencies: S5-02.
 - Acceptance: Cached/full replay token IDs and relevant state agree; report actual reused tokens; predeclared 20% gate.

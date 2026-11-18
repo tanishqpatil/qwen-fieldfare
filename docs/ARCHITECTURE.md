@@ -352,14 +352,12 @@ incremental parser; tools execute only in clients. S2-00 now supplies the minima
 `QwenFieldfareServer`, loopback/authenticated HTTP, bounded admission and SSE
 backpressure, disconnect cancellation, and one serialized inference owner.
 Networking must run independently from blocking GPU/IO work. App, bench and
-server now share the Core Q4 lease described below; UI server management is pending.
+server now share the Core Q4 lease. S2-03 implements native server management.
 See [integration contract](AGENT_INTEGRATION.md).
 
-Stage 5 may retain one exact token-prefix session including KV, Conv, DeltaNet,
-position and pending token; all invalidations reset/replay the whole state.
-No recurrent-state truncation or KV-only approximation is permitted. Stage 6
-may add idle/retained-token limits and investigate bounded KV growth, including
-replacement peaks. These controls and lazy KV allocation do not exist today.
+S3-00d covers one retained exact-prefix session including KV, Conv and
+DeltaNet. Idle expiry, a separate retention limit and lazy KV allocation
+remain future work. See the [state contract](EXACT_PREFIX_STATE_CONTRACT.md).
 
 ## Numerical qualification index
 
@@ -563,15 +561,14 @@ measurement of improvement over the preserved long OpenCode workflow.
 
 ## S3-00 exact-prefix investigation — rejected candidate
 
-Production still resets/replays every request: the in-place cache candidate
-failed sustained same-Swift raw-token equivalence and was fully reverted.
-No CLI/UI cache mode,clear endpoint,new model owner,state snapshot or inference
-math change ships. Existing S2-03 ownership and lifecycle remain unchanged.
+The original attempt failed sustained same-Swift raw-token equivalence.
+At that checkpoint the candidate was fully reverted and S2-03 replay
+behavior and lifecycle were restored.
 
 The candidate proved useful natural tool prefixes with one consumed-token ledger
 and existing KV/Conv/DeltaNet buffers. Its proposed EOS/pending-token,strict-prefix,
 transactional flush/epoch and cancellation contract is recorded in
-[EXACT_PREFIX_STATE_CONTRACT](EXACT_PREFIX_STATE_CONTRACT.md),not a current feature.
+[state contract](EXACT_PREFIX_STATE_CONTRACT.md), now updated for S3-00d.
 Five short tool-cycle pairs matched,then a512-token continuation diverged at
 output index465. A full-replay-only cold/warm expert-history diagnostic reproduced
 the two outputs. Existing hit/miss MoE subset reduction ordering is the hypothesis;
@@ -582,7 +579,7 @@ alone cannot guarantee equivalence to a replay whose expert residency differs.
 measurements and reproduction. Any future cache implementation needs a separately
 scoped numerical/history-invariance contract and relevant reference gates;no
 recurrent rewind or weakened expected tokens is accepted. MLX131/132 is independent
-and remains a release blocker. S3-00 is blocked,not delivered or promoted.
+and remains a release blocker. S3-00d requalifies reuse separately.
 
 ## S3-00a expert-cache residency
 
@@ -622,3 +619,32 @@ reassociation tests but did not improve the important boundary margins.
 The selected path is the new full-replay control for S3-00. Its documented
 local MLX fidelity limits and the original strict 131/132 gate still apply.
 See the [S3-00c decision and requalification handoff](evidence/2026-11-18-s300c/README.md).
+
+
+## S3-00d exact-prefix server state
+
+The standalone and native server share one opt-in `CoreBackend` mode.
+The active streaming runner holds one context-bounded consumed-token
+ledger and reuses its existing attention KV, Conv and DeltaNet allocations.
+Native chat and the default server setting always replay. The model lease,
+serial admission and expert-cache residency policy are unchanged.
+
+The complete retained ledger must match a proper prefix of the newly
+formatted and tokenized prompt. A fresh last prompt token always generates
+the new request's first prediction. A mismatch clears sequence buffers
+and replays from position zero. Changing schema, template branch or
+sampling identity invalidates prior state. A context or output limit
+leaves the last output unconsumed and disqualifies publication.
+
+Valid metadata is published after EOS, decoder and native tool validation
+and the final successful HTTP flush. The cancellation token arbitrates
+terminal delivery versus disconnect. Clear and shutdown invalidate
+through a locked epoch without touching GPU state owned by current work.
+Metal completion errors are checked at existing queue barriers. A
+recoverable failure prevents publication and requires fresh replay.
+
+The only variable allocation introduced by reuse is one CPU token array
+bounded by context, plus its normal allocation capacity. Health reports
+that capacity and aggregate timing and cache counters. See the
+[exact state contract](EXACT_PREFIX_STATE_CONTRACT.md) and
+[runtime controls](RUNTIME_CONTROLS.md).

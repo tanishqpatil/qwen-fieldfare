@@ -224,3 +224,18 @@ with no new cache policy, release mode or precision representation. Use this
 implementation as the full-replay control for opt-in exact prefix reuse and
 separately requalify the known long continuation. See
 [S3-00c evidence](evidence/2026-11-18-s300c/README.md).
+
+
+## ADR — S3-00d one opt-in exact prefix per server runner
+
+2026-11-18. Keep one context-bounded consumed-token ledger over the
+accepted fixed router-order runtime and reuse live sequence buffers in
+place. Require whole-ledger identity, a fresh suffix and publication
+after successful terminal delivery. Full reset and replay is the fallback.
+An output or context limit never establishes an eligible boundary.
+Controls and redacted diagnostics are shared by the CLI and native server.
+The measured 8K tool and OpenCode workloads qualify the opt-in mode.
+The default stays off. The original S3-00 rejection and independent strict
+MLX 131/132 baseline remain evidence. See the
+[technical contract](EXACT_PREFIX_STATE_CONTRACT.md) and
+[qualification evidence](evidence/2026-11-18-s300d/README.md).

@@ -1,0 +1,334 @@
+{
+  "binary_sha256": "b877d9bf883e8f711281dafe089defc5a8b76c3e302b3ead5087714072d7eb24",
+  "checkpoint_integrity": "standard model loader checks; reused checkpoint identity",
+  "context": 8192,
+  "lifecycle": {},
+  "measurements": [],
+  "memory_gib": 5,
+  "opencode": {
+    "client_seconds": 567.129510209008,
+    "completed_tools": [
+      "read",
+      "edit",
+      "bash"
+    ],
+    "exit": 0,
+    "final_response": true,
+    "independent_tests_exit": 0,
+    "mode": "off",
+    "requests": [
+      {
+        "completion": 1,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 5225210784,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 1,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 3006,
+            "reason": "disabled",
+            "reusedPrefixTokens": 0,
+            "session": "220DEB85-861A-4846-9332-61AD86C52971",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "timing": {
+          "actualPrefillTokens": 3006,
+          "admissionMs": 0.9730000019771978,
+          "decodeAfterFirstTokenMs": 3410.3123750101076,
+          "expertCacheHits": 631850,
+          "expertCacheMisses": 352790,
+          "expertFetchedBytes": 624252026880,
+          "expertLogicalReads": 352790,
+          "firstGeneratedTokenMs": 131708.43954166048,
+          "formattingMs": 0.30954166140872985,
+          "outcome": "completed",
+          "outputTokens": 71,
+          "overallMs": 135119.55058333115,
+          "parserBufferMs": 3410.4467916622525,
+          "prefillMs": 131682.2360754013,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 1,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 3006,
+            "reason": "disabled",
+            "reusedPrefixTokens": 0,
+            "session": "220DEB85-861A-4846-9332-61AD86C52971",
+            "tokenStorageBytes": 0,
+            "valid": false
+          },
+          "promptTokens": 3006,
+          "queueWaitMs": 0.03587499668356031,
+          "tokenizationMs": 18.656708343769424
+        }
+      },
+      {
+        "completion": 2,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 5146370952,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 3,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 0,
+            "reason": "disabled",
+            "reusedPrefixTokens": 0,
+            "session": "220DEB85-861A-4846-9332-61AD86C52971",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "timing": {
+          "actualPrefillTokens": 3192,
+          "admissionMs": 0.7789166556904092,
+          "decodeAfterFirstTokenMs": 4579.09954166098,
+          "expertCacheHits": 679980,
+          "expertCacheMisses": 375060,
+          "expertFetchedBytes": 663658168320,
+          "expertLogicalReads": 375060,
+          "firstGeneratedTokenMs": 136337.65099999437,
+          "formattingMs": 0.2202916657552123,
+          "outcome": "completed",
+          "outputTokens": 105,
+          "overallMs": 140917.28420832078,
+          "parserBufferMs": 4579.285458326922,
+          "prefillMs": 136312.8399848938,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 2,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 3192,
+            "reason": "disabled",
+            "reusedPrefixTokens": 0,
+            "session": "220DEB85-861A-4846-9332-61AD86C52971",
+            "tokenStorageBytes": 0,
+            "valid": false
+          },
+          "promptTokens": 3192,
+          "queueWaitMs": 0.015124998753890395,
+          "tokenizationMs": 17.910958340507932
+        }
+      },
+      {
+        "completion": 3,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 5201077128,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 3,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 3319,
+            "reason": "disabled",
+            "reusedPrefixTokens": 0,
+            "session": "220DEB85-861A-4846-9332-61AD86C52971",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "timing": {
+          "actualPrefillTokens": 3319,
+          "admissionMs": 0.8927916642278433,
+          "decodeAfterFirstTokenMs": 1299.5940833352506,
+          "expertCacheHits": 692134,
+          "expertCacheMisses": 379866,
+          "expertFetchedBytes": 672162250752,
+          "expertLogicalReads": 379866,
+          "firstGeneratedTokenMs": 142922.60700000043,
+          "formattingMs": 0.21808332530781627,
+          "outcome": "completed",
+          "outputTokens": 31,
+          "overallMs": 144222.72266667278,
+          "parserBufferMs": 1299.6499166765716,
+          "prefillMs": 142906.4040184021,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 3,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 3319,
+            "reason": "disabled",
+            "reusedPrefixTokens": 0,
+            "session": "220DEB85-861A-4846-9332-61AD86C52971",
+            "tokenStorageBytes": 0,
+            "valid": false
+          },
+          "promptTokens": 3319,
+          "queueWaitMs": 0.017124999430961907,
+          "tokenizationMs": 13.291291674249806
+        }
+      },
+      {
+        "completion": 4,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 5202994056,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 4,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 3400,
+            "reason": "disabled",
+            "reusedPrefixTokens": 0,
+            "session": "220DEB85-861A-4846-9332-61AD86C52971",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "timing": {
+          "actualPrefillTokens": 3400,
+          "admissionMs": 0.9737916698213667,
+          "decodeAfterFirstTokenMs": 1542.2295416647103,
+          "expertCacheHits": 710496,
+          "expertCacheMisses": 387744,
+          "expertFetchedBytes": 686102151168,
+          "expertLogicalReads": 387744,
+          "firstGeneratedTokenMs": 143745.47841667663,
+          "firstVisibleSSEMs": 143745.6967083417,
+          "formattingMs": 0.2798333443934098,
+          "outcome": "completed",
+          "outputTokens": 32,
+          "overallMs": 145287.94520834344,
+          "prefillMs": 143724.19703006744,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 4,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 3400,
+            "reason": "disabled",
+            "reusedPrefixTokens": 0,
+            "session": "220DEB85-861A-4846-9332-61AD86C52971",
+            "tokenStorageBytes": 0,
+            "valid": false
+          },
+          "promptTokens": 3400,
+          "queueWaitMs": 0.019875005818903446,
+          "tokenizationMs": 18.33983333199285
+        }
+      }
+    ],
+    "reused_token_counts": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "test_seen_in_tool_result": true,
+    "version": "1.19.5",
+    "workspace_edit": true
+  },
+  "passed": true,
+  "servers": [
+    {
+      "exit": 0,
+      "initial": {
+        "active_generations": 0,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 1167382576,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 0,
+            "hits": 0,
+            "invalidations": 0,
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "off",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 0,
+            "reason": "cold",
+            "reusedPrefixTokens": 0,
+            "session": "220DEB85-861A-4846-9332-61AD86C52971",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "model": "qwen-fieldfare",
+        "queue_capacity": 2,
+        "queued_requests": 0,
+        "requests": {
+          "cancelled": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "service": "QwenFieldfareServer",
+        "status": "ready",
+        "tools": true
+      },
+      "phase": "opencode-replay",
+      "ready_seconds": 3.7357035409950186,
+      "shutdown_seconds": 0.0850773330021184,
+      "swap_after_requests": [
+        "1",
+        "total = 2048.00M  used = 961.12M  free = 1086.88M  (encrypted)"
+      ],
+      "swap_before_requests": [
+        "1",
+        "total = 2048.00M  used = 961.12M  free = 1086.88M  (encrypted)"
+      ]
+    }
+  ]
+}

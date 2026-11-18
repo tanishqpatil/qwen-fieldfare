@@ -1,0 +1,336 @@
+{
+  "binary_sha256": "b877d9bf883e8f711281dafe089defc5a8b76c3e302b3ead5087714072d7eb24",
+  "checkpoint_integrity": "standard model loader checks; reused checkpoint identity",
+  "context": 8192,
+  "lifecycle": {},
+  "measurements": [],
+  "memory_gib": 5,
+  "opencode": {
+    "client_seconds": 154.39816558299935,
+    "completed_tools": [
+      "read",
+      "edit",
+      "bash"
+    ],
+    "exit": 0,
+    "final_response": true,
+    "independent_tests_exit": 0,
+    "mode": "exact-prefix",
+    "requests": [
+      {
+        "completion": 1,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 5141095232,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 3080,
+            "fullReplays": 1,
+            "hits": 0,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 1,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 3008,
+            "reusedPrefixTokens": 0,
+            "session": "B1EFA483-6026-4CDE-AA2A-0740EFCBF8C6",
+            "tokenStorageBytes": 20448,
+            "valid": true
+          }
+        },
+        "timing": {
+          "actualPrefillTokens": 3008,
+          "admissionMs": 0.7130833400879055,
+          "decodeAfterFirstTokenMs": 3454.5904583355878,
+          "expertCacheHits": 632661,
+          "expertCacheMisses": 352939,
+          "expertFetchedBytes": 624515678208,
+          "expertLogicalReads": 352939,
+          "firstGeneratedTokenMs": 133534.51787499944,
+          "formattingMs": 0.29437500052154064,
+          "outcome": "completed",
+          "outputTokens": 72,
+          "overallMs": 136990.15741667245,
+          "parserBufferMs": 3454.730124998605,
+          "prefillMs": 133516.96801185608,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 1,
+            "hits": 0,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 1,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 3008,
+            "reason": "modeChanged",
+            "reusedPrefixTokens": 0,
+            "session": "B1EFA483-6026-4CDE-AA2A-0740EFCBF8C6",
+            "tokenStorageBytes": 20448,
+            "valid": false
+          },
+          "promptTokens": 3008,
+          "queueWaitMs": 0.017666665371507406,
+          "tokenizationMs": 12.40920832788106
+        }
+      },
+      {
+        "completion": 2,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 5141242688,
+          "prefixCache": {
+            "comparedPrefixTokens": 3080,
+            "consumedTokens": 3302,
+            "fullReplays": 1,
+            "hits": 1,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 1,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 116,
+            "reusedPrefixTokens": 3080,
+            "session": "B1EFA483-6026-4CDE-AA2A-0740EFCBF8C6",
+            "tokenStorageBytes": 20448,
+            "valid": true
+          }
+        },
+        "timing": {
+          "actualPrefillTokens": 116,
+          "admissionMs": 0.7775000121910125,
+          "decodeAfterFirstTokenMs": 5023.375541670248,
+          "expertCacheHits": 48363,
+          "expertCacheMisses": 22677,
+          "expertFetchedBytes": 40126316544,
+          "expertLogicalReads": 22677,
+          "firstGeneratedTokenMs": 5182.190916675609,
+          "formattingMs": 0.22429166710935533,
+          "outcome": "completed",
+          "outputTokens": 106,
+          "overallMs": 10206.192375000683,
+          "parserBufferMs": 5023.570250006742,
+          "prefillMs": 5167.927026748657,
+          "prefixCache": {
+            "comparedPrefixTokens": 3080,
+            "consumedTokens": 0,
+            "fullReplays": 1,
+            "hits": 1,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 1,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 116,
+            "reusedPrefixTokens": 3080,
+            "session": "B1EFA483-6026-4CDE-AA2A-0740EFCBF8C6",
+            "tokenStorageBytes": 20448,
+            "valid": false
+          },
+          "promptTokens": 3196,
+          "queueWaitMs": 0.01879165938589722,
+          "tokenizationMs": 13.073166672256775
+        }
+      },
+      {
+        "completion": 3,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 5142700864,
+          "prefixCache": {
+            "comparedPrefixTokens": 3302,
+            "consumedTokens": 3355,
+            "fullReplays": 1,
+            "hits": 2,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 1,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 22,
+            "reusedPrefixTokens": 3302,
+            "session": "B1EFA483-6026-4CDE-AA2A-0740EFCBF8C6",
+            "tokenStorageBytes": 20448,
+            "valid": true
+          }
+        },
+        "timing": {
+          "actualPrefillTokens": 22,
+          "admissionMs": 0.9233750024577603,
+          "decodeAfterFirstTokenMs": 1356.675749993883,
+          "expertCacheHits": 12056,
+          "expertCacheMisses": 4904,
+          "expertFetchedBytes": 8677490688,
+          "expertLogicalReads": 4904,
+          "firstGeneratedTokenMs": 964.9552916671382,
+          "formattingMs": 0.23004166723694652,
+          "outcome": "completed",
+          "outputTokens": 31,
+          "overallMs": 2322.031125004287,
+          "parserBufferMs": 1356.7432916606776,
+          "prefillMs": 951.0769844055176,
+          "prefixCache": {
+            "comparedPrefixTokens": 3302,
+            "consumedTokens": 0,
+            "fullReplays": 1,
+            "hits": 2,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 1,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 22,
+            "reusedPrefixTokens": 3302,
+            "session": "B1EFA483-6026-4CDE-AA2A-0740EFCBF8C6",
+            "tokenStorageBytes": 20448,
+            "valid": false
+          },
+          "promptTokens": 3324,
+          "queueWaitMs": 0.01870833511929959,
+          "tokenizationMs": 12.55841666716151
+        }
+      },
+      {
+        "completion": 4,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 5142831936,
+          "prefixCache": {
+            "comparedPrefixTokens": 3355,
+            "consumedTokens": 3432,
+            "fullReplays": 1,
+            "hits": 3,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 1,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 50,
+            "reusedPrefixTokens": 3355,
+            "session": "B1EFA483-6026-4CDE-AA2A-0740EFCBF8C6",
+            "tokenStorageBytes": 20448,
+            "valid": true
+          }
+        },
+        "timing": {
+          "actualPrefillTokens": 50,
+          "admissionMs": 0.8811666630208492,
+          "decodeAfterFirstTokenMs": 1391.713458331651,
+          "expertCacheHits": 17204,
+          "expertCacheMisses": 7436,
+          "expertFetchedBytes": 13157793792,
+          "expertLogicalReads": 7436,
+          "firstGeneratedTokenMs": 2126.9706250022864,
+          "firstVisibleSSEMs": 2127.108083324856,
+          "formattingMs": 0.22558333876077086,
+          "outcome": "completed",
+          "outputTokens": 27,
+          "overallMs": 3518.879041657783,
+          "prefillMs": 2113.0149364471436,
+          "prefixCache": {
+            "comparedPrefixTokens": 3355,
+            "consumedTokens": 0,
+            "fullReplays": 1,
+            "hits": 3,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 1,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 50,
+            "reusedPrefixTokens": 3355,
+            "session": "B1EFA483-6026-4CDE-AA2A-0740EFCBF8C6",
+            "tokenStorageBytes": 20448,
+            "valid": false
+          },
+          "promptTokens": 3405,
+          "queueWaitMs": 0.017416663467884064,
+          "tokenizationMs": 12.683541659498587
+        }
+      }
+    ],
+    "reused_token_counts": [
+      0,
+      3080,
+      3302,
+      3355
+    ],
+    "test_seen_in_tool_result": true,
+    "version": "1.19.5",
+    "workspace_edit": true
+  },
+  "passed": true,
+  "servers": [
+    {
+      "exit": 0,
+      "initial": {
+        "active_generations": 0,
+        "diagnostics": {
+          "context": 8192,
+          "memoryBudgetGiB": 5,
+          "metalAllocatedBytes": 5291360256,
+          "physicalFootprintBytes": 1167382480,
+          "prefixCache": {
+            "comparedPrefixTokens": 0,
+            "consumedTokens": 0,
+            "fullReplays": 0,
+            "hits": 0,
+            "invalidations": 1,
+            "lastInvalidationReason": "modeChanged",
+            "maximumTokens": 8192,
+            "misses": 0,
+            "mode": "exact-prefix",
+            "pendingOutputToken": false,
+            "processedPromptTokens": 0,
+            "reason": "modeChanged",
+            "reusedPrefixTokens": 0,
+            "session": "B1EFA483-6026-4CDE-AA2A-0740EFCBF8C6",
+            "tokenStorageBytes": 0,
+            "valid": false
+          }
+        },
+        "model": "qwen-fieldfare",
+        "queue_capacity": 2,
+        "queued_requests": 0,
+        "requests": {
+          "cancelled": 0,
+          "completed": 0,
+          "failed": 0,
+          "rejected": 0
+        },
+        "service": "QwenFieldfareServer",
+        "status": "ready",
+        "tools": true
+      },
+      "phase": "opencode",
+      "ready_seconds": 0.7758620840031654,
+      "shutdown_seconds": 0.06285879199276678,
+      "swap_after_requests": [
+        "1",
+        "total = 2048.00M  used = 961.12M  free = 1086.88M  (encrypted)"
+      ],
+      "swap_before_requests": [
+        "1",
+        "total = 2048.00M  used = 961.12M  free = 1086.88M  (encrypted)"
+      ]
+    }
+  ]
+}

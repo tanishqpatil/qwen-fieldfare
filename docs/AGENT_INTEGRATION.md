@@ -5,6 +5,26 @@ JSON and SSE call/result continuations are verified. S2-02 qualifies installed
 OpenCode1.19.5 separately below; Hermes remains unqualified. Strict MLX parity remains
 131/132; this research backend is not release qualified.
 
+## Opt-in conversation prefix cache
+
+Start the CLI with `--prefix-cache exact-prefix` or choose **Exact prefix**
+in the native **Local Server** settings before starting. The default
+`off` replays every prompt. Canonical tool continuations can reuse the
+last completed request's consumed state when their formatted token IDs
+match its entire represented sequence. A history, template or sampler
+mismatch triggers full replay. Preserve validated assistant calls and
+matching tool results as received. An equal prompt with no fresh suffix
+and a length-limited completion are ineligible.
+
+Send authenticated `POST /v1/cache/clear` with `{}` or an empty body,
+or use the native **Clear Prefix Cache** button. The current generation
+may continue after clear, with publication disabled for its epoch. The
+next request starts from reset state. Authenticated health has
+`diagnostics.prefixCache` for current state and `requests.lastRequest`
+for timing and the most recent operation's reuse counts. Those records
+contain no payload or raw IDs. Tool execution remains with the OpenCode
+or other client. See [runtime controls](RUNTIME_CONTROLS.md).
+
 ## Build and run
 
 ```bash
@@ -74,7 +94,7 @@ Protocol references: [request](https://developers.openai.com/api/reference/resou
 One retained Core runner/tokenizer, one active generation, configurable0–8 queued
 requests (default2);
 full queue returns429, shutdown admission returns503. Networking uses NIO event
-loops; serialized detached work resets/replays Core state for every request.
+loops. Serialized detached work owns all Core state. The default replays every prompt.
 Disconnect cancels active/queued work; cancellation waits for the current Core
 forward/Metal work to finish. SIGINT/SIGTERM stop admission/listening, cancel and
 drain work before event-loop shutdown/process exit. A Core RAII flock acquired by both
@@ -319,7 +339,7 @@ includes callbacks/output work and finishing EOS; it is not pure GPU kernel time
 SSE flush is not client receipt. JSON/empty/cancelled/no-tool paths leave relevant
 values unavailable. No prompts,arguments,source text or token arrays are stored.
 This instrumentation does not optimize or attribute the older long-workflow
-latency without a future controlled investigation. No prefix-state reuse exists.
+latency. S3-00d separately qualifies exact-prefix state reuse.
 
 See [S2-03 evidence](evidence/2026-11-17-s203/README.md) for real lifecycle tests,
 initial restart failure/fix,model-free gates,measurement limits and unchanged
@@ -328,11 +348,10 @@ against a running managed instance with `python3 Scripts/test_managed_server.py
 --key-file /private/path/key --port 8080`; it never loads another model and saves
 only public synthetic fixture exchanges/aggregate measurements.
 
-## S3-00 cache qualification failed
+## Historical S3-00 qualification outcome
 
-The exact-prefix candidate was reverted after sustained same-Swift raw-token
-divergence. Current CLI/UI/HTTP behavior remains S2-03 reset-and-replay;there is
-no supported --prefix-cache option or /v1/cache/clear endpoint. Client tool
-execution,authentication,JSON/SSE,queue and app/CLI ownership are unchanged.
-See [failed gate and reproduced expert-history sensitivity](evidence/2026-11-18-s300/README.md).
-Short tool-cycle hits and latency reductions do not establish qualified reuse.
+The first candidate was reverted after sustained raw-token divergence.
+The archived evidence records that failure and the full-replay expert-history
+sensitivity. S3-00d uses the fixed router-order control under the opt-in
+settings described above. See the
+[historical evidence](evidence/2026-11-18-s300/README.md).

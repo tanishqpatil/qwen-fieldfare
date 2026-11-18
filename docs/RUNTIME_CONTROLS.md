@@ -38,14 +38,14 @@ The inspector reports model state, Metal allocation, memory pressure, KV
 estimate, prefill duration, time to first token, rolling and run-average decode
 rates, token latency percentiles, expert-cache occupancy, and miss rate.
 
-## Conversation state and future server controls
+## Conversation state
 
-Every request currently resets and replays KV, Conv and DeltaNet state.
-Cross-request prefix reuse, cache idle expiry/retained-token limits/clear action,
-lazy KV growth are not implemented. Native server settings are described below. Expert caching
-is separate from sequence state and conversation reuse. Selected context is an
-allocation capacity, not measured occupied-history qualification. Current
-teacher-forced correctness is blocked; see [baseline](PERFORMANCE_BASELINES.md).
+Native chat resets KV, Conv and DeltaNet for each request. The standalone
+and native local server can retain one exact consumed-token prefix per
+runner. The default is off. Reuse requires identical represented token
+IDs and a fresh suffix. Expert caching remains separate. The context
+setting bounds the ledger and model allocations. The strict teacher-forced
+release blocker remains in the [numerical policy](NUMERICAL_NON_REGRESSION.md).
 
 ## Standalone local server (S2-02)
 
@@ -53,7 +53,7 @@ Build/run/help/version and authenticated health/model/completion commands are in
 [AGENT_INTEGRATION](AGENT_INTEGRATION.md). Controls: required model directory;
 model-id; host127.0.0.1 only; port0–65535 (0 ephemeral); positive context checked
 against the3/4/5GiB Metal plan; queue-capacity0–8 (default2). One active generation,
-reset/replay each request, no prefix reuse. Key comes from QWENFIELDFARE_API_KEY
+full replay by default. Key comes from QWENFIELDFARE_API_KEY
 OR a private owned regular --api-key-file; secrets are not command-line values.
 
 Readiness is authenticated GET /health after successful initialization/bind;
@@ -85,11 +85,21 @@ See the integration guide for metric definitions,Keychain/private-file contract,
 external observation version requirements and remaining lifecycle limitations.
 The known131/132 numerical release blocker remains unchanged.
 
-## S3-00 qualification outcome
+## Opt-in exact-prefix controls
 
-Exact-prefix configuration,diagnostics and clear controls were prototyped but
-reverted after sustained raw-token divergence. Current shipped controls above
-are unchanged;native chat and both server entry points reset/replay. No cache
-setting or clear endpoint is available. See
-[S3-00 blocked investigation](evidence/2026-11-18-s300/README.md) before proposing
-further state-reuse work. The candidate patch is evidence,not a supported mode.
+- Standalone server: `--prefix-cache exact-prefix`. Use `--prefix-cache off`
+  or omit the flag for full replay.
+- Native app: open **Local Server**, stop the owned server if needed,
+  select **Exact prefix**, then start. The preference persists and the
+  runner starts with an empty ledger. Restart constructs a fresh runner.
+  The **Clear Prefix Cache** button is available while the owned server is
+  ready or generating. Independent CLI observation is read-only.
+- HTTP: authenticated `POST /v1/cache/clear` accepts an empty request body
+  or `{}`. Clear changes the epoch and any generation already in progress
+  may finish without publishing a prefix. Expert weights remain cached.
+
+Authenticated health reports mode, validity, last invalidation,
+hit/miss/full-replay totals, reused/fresh tokens, prefill timing, context
+capacity and token-array element bytes. Health excludes prompts, token IDs
+and tool payloads. See the [state contract](EXACT_PREFIX_STATE_CONTRACT.md)
+and preserve the [first S3-00 investigation](evidence/2026-11-18-s300/README.md).

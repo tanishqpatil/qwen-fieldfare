@@ -1410,3 +1410,46 @@ review excludes temporary capture hooks, raw arrays and checkpoint files.
 Publish production and documentation in separate commits on the feature
 branch. The experiment ends here. S3-00 can resume as a separate opt-in
 experiment against this full-replay path.
+
+## S3-00d restore exact-prefix reuse over fixed router order
+
+Restore the single-runner exact consumed-token ledger from the archived
+S3-00 candidate and adapt its transaction to the S3-00c production runner.
+Use checked consumed positions and the pending-output boundary. Bind the
+ledger to formatting and ordered tool policy, generation settings,
+runner identity and an invalidation epoch. Extend the epoch across
+formatting and tokenization. Keep the default off for both server entry
+points. Wait for validated content and terminal delivery before committing.
+The existing Metal barriers report errors without changing arithmetic.
+No extra Metal state allocation or expert-cache policy change.
+
+Real same-runtime release test passed in 377.356 seconds. The 430-token
+continuation reused 399 tokens and matched all 512 generated IDs, the
+finish reason, and seven full-logit and hidden-state samples including
+output 465. The archived four-turn tool cycle matched raw IDs, three calls
+and final DONE with reuse of 1,166 / 1,280 / 1,394 tokens. Model-free suite
+171 passes and four opt-in skips. Final release build 42.66 seconds.
+Numerical checker six passes and the archived strict log retains the same
+131/132 mismatch. See [S3-00d evidence](evidence/2026-11-18-s300d/README.md).
+
+Rebuilt CLI passed authenticated JSON/SSE, changed-result full replay,
+context rejection, active and queued disconnects, epoch clear, active
+shutdown and a fresh default-off restart. Controlled HTTP continuations
+at 1,255 / 4,116 / 6,114 prompt tokens measured first-token times of
+49.04 / 159.42 / 242.73 s on full replay and 3.65 / 3.93 / 4.16 s with
+reuse. Metal allocation stayed 5,291,360,256 bytes. Normal pressure
+persisted through the sampled runs. Native validation passed stored
+opt-in, a real 399-token hit, explicit clear, restart to a fresh session,
+stop and native-chat exclusivity. The isolated app wrapper needed the
+SwiftPM resource bundles linked at its root. The first OpenCode attempt
+has only a readiness record from the interrupted session. Rerun its
+workflow independently and preserve the finished Core/HTTP evidence.
+
+The separate real OpenCode 1.19.5 controls completed read, edit, bash
+test and final response. Independent unittest passed in both workspaces.
+Measured wall time was 567.13 s off and 154.40 s exact. Cached continuation
+reuse was 3,080 / 3,302 / 3,355 with only 116 / 22 / 50 fresh tokens.
+The temporary repository paths and prompt counts differed. The fixed
+input gate independently established same-runtime raw equivalence.
+Review the final scope, retain the strict MLX blocker, publish the
+implementation and evidence on the feature branch and stop at S3-00d.

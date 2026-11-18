@@ -1,6 +1,18 @@
 # QwenFieldfare
 
-## Current milestone — S3-00c reduction decision
+## Current milestone — S3-00d exact-prefix state reuse
+
+Qualify one in-place exact consumed-token prefix per active server runner
+against fixed router-order full replay. The default is off. Native chat
+and the server retain exclusive model ownership. The strict MLX 131/132
+release blocker remains.
+
+After reviewing the diff and validation evidence, commit validated
+milestones and push to the development or feature branch. Automatic merges
+to main remain prohibited. S3-00d stops at its qualification decision.
+The earlier local-only instructions below describe their historical milestones.
+
+## Historical milestone — S3-00c reduction decision
 
 S3-00c selects the original fixed router-order expert reduction as the
 production full-replay baseline. The grouped-tail experiment is closed.
@@ -104,7 +116,7 @@ and decision it informs, or a change directly requiring it. Model-free tests
 first; model-backed checks only for inference-affecting work/integration gates.
 Reuse verified evidence; never skip required integrity checks, but do not hash
 all weights repeatedly without an identity/integrity reason. Preserve unrelated
-work and historical rejections. No push/merge without approval. Project memory
+work and historical rejections. Follow the current feature-branch policy above. Project memory
 must contain no secrets, private prompts or sensitive runtime payloads.
 
 ## Products
