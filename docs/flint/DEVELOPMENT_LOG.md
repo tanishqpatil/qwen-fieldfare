@@ -778,6 +778,45 @@
 - Zero compiler warnings, Swift 6 strict concurrency clean (`-strict-concurrency=complete`).
 - Workspace isolation maintained: `/Users/tanishq/dev/product/qwen-fieldfare` and legacy symlink remain strictly pristine.
 
+---
+
+## [2026-11-19 01:10] — Review #012 Response: Reconciled Numerical Report, Hardened Memory Safety, Finite Inputs, and KV Semantics
+
+### 1. Root Cause of Contradictory Numerical Report
+- The committed tests previously passed with `#expect(maxFinalDiff <= 0.02)` and `#expect(finalRelL2 <= 0.002)`.
+- However, the markdown report table in Completion Report #011 accidentally included preliminary numbers from an earlier development iteration (`0.125` max diff and `0.002241` relative L2) rather than the exact values output by the test runner (`0.007812` max diff and `0.000962` relative L2).
+- The discrepancy was completely resolved by formatting and printing stage-by-stage verification tables in the test runner, capturing the exact metrics directly from console output.
+
+### 2. Valid Finite Determinism Inputs
+- Replaced bit-pattern generators (`(i * 37 + 11) & 0xFFFF`), which inadvertently produced 7 IEEE 754 NaNs per 2048 elements, with deterministic, finite Float32 generators (`sin(Float(i) * 0.05 + 0.1) * 0.4`) converted to BF16 via `floatToBf16`.
+- Verified 0 NaNs and 0 infinities in inputs, intermediate activations, and final outputs across all 50 repeat runs.
+- Produced distinct, finite, non-trivial SHA-256 digests:
+  - Layer 0 (50/50 runs): `a0dcde86bf482cf692017d67656377c531f51ad2c0fd53b5f32af86aa59a1ac7`.
+  - Layer 0 (distinct 2nd finite input): `1185c49f3c3d2fd36375ca7fd557b75da333a29403af473e82b8fcaf5747a9f1`.
+  - Layer 2 (50/50 runs): `f422131d7c98be6a141a7f4431265a7e33eed87a7e78cdac5073eefa03f540ae`.
+  - Layer 2 (distinct 2nd finite input): `904f5edce17c03e45297386744a14f6f9a54af9d1d9c784dcc7a008fd3ad7dbf`.
+
+### 3. Hardened Decoder Layer Memory Safety & API Contracts
+- Enforced non-negative and 2-byte alignment on `inputOffset` and `outputOffset`.
+- Enforced overflow-checked required byte count calculations using `multipliedReportingOverflow`.
+- Enforced buffer capacity bounds checks throwing `FlintMetalError.bufferTooSmall`.
+- Enforced buffer non-aliasing validation throwing `FlintMetalError.invalidParameter` when input and output ranges overlap in the same Metal buffer.
+- Adopted Contract A: Removed misleading `waitUntilCompleted` parameter from `executeLayer0Forward` and `executeLayer2Forward`; functions are explicitly and synchronously blocking until GPU execution completes.
+- Enforced unsupported configuration rejections in Layer 2:
+  - `batch != 1` throws `FlintMetalError.unsupportedConfiguration`.
+  - `cacheOffset != 0` throws `FlintMetalError.unsupportedConfiguration`.
+- Token capacity strictly bounded to 16 tokens (scratch buffer capacity limit).
+
+### 4. Apple M5 Benchmarks & Sub-Stage Profiling
+- Detailed timing breakdowns instrumented for Layer 0 (GPU vs Wall Clock, Command Buffers, Waits) and Layer 2 (CB1 Attention/Norm/Router, Disk Read pread, CB2 Routed Experts, CB3 Shared/Reduction/Res2).
+- Single-layer timings explicitly disclosed as isolated layer kernel execution, not steady-state autoregressive decoding.
+
+### 5. Full Test Suite Status
+- **117 tests passing across 11 suites in 13.787 seconds** (`./Scripts/test.sh`).
+- Zero compiler warnings (`-strict-concurrency=complete`).
+- Clean repository state, isolated workspace `/Users/tanishq/dev/product/flint-fieldfare-isolated`.
+
+
 
 
 

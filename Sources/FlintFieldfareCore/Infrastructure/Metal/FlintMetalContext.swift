@@ -12,6 +12,7 @@ public enum FlintMetalError: Error, LocalizedError, Equatable {
     case bufferTooSmall(name: String, actual: Int, required: Int)
     case invalidParameter(String)
     case concurrencyViolation(String)
+    case unsupportedConfiguration(String)
 
     public var errorDescription: String? {
         switch self {
@@ -33,6 +34,8 @@ public enum FlintMetalError: Error, LocalizedError, Equatable {
             return "Invalid kernel parameter: \(reason)"
         case .concurrencyViolation(let reason):
             return "Concurrency violation: \(reason)"
+        case .unsupportedConfiguration(let reason):
+            return "Unsupported configuration: \(reason)"
         }
     }
 }

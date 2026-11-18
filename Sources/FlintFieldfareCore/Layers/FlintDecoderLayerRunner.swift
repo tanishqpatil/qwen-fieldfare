@@ -11,6 +11,14 @@ import QuartzCore
 ///   plus 1 shared expert (4-bit), fixed router-order reduction, and residuals.
 public final class FlintDecoderLayerRunner: @unchecked Sendable {
 
+    /// Timing and execution breakdown for Layer 0 forward.
+    public struct Layer0TimingBreakdown: Sendable {
+        public let totalGpuElapsedUs: Double
+        public let totalWallClockUs: Double
+        public let commandBuffersCommitted: Int
+        public let gpuWaits: Int
+    }
+
     /// Holds all 10 captured intermediate/final stages of a Layer 0 forward pass for numerical verification.
     public struct Layer0Intermediates {
         public let input: MTLBuffer
@@ -27,6 +35,20 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
         public let norm2: MTLBuffer
         public let mlpOut: MTLBuffer
         public let finalOut: MTLBuffer
+        public let timing: Layer0TimingBreakdown
+    }
+
+    /// Timing and execution breakdown for Layer 2 MoE forward.
+    public struct Layer2TimingBreakdown: Sendable {
+        public let cb1AttentionNormRouterUs: Double
+        public let diskWeightReadUs: Double
+        public let cb2RoutedExpertsUs: Double
+        public let cb3SharedReductionRes2Us: Double
+        public let totalGpuElapsedUs: Double
+        public let totalWallClockUs: Double
+        public let commandBuffersCommitted: Int
+        public let gpuWaits: Int
+        public let routedBytesRead: Int
     }
 
     /// Holds all 14 captured intermediate/final stages of a Layer 2 MoE forward pass for numerical verification.
@@ -51,6 +73,7 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
         public let sharedOut: MTLBuffer
         public let moeOut: MTLBuffer
         public let finalOut: MTLBuffer
+        public let timing: Layer2TimingBreakdown
     }
 
     /// Temporary Metal buffers for loading 3-bit weights of 1 routed expert.
@@ -274,6 +297,29 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
         batch: Int = 1,
         numTokens: Int
     ) throws -> Layer0Intermediates {
+        let tWallStart = CACurrentMediaTime()
+        guard batch > 0, numTokens > 0 else {
+            throw FlintMetalError.invalidParameter("batch (\(batch)) and numTokens (\(numTokens)) must be positive")
+        }
+        let (totalTokens, ofTokens) = batch.multipliedReportingOverflow(by: numTokens)
+        guard !ofTokens else {
+            throw FlintMetalError.invalidParameter("batch * numTokens overflowed integer bounds")
+        }
+        guard totalTokens <= 16 else {
+            throw FlintMetalError.invalidParameter("Total tokens (\(totalTokens)) exceeds preallocated capacity (16)")
+        }
+        guard inputOffset >= 0, inputOffset % 2 == 0 else {
+            throw FlintMetalError.invalidParameter("inputOffset (\(inputOffset)) must be non-negative and 2-byte aligned for bfloat16")
+        }
+        let (reqInTokens, of1) = totalTokens.multipliedReportingOverflow(by: 2048)
+        let (requiredInputBytes, of2) = reqInTokens.multipliedReportingOverflow(by: 2)
+        guard !of1, !of2 else {
+            throw FlintMetalError.invalidParameter("Input byte size calculation overflowed")
+        }
+        guard input.length >= inputOffset + requiredInputBytes else {
+            throw FlintMetalError.bufferTooSmall(name: "input", actual: input.length, required: inputOffset + requiredInputBytes)
+        }
+
         guard let attnWeights = weights.attentionWeights(forLayer: 0) else {
             throw FlintSafetensorsError.tensorNotFound(name: "model.layers.0 attention weights")
         }
@@ -289,27 +335,27 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
         let kvDim = 4 * 128 // 512
         let elementBytes = 2 // bfloat16
 
-        let hiddenBytes = batch * numTokens * hiddenDim * elementBytes
-        let qBytes = batch * numTokens * qDim * elementBytes
-        let kvBytes = batch * numTokens * kvDim * elementBytes
+        let hiddenBytes = totalTokens * hiddenDim * elementBytes
+        let qBytes = totalTokens * qDim * elementBytes
+        let kvBytes = totalTokens * kvDim * elementBytes
 
         // Use preallocated buffers if within capacity (<= 16 tokens)
-        let norm1Buf = (batch * numTokens <= 16) ? self.norm1Buf : try context.makeBuffer(byteCount: hiddenBytes)
-        let qRawBuf = (batch * numTokens <= 16) ? self.qRawBuf : try context.makeBuffer(byteCount: qBytes)
-        let kRawBuf = (batch * numTokens <= 16) ? self.kRawBuf : try context.makeBuffer(byteCount: kvBytes)
-        let vRawBuf = (batch * numTokens <= 16) ? self.vRawBuf : try context.makeBuffer(byteCount: kvBytes)
-        let qNormBuf = (batch * numTokens <= 16) ? self.qNormBuf : try context.makeBuffer(byteCount: qBytes)
-        let kNormBuf = (batch * numTokens <= 16) ? self.kNormBuf : try context.makeBuffer(byteCount: kvBytes)
-        let qTransposedBuf = (batch * numTokens <= 16) ? self.qTransposedBuf : try context.makeBuffer(byteCount: qBytes)
-        let kTransposedBuf = (batch * numTokens <= 16) ? self.kTransposedBuf : try context.makeBuffer(byteCount: kvBytes)
-        let vTransposedBuf = (batch * numTokens <= 16) ? self.vTransposedBuf : try context.makeBuffer(byteCount: kvBytes)
-        let attnOutBuf = (batch * numTokens <= 16) ? self.attnOutBuf : try context.makeBuffer(byteCount: qBytes)
-        let attnFlatBuf = (batch * numTokens <= 16) ? self.attnFlatBuf : try context.makeBuffer(byteCount: qBytes)
-        let attnProjBuf = (batch * numTokens <= 16) ? self.attnProjBuf : try context.makeBuffer(byteCount: hiddenBytes)
-        let res1Buf = (batch * numTokens <= 16) ? self.res1Buf : try context.makeBuffer(byteCount: hiddenBytes)
-        let norm2Buf = (batch * numTokens <= 16) ? self.norm2Buf : try context.makeBuffer(byteCount: hiddenBytes)
-        let mlpOutBuf = (batch * numTokens <= 16) ? self.mlpOutBuf : try context.makeBuffer(byteCount: hiddenBytes)
-        let finalOutBuf = (batch * numTokens <= 16) ? self.finalOutBuf : try context.makeBuffer(byteCount: hiddenBytes)
+        let norm1Buf = (totalTokens <= 16) ? self.norm1Buf : try context.makeBuffer(byteCount: hiddenBytes)
+        let qRawBuf = (totalTokens <= 16) ? self.qRawBuf : try context.makeBuffer(byteCount: qBytes)
+        let kRawBuf = (totalTokens <= 16) ? self.kRawBuf : try context.makeBuffer(byteCount: kvBytes)
+        let vRawBuf = (totalTokens <= 16) ? self.vRawBuf : try context.makeBuffer(byteCount: kvBytes)
+        let qNormBuf = (totalTokens <= 16) ? self.qNormBuf : try context.makeBuffer(byteCount: qBytes)
+        let kNormBuf = (totalTokens <= 16) ? self.kNormBuf : try context.makeBuffer(byteCount: kvBytes)
+        let qTransposedBuf = (totalTokens <= 16) ? self.qTransposedBuf : try context.makeBuffer(byteCount: qBytes)
+        let kTransposedBuf = (totalTokens <= 16) ? self.kTransposedBuf : try context.makeBuffer(byteCount: kvBytes)
+        let vTransposedBuf = (totalTokens <= 16) ? self.vTransposedBuf : try context.makeBuffer(byteCount: kvBytes)
+        let attnOutBuf = (totalTokens <= 16) ? self.attnOutBuf : try context.makeBuffer(byteCount: qBytes)
+        let attnFlatBuf = (totalTokens <= 16) ? self.attnFlatBuf : try context.makeBuffer(byteCount: qBytes)
+        let attnProjBuf = (totalTokens <= 16) ? self.attnProjBuf : try context.makeBuffer(byteCount: hiddenBytes)
+        let res1Buf = (totalTokens <= 16) ? self.res1Buf : try context.makeBuffer(byteCount: hiddenBytes)
+        let norm2Buf = (totalTokens <= 16) ? self.norm2Buf : try context.makeBuffer(byteCount: hiddenBytes)
+        let mlpOutBuf = (totalTokens <= 16) ? self.mlpOutBuf : try context.makeBuffer(byteCount: hiddenBytes)
+        let finalOutBuf = (totalTokens <= 16) ? self.finalOutBuf : try context.makeBuffer(byteCount: hiddenBytes)
 
         guard let cb = context.queue.makeCommandBuffer(),
               let encoder = cb.makeComputeCommandEncoder() else {
@@ -540,8 +586,18 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
             throw error
         }
 
+        let tGpuStart = CACurrentMediaTime()
         cb.commit()
         cb.waitUntilCompleted()
+        let tGpuEnd = CACurrentMediaTime()
+        let tWallEnd = CACurrentMediaTime()
+
+        let timing = Layer0TimingBreakdown(
+            totalGpuElapsedUs: (tGpuEnd - tGpuStart) * 1_000_000.0,
+            totalWallClockUs: (tWallEnd - tWallStart) * 1_000_000.0,
+            commandBuffersCommitted: 1,
+            gpuWaits: 1
+        )
 
         return Layer0Intermediates(
             input: input,
@@ -557,11 +613,12 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
             res1: res1Buf,
             norm2: norm2Buf,
             mlpOut: mlpOutBuf,
-            finalOut: finalOutBuf
+            finalOut: finalOutBuf,
+            timing: timing
         )
     }
 
-    /// Full Layer 0 forward execution with zero steady-state heap allocations.
+    /// Full Layer 0 forward execution. Synchronously blocks until GPU completion.
     @discardableResult
     public func executeLayer0Forward(
         weights: FlintResidentWeights,
@@ -570,9 +627,35 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
         output: MTLBuffer,
         outputOffset: Int = 0,
         batch: Int = 1,
-        numTokens: Int,
-        waitUntilCompleted: Bool = true
+        numTokens: Int
     ) throws -> Double {
+        guard outputOffset >= 0, outputOffset % 2 == 0 else {
+            throw FlintMetalError.invalidParameter("outputOffset (\(outputOffset)) must be non-negative and 2-byte aligned for bfloat16")
+        }
+        let (totalTokens, ofTokens) = batch.multipliedReportingOverflow(by: numTokens)
+        guard !ofTokens else {
+            throw FlintMetalError.invalidParameter("batch * numTokens overflowed integer bounds")
+        }
+        let (reqTokens, of1) = totalTokens.multipliedReportingOverflow(by: 2048)
+        let (totalBytes, of2) = reqTokens.multipliedReportingOverflow(by: 2)
+        guard !of1, !of2 else {
+            throw FlintMetalError.invalidParameter("Output byte size calculation overflowed")
+        }
+        guard output.length >= outputOffset + totalBytes else {
+            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outputOffset + totalBytes)
+        }
+        // Aliasing validation:
+        if input.gpuAddress == output.gpuAddress {
+            let inStart = inputOffset
+            let inEnd = inputOffset + totalBytes
+            let outStart = outputOffset
+            let outEnd = outputOffset + totalBytes
+            if max(inStart, outStart) < min(inEnd, outEnd) {
+                throw FlintMetalError.invalidParameter("Input and output buffer ranges overlap in the same Metal buffer (in: [\(inStart)..<\(inEnd)], out: [\(outStart)..<\(outEnd)])")
+            }
+        }
+
+        let start = CACurrentMediaTime()
         let inter = try executeLayer0ForwardWithIntermediates(
             weights: weights,
             input: input,
@@ -581,11 +664,11 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
             numTokens: numTokens
         )
 
-        let totalBytes = batch * numTokens * 2048 * 2
         let src = inter.finalOut.contents()
         let dst = output.contents().advanced(by: outputOffset)
         memcpy(dst, src, totalBytes)
-        return 0.0
+        let elapsed = CACurrentMediaTime() - start
+        return elapsed
     }
 
     // MARK: - Layer 2 MoE Forward Pass
@@ -600,9 +683,28 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
         numTokens: Int,
         cacheOffset: Int = 0
     ) throws -> Layer2Intermediates {
-        guard batch > 0, numTokens > 0, numTokens <= 16 else {
-            throw FlintMetalError.invalidParameter("batch (\(batch)) and numTokens (\(numTokens)) must be positive and <= 16")
+        let tWallStart = CACurrentMediaTime()
+        guard batch == 1 else {
+            throw FlintMetalError.unsupportedConfiguration("Layer 2 MoE currently supports batch == 1 only; received batch = \(batch)")
         }
+        guard cacheOffset == 0 else {
+            throw FlintMetalError.unsupportedConfiguration("Incremental KV caching with cacheOffset != 0 is unsupported in F3-01; single-layer forward only supports isolated sequence execution (cacheOffset == 0, received \(cacheOffset))")
+        }
+        guard numTokens > 0, numTokens <= 16 else {
+            throw FlintMetalError.invalidParameter("numTokens (\(numTokens)) must be positive and <= 16")
+        }
+        guard inputOffset >= 0, inputOffset % 2 == 0 else {
+            throw FlintMetalError.invalidParameter("inputOffset (\(inputOffset)) must be non-negative and 2-byte aligned for bfloat16")
+        }
+        let (reqInTokens, of1) = numTokens.multipliedReportingOverflow(by: 2048)
+        let (requiredInputBytes, of2) = reqInTokens.multipliedReportingOverflow(by: 2)
+        guard !of1, !of2 else {
+            throw FlintMetalError.invalidParameter("Input byte size calculation overflowed")
+        }
+        guard input.length >= inputOffset + requiredInputBytes else {
+            throw FlintMetalError.bufferTooSmall(name: "input", actual: input.length, required: inputOffset + requiredInputBytes)
+        }
+
         guard let attnWeights = weights.attentionWeights(forLayer: 2) else {
             throw FlintSafetensorsError.tensorNotFound(name: "model.layers.2 attention weights")
         }
@@ -843,8 +945,11 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
             throw error
         }
 
+        let tCb1Start = CACurrentMediaTime()
         cb1.commit()
         cb1.waitUntilCompleted()
+        let tCb1End = CACurrentMediaTime()
+        let cb1DurationUs = (tCb1End - tCb1Start) * 1_000_000.0
 
         // Read router output on CPU:
         let expertIdsPtr = routerExpertsBuf.contents().bindMemory(to: Int32.self, capacity: batch * numTokens * 6)
@@ -858,6 +963,10 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
         }
 
         // --- COMMAND BUFFER 2: Routed Experts per token ---
+        var totalDiskReadDurationUs: Double = 0.0
+        var totalCb2DurationUs: Double = 0.0
+        var totalBytesRead = 0
+
         for t in 0..<numTokens {
             guard let cbToken = context.queue.makeCommandBuffer(),
                   let encToken = cbToken.makeComputeCommandEncoder() else {
@@ -866,6 +975,7 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
 
             do {
                 // Load 3-bit slices for all 6 experts of token t
+                let tDiskStart = CACurrentMediaTime()
                 for k in 0..<6 {
                     let expertId = Int(expertIdsPtr[t * 6 + k])
                     guard expertId >= 0 && expertId < 256 else {
@@ -923,6 +1033,7 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
                         byteRange: (expertId * 32768)..<((expertId + 1) * 32768),
                         into: UnsafeMutableRawBufferPointer(start: expBuf.downBiases.contents(), count: 32768)
                     )
+                    totalBytesRead += 1_376_256
 
                     // Encode expert execution:
                     // 1. Gate dequant + GEMM (512 x 2048)
@@ -999,6 +1110,8 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
                     )
                     encToken.memoryBarrier(scope: .buffers)
                 }
+                let tDiskEnd = CACurrentMediaTime()
+                totalDiskReadDurationUs += (tDiskEnd - tDiskStart) * 1_000_000.0
 
                 encToken.endEncoding()
             } catch {
@@ -1006,8 +1119,11 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
                 throw error
             }
 
+            let tCb2Start = CACurrentMediaTime()
             cbToken.commit()
             cbToken.waitUntilCompleted()
+            let tCb2End = CACurrentMediaTime()
+            totalCb2DurationUs += (tCb2End - tCb2Start) * 1_000_000.0
         }
 
         // --- COMMAND BUFFER 3: Shared Expert + Reduction + Residual 2 ---
@@ -1058,8 +1174,27 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
             throw error
         }
 
+        let tCb3Start = CACurrentMediaTime()
         cbShared.commit()
         cbShared.waitUntilCompleted()
+        let tCb3End = CACurrentMediaTime()
+        let cb3DurationUs = (tCb3End - tCb3Start) * 1_000_000.0
+
+        let tWallEnd = CACurrentMediaTime()
+        let totalGpuElapsedUs = cb1DurationUs + totalCb2DurationUs + cb3DurationUs
+        let totalWallClockUs = (tWallEnd - tWallStart) * 1_000_000.0
+
+        let timing = Layer2TimingBreakdown(
+            cb1AttentionNormRouterUs: cb1DurationUs,
+            diskWeightReadUs: totalDiskReadDurationUs,
+            cb2RoutedExpertsUs: totalCb2DurationUs,
+            cb3SharedReductionRes2Us: cb3DurationUs,
+            totalGpuElapsedUs: totalGpuElapsedUs,
+            totalWallClockUs: totalWallClockUs,
+            commandBuffersCommitted: 2 + numTokens,
+            gpuWaits: 2 + numTokens,
+            routedBytesRead: totalBytesRead
+        )
 
         return Layer2Intermediates(
             input: input,
@@ -1081,11 +1216,12 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
             routedContributions: routedContributionsBuf,
             sharedOut: sharedOutBuf,
             moeOut: moeOutBuf,
-            finalOut: finalOutBuf
+            finalOut: finalOutBuf,
+            timing: timing
         )
     }
 
-    /// Full Layer 2 MoE forward execution with zero steady-state heap allocations.
+    /// Full Layer 2 MoE forward execution. Synchronously blocks until GPU completion.
     @discardableResult
     public func executeLayer2Forward(
         weights: FlintResidentWeights,
@@ -1096,9 +1232,33 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
         outputOffset: Int = 0,
         batch: Int = 1,
         numTokens: Int,
-        cacheOffset: Int = 0,
-        waitUntilCompleted: Bool = true
+        cacheOffset: Int = 0
     ) throws -> Double {
+        guard outputOffset >= 0, outputOffset % 2 == 0 else {
+            throw FlintMetalError.invalidParameter("outputOffset (\(outputOffset)) must be non-negative and 2-byte aligned for bfloat16")
+        }
+        guard batch == 1 else {
+            throw FlintMetalError.unsupportedConfiguration("Layer 2 MoE currently supports batch == 1 only; received batch = \(batch)")
+        }
+        let (reqTokens, of1) = numTokens.multipliedReportingOverflow(by: 2048)
+        let (totalBytes, of2) = reqTokens.multipliedReportingOverflow(by: 2)
+        guard !of1, !of2 else {
+            throw FlintMetalError.invalidParameter("Output byte size calculation overflowed")
+        }
+        guard output.length >= outputOffset + totalBytes else {
+            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outputOffset + totalBytes)
+        }
+        // Aliasing validation:
+        if input.gpuAddress == output.gpuAddress {
+            let inStart = inputOffset
+            let inEnd = inputOffset + totalBytes
+            let outStart = outputOffset
+            let outEnd = outputOffset + totalBytes
+            if max(inStart, outStart) < min(inEnd, outEnd) {
+                throw FlintMetalError.invalidParameter("Input and output buffer ranges overlap in the same Metal buffer (in: [\(inStart)..<\(inEnd)], out: [\(outStart)..<\(outEnd)])")
+            }
+        }
+
         let start = CACurrentMediaTime()
         let inter = try executeLayer2ForwardWithIntermediates(
             weights: weights,
@@ -1110,7 +1270,6 @@ public final class FlintDecoderLayerRunner: @unchecked Sendable {
             cacheOffset: cacheOffset
         )
 
-        let totalBytes = batch * numTokens * 2048 * 2
         let src = inter.finalOut.contents()
         let dst = output.contents().advanced(by: outputOffset)
         memcpy(dst, src, totalBytes)

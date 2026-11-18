@@ -353,20 +353,27 @@ Ground truth fixtures were generated using Python MLX 0.32.4 on live model check
 | `layer2_prefill_t4_bf16` | L2 (MoE) | 1 | 4 | 0.007812 | 2.100852e-04 | 2.089889e-04 | PASSED |
 | `layer2_decode_zero_bf16` | L2 (MoE) | 1 | 1 | 0.000000 | 0.000000e+00 | 0.000000e+00 | PASSED |
 
-- **Intermediate Stage Verifications**: All 10 stages of Layer 0 and all 14 stages of Layer 2 verified within 1 BF16 ULP ($\text{rel L2} \le 0.02$, max diff $\le 0.25$).
-- **Router Selections & Weights**: 100% exact top-6 expert set agreement with MLX, and router normalized weights match MLX to within $0.00015$ across all tokens.
-- **Bitwise Determinism**: 50/50 repeat runs on Layer 0 and 50/50 repeat runs on Layer 2 produced identical SHA-256 digests (`ab289efcae1913d144ce991e3bcbd8b57ba70c929694debf273c6a30423c5e2e`).
+- **Intermediate Stage Verifications**: All 10 stages of Layer 0 and all 14 stages of Layer 2 verified within 1 BF16 ULP ($\text{rel L2} \le 0.02$, max diff $\le 0.25$, non-finite count strictly 0).
+- **Router Selections & Weights**: 100% exact top-6 expert set agreement with MLX, and router normalized weights match MLX to within $0.000155$ across all tokens.
+- **Bitwise Determinism on Finite Inputs**:
+  - Layer 0 (50/50 repeat runs on finite valid inputs): SHA-256 = `a0dcde86bf482cf692017d67656377c531f51ad2c0fd53b5f32af86aa59a1ac7`.
+  - Layer 0 (deliberately distinct finite input): SHA-256 = `1185c49f3c3d2fd36375ca7fd557b75da333a29403af473e82b8fcaf5747a9f1`.
+  - Layer 2 (50/50 repeat runs on finite valid inputs): SHA-256 = `f422131d7c98be6a141a7f4431265a7e33eed87a7e78cdac5073eefa03f540ae`.
+  - Layer 2 (deliberately distinct finite input): SHA-256 = `904f5edce17c03e45297386744a14f6f9a54af9d1d9c784dcc7a008fd3ad7dbf`.
+  - Both layers produce completely distinct, non-trivial, finite outputs with zero NaNs or infinities across all intermediate and final buffers.
 
 #### Apple M5 Hardware Performance Benchmark (FlintDecoderLayerRunner)
-- **Platform**: Apple M5, 32 GB Unified Memory, macOS 14+.
-- **Zero Steady-State Heap Allocations**: All layer and temporary expert buffers preallocated at runner initialization.
+- **Platform**: Apple MacBook Pro M5, 32 GB Unified Memory, macOS 27.2.1.
+- **Steady-State Allocations**: Strictly 0 bytes heap allocations during dispatch (reusable GPU scratch preallocated: 52.5 MiB; temporary expert buffers: 7.875 MiB).
+- **Disclosure**: Single-layer timings reflect isolated single-layer kernel forward execution and synchronous disk reads, not steady-state autoregressive full-model decoding.
 
-| Configuration | P50 Latency | Min Latency | P95 Latency | Max Latency | Jitter (P95 - Min) | Status |
+| Configuration | P50 Wall | Min Wall | P95 Wall | Max Wall | Sub-Stage Breakdown / GPU Time | Status |
 |---|---|---|---|---|---|---|
-| **Layer 0 Decode ($T=1$, Dense)** | **$9.55\text{ ms}$** | $6.34\text{ ms}$ | $14.37\text{ ms}$ | $14.96\text{ ms}$ | $8.02\text{ ms}$ | PASSED |
-| **Layer 0 Prefill ($T=8$, Dense)** | **$20.32\text{ ms}$** | $10.76\text{ ms}$ | $24.34\text{ ms}$ | $26.51\text{ ms}$ | $13.58\text{ ms}$ | PASSED |
-| **Layer 2 Decode ($T=1$, MoE)** | **$9.04\text{ ms}$** | $7.23\text{ ms}$ | $11.49\text{ ms}$ | $12.72\text{ ms}$ | $4.27\text{ ms}$ | PASSED |
-| **Layer 2 Prefill ($T=4$, MoE)** | **$23.65\text{ ms}$** | $21.49\text{ ms}$ | $26.59\text{ ms}$ | $27.94\text{ ms}$ | $5.10\text{ ms}$ | PASSED |
+| **Layer 0 Decode ($T=1$, Dense)** | **$2.10\text{ ms}$** | $2.08\text{ ms}$ | $2.16\text{ ms}$ | $2.18\text{ ms}$ | GPU: $2.06\text{ ms}$ (1 CB, 1 Wait) | PASSED |
+| **Layer 0 Prefill ($T=8$, Dense)** | **$3.81\text{ ms}$** | $3.77\text{ ms}$ | $3.85\text{ ms}$ | $3.93\text{ ms}$ | GPU: $3.74\text{ ms}$ (1 CB, 1 Wait) | PASSED |
+| **Layer 2 Decode ($T=1$, MoE)** | **$2.36\text{ ms}$** | $2.28\text{ ms}$ | $2.42\text{ ms}$ | $2.44\text{ ms}$ | CB1 Attn: $0.87\text{ ms}$, Disk Read: $0.40\text{ ms}$, CB2 Exp: $0.75\text{ ms}$, CB3 Red: $0.34\text{ ms}$ (3 CBs, 3 Waits, $7.875\text{ MiB}$ read) | PASSED |
+| **Layer 2 Prefill ($T=4$, MoE)** | **$5.92\text{ ms}$** | $5.79\text{ ms}$ | $5.98\text{ ms}$ | $6.02\text{ ms}$ | CB1 Attn: $1.06\text{ ms}$, Disk Read: $1.46\text{ ms}$, CB2 Exp: $2.91\text{ ms}$, CB3 Red: $0.42\text{ ms}$ (6 CBs, 6 Waits, $31.5\text{ MiB}$ read) | PASSED |
+
 
 
 
