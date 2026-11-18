@@ -1,0 +1,23 @@
+{
+  "decision": "B \u2014 Revise",
+  "swift_residency_consistency": {
+    "strict": "152/152 bitwise logits",
+    "sustained": "941/941 bitwise logits",
+    "sampled_pre_norm_hidden": "14/14 bitwise"
+  },
+  "strict_fixture": "native MLX 132/132, all Swift controls 131/132",
+  "strict_swift_mismatch": [
+    61,
+    14988,
+    10000
+  ],
+  "restored_tree": {
+    "package_passes": 153,
+    "opt_in_skips": 3,
+    "release_seconds": 42.54,
+    "numerical_checker_tests": 6
+  },
+  "production_base": "c1ff7c9",
+  "benchmark_evidence": "S3-00a only, no new throughput runs",
+  "prefix_reuse": "remains blocked"
+}

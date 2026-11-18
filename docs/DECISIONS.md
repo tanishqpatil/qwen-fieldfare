@@ -189,3 +189,20 @@ production reduction change. Use a matched, checkpoint-identified reference
 sample to review score and margin differences beyond token counts. Resume S3-00
 only after a candidate passes those gates, then independently compare reuse
 against that candidate's full replay.
+
+## ADR-014 — Revise the router-order expert combine
+
+S3-00b compared both Swift histories and the experimental router-order
+path against native prefill and sequential MLX on two pinned teacher
+histories. Router order is consistent across the requested residency
+changes and approximately preserves aggregate MLX fidelity. It retains the
+wrong ranking at the sustained divergence compared with both MLX schedules
+and cold legacy. The strict 131/132 result is unchanged. The throughput
+and 64 KiB trade-offs from S3-00a do not decide this result.
+
+Choose Outcome B. Keep production unchanged and archive the diagnostic patch.
+The next implementation step is one combine-only variant that preserves
+router-order accumulation and evaluates `residual + (routed + shared)`.
+Reuse the current matched comparisons. Attempt S3-00 again only after a
+reduction passes that review. See the
+[qualification report](evidence/2026-11-18-s300b/README.md).

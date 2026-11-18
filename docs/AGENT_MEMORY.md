@@ -1,6 +1,25 @@
 # Agent recovery memory
 
-## Current milestone — S3-00a expert-cache residency
+## Current milestone — S3-00b deterministic expert reduction
+
+S3-00b ended with Outcome B (revise). Router order eliminates the measured
+residency variance and preserves similar aggregate MLX fidelity, but selects
+1031 over 285 at the sustained boundary where both MLX schedules select 285.
+The original strict 131/132 issue remains. Production matches c1ff7c9.
+S3-00 prefix reuse stays blocked pending a qualified reduction.
+
+Native MLX gives 132/132 and tokenwise MLX 129/132 on the short fixture.
+Swift 131/132 across all modes. Canonical 152/152 and 941/941 logit
+digests match across histories, with equal sampled hidden and layer-0
+contributions. Sustained output 465 margin 1031–285 is −0.125 in each MLX
+schedule, −0.01248 cold legacy, +0.01474 warm legacy and +0.01194 router order.
+No runtime patch is applied. Reproduction, metrics and commands are in
+[evidence](evidence/2026-11-18-s300b/README.md). Final checks passed: 153
+package tests and three opt-in skips, release build 42.54s, checker 6/6.
+Next step is a combine-only `residual + (routed + shared)` diagnostic. Do
+not restart prefix reuse before the new reduction review.
+
+## Historical milestone — S3-00a expert-cache residency
 
 S3-00a characterized residency-dependent MoE accumulation. The experiment is
 archived and production uses full replay with the original sum. S3-00 remains

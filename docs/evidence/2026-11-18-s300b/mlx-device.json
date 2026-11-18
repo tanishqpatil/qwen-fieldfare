@@ -1,0 +1,17 @@
+{
+  "versions": {
+    "mlx": "0.32.4",
+    "mlx-lm": "0.32.2",
+    "transformers": "5.22.2",
+    "numpy": "2.5.4"
+  },
+  "source_hashes": {
+    "Model": "ef9e8e1f6a5c097b29587c8330e8eb9c9cbdc52fbb4597fbc2362606c1996619",
+    "Qwen3_5TextModel": "851449fd9989d6bf4b3c4fed92ddc3be5f1e781eb2246f89c54d7eff2518d9c6",
+    "Qwen3NextSparseMoeBlock": "67ca08a4d08cb7be124965e95399735e556f1eaeb21a16bc23cb88d1ac035e11"
+  },
+  "checkpoint_files": 10,
+  "fixture_sha256": "8d552a906d417ceb492ddd045a50e67b0e9630988d9665e8c6fe5e480cb30747",
+  "input_sha256": "70552adc69cddd07002202457412f7bfb6c54059143a63f95c573da9b8a6e0ec",
+  "pressure_check": "level 1 before start and every 64 token positions"
+}

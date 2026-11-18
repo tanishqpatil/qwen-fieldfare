@@ -109,3 +109,28 @@ would need separate calibration on matched inputs before adopting tolerances.
 The observed differences are descriptive and are not an allowable error budget.
 Future conversation reuse must independently compare with canonical full replay.
 See [S3-00a evidence](evidence/2026-11-18-s300a/README.md).
+
+## S3-00b: matched reference fidelity
+
+The original 21+132 teacher fixture and 430+512 sustained continuation have
+different inputs and independent acceptance roles. Native MLX batch prefill
+reproduces 132/132 on the original fixture. A sequential-only MLX diagnostic
+with identical teacher tokens returns 129/132. All four Swift controls return
+the same known 131/132. Do not use the sequential experiment to redefine
+the reference or declare the strict failure resolved.
+
+Router order gives bitwise-equal logits across cold/warm residency for both
+teacher histories, 152 and 941 input positions, with equal sampled final
+hidden states, layer-0 router weights, per-expert contributions and layer
+outputs. Fidelity against native MLX is similar in aggregate. At sustained
+output 465, MLX native and sequential both prefer token 285 with raw
+1031–285 margin −0.125. Cold legacy also prefers 285 (−0.01248). Router order
+prefers 1031 (+0.01194) under both cache histories, as warm legacy does.
+This is separate from the strict fixture's token-61 mismatch. Reference
+and residency gates test different properties.
+
+Outcome B: defer promotion and test only a fixed-order combine with the
+shared expert added to routed contributions before the attention residual.
+Require exact warm/cold consistency again and inspect the saved matched
+reference scores before deciding whether to keep it. See
+[S3-00b metrics and decision](evidence/2026-11-18-s300b/README.md).

@@ -1,6 +1,22 @@
 # Authoritative implementation backlog
 
-## Current milestone — S3-00a expert-cache residency
+## Current milestone — S3-00b deterministic expert reduction
+
+S3-00b ended with Outcome B (revise). Router order eliminates the measured
+residency variance and preserves similar aggregate MLX fidelity, but selects
+1031 over 285 at the sustained boundary where both MLX schedules select 285.
+The original strict 131/132 issue remains. Production matches c1ff7c9.
+S3-00 prefix reuse stays blocked pending a qualified reduction.
+
+- [x] Publish the S3-00a investigation on the feature branch (c85edac).
+- [x] Compare both teacher histories with native and tokenwise MLX.
+- [x] Check bitwise router-order warm/cold agreement and strict non-regression.
+- [x] Record the revision outcome and retain the exact probe and metrics.
+- [ ] Evaluate only the explicit `residual + (routed + shared)` combine variant.
+
+See [S3-00b report](docs/evidence/2026-11-18-s300b/README.md).
+
+## Historical milestone — S3-00a expert-cache residency
 
 S3-00a characterized residency-dependent MoE accumulation. The experiment is
 archived and production uses full replay with the original sum. S3-00 remains

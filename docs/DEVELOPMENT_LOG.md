@@ -1325,3 +1325,43 @@ Markdown link and diff checks. Sources, Tests, Package.swift, dependency
 pins and the strict MLX fixture match c1ff7c9. Postflight pressure was 1,
 free memory 81%, swap 271.69 MiB, with no remaining model owner. Full
 reproduction and evidence are in docs/evidence/2026-11-18-s300a.
+
+## S3-00b matched MLX qualification
+
+S3-00a was published on the feature branch in c85edac as documentation and
+evidence. The S3-00b probe reuses its archived Metal implementation and
+captures final pre-RMSNorm hidden states and raw LM-head logits. Use one
+local model owner at a time, the same reference checkpoint and teacher
+tokens, and the original strict fixture as an immutable input. Compare the
+21+132 strict fixture separately from the 430+512 sustained fixture. MLX uses
+its native prefill schedule as primary and a tokenwise control to expose
+batch effects. Each history samples two early positions, the prefill
+boundary, the known divergence and the last input, plus one smallest-margin
+position from each decode half selected from native MLX scores. Reports
+retain full-vocabulary errors, ranks, signed margins and aggregate
+distributions at the sampled positions. Raw temporary arrays stay local.
+The decision considers exact same-Swift residency consistency, reference
+fidelity at each position and near tie, and the separately measured
+performance and memory cost.
+
+Matched captures completed: MLX verified ten checkpoint files. Native MLX
+reproduced 132/132 on the strict fixture while its tokenwise control gave
+129/132. All four Swift paths preserved the sole strict token-61 mismatch.
+The Swift diagnostic (180.388s) passed exact router warm/cold outputs at
+152/152 and 941/941 logit positions, including equal sampled pre-norm hidden
+states and layer-0 contributions. At sustained output 465 native and tokenwise
+MLX and cold legacy choose 285. Router order and warm legacy choose 1031.
+Mean native MLX logit relative L2 at seven sustained samples is 7.571% cold,
+7.780% warm and 7.613% router order. The measured fidelity trade-off supports
+Outcome B. Next target is an isolated explicit residual+(routed+shared)
+combine with the same routed FP32 contributions and the same saved inputs.
+The source was restored. No new throughput runs were needed. Retained
+performance evidence shows −2.76% at 128 outputs and −0.48% at 512. Extra
+Swift Metal 65536 bytes. MLX peak allocation 20272756008 bytes and system
+swap rose from 271.69 to 3067.69 MiB after MLX despite level 1 checks.
+After Swift, pressure stayed 1 and swap fell to 2899.62 MiB.
+
+Restored tree: 153 passes, three opt-in skips, release 42.54s, checker 6/6,
+archived strict non-regression, exact production and reference identity, and
+documentation and diff checks. Publish qualification evidence and leave the
+S3-00 work blocked on the feature branch.

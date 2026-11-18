@@ -1,0 +1,12 @@
+{
+  "base": "c85edac554c5b62b69a36e38e803a83917cbc34d",
+  "patch_sha256": "8c12bdf7f85bc6d5b890c37c92ad4364ab1879ac8d100d7cf682fa4313390512",
+  "uncompressed_patch_sha256": "fed1f6ad9566ffa7950294035ee8850a1e5939abeaeb744365d4992c97045462",
+  "source_sha256": {
+    "Sources/QwenFieldfareCore/Metal/LinearAttention/deltanet.metal": "e499bd46f7aec98598c202e43d94f80e0229a16d39479ccf1b9655ceb9fe82fa",
+    "Sources/QwenFieldfareCore/Runtime/Generation/QwenQ4ActiveExpertStreamingRunner.swift": "e58fe3e11b314bc9ce3a623dad663bff2ceb4d077aa27aeb045e51276c810b2c",
+    "Tests/QwenFieldfareServerTests/ExpertResidencyProbeTests.swift": "0b47a9eb3f9389cf3c20ae59d1187cbf3a22fd055fe6d5c4823ebe42b86310f4",
+    "docs/evidence/2026-11-18-s300b/capture_mlx.py": "fc485bd7b60ee1fcd7e1f52b5a68d36e4437fd20fc65ca1e33c86317aabd1f40"
+  },
+  "scope": "Opt-in benchmark and numerical capture only. Kernel and production source changes are reversed before validation and push."
+}

@@ -1,0 +1,11 @@
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+Checkpoint files verified 10 {'mlx': '0.32.4', 'mlx-lm': '0.32.2', 'transformers': '5.22.2', 'numpy': '2.5.4'}
+strict mlx-native native prefill 20 peak 19622407866
+strict mlx-sequential 0 peak 19622407866
+sustained mlx-native native prefill 429 peak 20272756008
+sustained mlx-native 512 peak 20272756008
+sustained mlx-native 768 peak 20272756008
+sustained mlx-sequential 0 peak 20272756008
+sustained mlx-sequential 256 peak 20272756008
+sustained mlx-sequential 512 peak 20272756008
+sustained mlx-sequential 768 peak 20272756008

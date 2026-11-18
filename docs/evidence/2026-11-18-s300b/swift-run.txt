@@ -1,0 +1,8 @@
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ExpertResidencyProbeTests started.
+◇ Test captureMatchedReference() started.
+✔ Test captureMatchedReference() passed after 180.388 seconds.
+✔ Suite ExpertResidencyProbeTests passed after 180.388 seconds.
+✔ Test run with 1 test in 1 suite passed after 180.388 seconds.

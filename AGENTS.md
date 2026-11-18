@@ -1,6 +1,14 @@
 # QwenFieldfare
 
-## Current milestone — S3-00a expert-cache residency
+## Current milestone — S3-00b deterministic expert reduction
+
+S3-00b ended with Outcome B (revise). Router order eliminates the measured
+residency variance and preserves similar aggregate MLX fidelity, but selects
+1031 over 285 at the sustained boundary where both MLX schedules select 285.
+The original strict 131/132 issue remains. Production matches c1ff7c9.
+S3-00 prefix reuse stays blocked pending a qualified reduction.
+
+## Historical milestone — S3-00a expert-cache residency
 
 S3-00a characterized residency-dependent MoE accumulation. The experiment is
 archived and production uses full replay with the original sum. S3-00 remains
