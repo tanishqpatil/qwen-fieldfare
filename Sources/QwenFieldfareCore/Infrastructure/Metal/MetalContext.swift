@@ -4,6 +4,7 @@ import Metal
 enum MetalError: Error, CustomStringConvertible {
     case noDevice
     case noQueue
+    case commandEncodingFailed
     case missingShaderResource(String)
     case missingFunction(String)
     case libraryCompileFailed(String)
@@ -12,6 +13,7 @@ enum MetalError: Error, CustomStringConvertible {
         switch self {
         case .noDevice:                   return "No Metal device"
         case .noQueue:                    return "Failed to create Metal command queue"
+        case .commandEncodingFailed:      return "Failed to create a Metal command buffer or encoder"
         case .missingShaderResource(let n): return "Shader resource missing: \(n)"
         case .missingFunction(let n):     return "Metal function missing in library: \(n)"
         case .libraryCompileFailed(let s):return "Metal library compile failed: \(s)"

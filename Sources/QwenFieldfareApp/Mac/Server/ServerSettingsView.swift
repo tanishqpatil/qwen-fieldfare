@@ -51,6 +51,11 @@ struct ServerSettingsView: View {
                     Picker("Active-streaming Metal target",selection:$controller.settings.memoryGiB) {
                         Text("3 GiB").tag(3);Text("4 GiB").tag(4);Text("5 GiB").tag(5)
                     }
+                    Picker("Conversation state cache",selection:$controller.settings.prefixCacheMode) {
+                        Text("Off — reset and replay").tag(QwenPrefixCacheMode.off)
+                        Text("Exact prefix — verified in-place reuse").tag(QwenPrefixCacheMode.exactPrefix)
+                    }
+                    Text("Default off. Reuse requires the entire consumed token sequence to match; ordinary chat framing can force replay. No recurrent rewind or extra KV snapshot.").font(.caption).foregroundStyle(.secondary)
                     Stepper("Queue limit: \(controller.settings.queueCapacity)",value:$controller.settings.queueCapacity,in:0...8)
                     if let message = controller.settings.validationMessage {Text(message).foregroundStyle(.red)}
                     Text("Stop before changing settings. No automatic startup on reopening. Larger contexts are allocation choices, not occupied-history qualification.").font(.caption).foregroundStyle(.secondary)
@@ -88,6 +93,22 @@ struct ServerSettingsView: View {
                         Text("Metal allocation is not total process memory or a measured peak. Counters reset when the server starts; rejected includes HTTP validation/authentication errors.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
+                    if let cache = health.diagnostics.prefixCache {
+                        Section("Conversation prefix cache") {
+                            LabeledContent("Mode / committed state",value:"\(cache.mode.rawValue) / \(cache.valid ? "valid":"not reusable")")
+                            LabeledContent("Committed consumed tokens",value:String(cache.consumedTokens))
+                            LabeledContent("Context capacity",value:"\(cache.maximumTokens) tokens")
+                            LabeledContent("Last reused / fresh prompt tokens",value:"\(cache.reusedPrefixTokens) / \(cache.processedPromptTokens)")
+                            LabeledContent("Hits / misses / invalidations",value:"\(cache.hits) / \(cache.misses) / \(cache.invalidations)")
+                            LabeledContent("Full replays",value:String(cache.fullReplays))
+                            LabeledContent("Last invalidation",value:cache.lastInvalidationReason?.rawValue ?? "None")
+                            LabeledContent("Token element capacity",value:"\(cache.tokenStorageBytes) bytes (no Metal snapshot)")
+                            LabeledContent("Runner session",value:String(cache.session.prefix(8)))
+                            Button("Clear Prefix Cache") {Task {await controller.clearPrefixCache()}}
+                                .disabled(controller.isExternal || (controller.state != .ready && controller.state != .generating))
+                            Text("Clears reusable metadata, not expert weights. In-flight work may finish but cannot commit the cleared prefix. External CLI observation has no control authority.").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
                     if let timing = health.requests.lastRequest {
                         Section("Last finished request — \(timing.outcome)") {
                             metric("Receipt through admission",timing.admissionMs)
@@ -95,6 +116,7 @@ struct ServerSettingsView: View {
                             metric("Prompt formatting",timing.formattingMs)
                             metric("Tokenization",timing.tokenizationMs)
                             LabeledContent("Prompt / output tokens",value:"\(timing.promptTokens.map(String.init) ?? "—") / \(timing.outputTokens.map(String.init) ?? "—")")
+                            LabeledContent("Actual fresh prefill tokens",value:timing.actualPrefillTokens.map(String.init) ?? "Unavailable")
                             metric("Prefill",timing.prefillMs)
                             metric("First generated token (from request)",timing.firstGeneratedTokenMs)
                             metric("First visible SSE content (flush)",timing.firstVisibleSSEMs)

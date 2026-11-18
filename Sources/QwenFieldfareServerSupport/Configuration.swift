@@ -10,10 +10,11 @@ public struct ServerConfiguration: Sendable, CustomStringConvertible, CustomDebu
     public let context: Int
     public let budget: QwenActiveStreamingMemoryBudget
     public let queueCapacity: Int
+    public let prefixCacheMode: QwenPrefixCacheMode
     public let apiKey: String
-    public var description: String { "QwenFieldfareServer(host=\(host), port=\(port), context=\(context), budget=\(budget.rawValue), queue=\(queueCapacity), apiKey=<redacted>)" }
+    public var description: String { "QwenFieldfareServer(host=\(host), port=\(port), context=\(context), budget=\(budget.rawValue), queue=\(queueCapacity), prefix=\(prefixCacheMode.rawValue), apiKey=<redacted>)" }
     public var debugDescription: String { description }
-    public static let version = "QwenFieldfareServer S2-02 (development build)"
+    public static let version = "QwenFieldfareServer S3-00 (development build)"
     public static let help = """
     Usage: QwenFieldfareServer --model PATH [options]
       --host 127.0.0.1       Loopback only (external binds rejected)
@@ -22,6 +23,7 @@ public struct ServerConfiguration: Sendable, CustomStringConvertible, CustomDebu
       --context 8192         Positive context supported by the selected memory plan
       --memory-gib 5         Active-streaming Metal target: 3, 4 or 5 GiB
       --queue-capacity 2     Waiting generations: 0–8; one active generation
+      --prefix-cache off    off or exact-prefix (one retained session; default off)
       --api-key-file PATH    Owned regular file, no group/other access, max 512-byte key
       --help, -h            Print this help without loading a model
       --version            Print development version without loading a model
@@ -35,7 +37,7 @@ public struct ServerConfiguration: Sendable, CustomStringConvertible, CustomDebu
     public static func parse(_ arguments: [String], environment: [String:String]) throws -> Action {
         if arguments == ["--help"] || arguments == ["-h"] {return .help}
         if arguments == ["--version"] {return .version}
-        let allowed: Set<String> = ["--model","--host","--port","--context","--memory-gib","--queue-capacity","--model-id","--api-key-file"]
+        let allowed: Set<String> = ["--model","--host","--port","--context","--memory-gib","--queue-capacity","--model-id","--api-key-file","--prefix-cache"]
         var options: [String:String] = [:];var index=0
         while index < arguments.count {
             let key=arguments[index]
@@ -49,6 +51,7 @@ public struct ServerConfiguration: Sendable, CustomStringConvertible, CustomDebu
         guard let context=Int(options["--context"] ?? "8192"),context > 0 else {throw APIError(400,"Context must be a positive integer")}
         guard let n=Int(options["--memory-gib"] ?? "5"),let budget=QwenActiveStreamingMemoryBudget(rawValue:n) else {throw APIError(400,"Memory budget must be 3, 4 or 5 GiB")}
         guard let queue=Int(options["--queue-capacity"] ?? "2"),(0...8).contains(queue) else {throw APIError(400,"Queue capacity must be 0–8")}
+        guard let prefix=QwenPrefixCacheMode(rawValue:options["--prefix-cache"] ?? "off") else {throw APIError(400,"Prefix cache must be off or exact-prefix")}
         let modelID=options["--model-id"] ?? "qwen-fieldfare"
         guard !modelID.isEmpty,modelID.utf8.count <= 128,modelID.unicodeScalars.allSatisfy({$0.value >= 33 && $0.value <= 126}) else {throw APIError(400,"Model ID must be 1–128 printable ASCII characters")}
         do {_ = try QwenActiveStreamingMemoryConfiguration.make(budget:budget,contextLength:context)} catch {throw APIError(400,"Context does not fit selected memory plan")}
@@ -60,7 +63,7 @@ public struct ServerConfiguration: Sendable, CustomStringConvertible, CustomDebu
             guard let value=environment["QWENFIELDFARE_API_KEY"] else {throw APIError(400,"Set QWENFIELDFARE_API_KEY or use --api-key-file")};key=value
         }
         guard (16...512).contains(key.utf8.count),key.utf8.allSatisfy({(33...126).contains($0)}) else {throw APIError(400,"API key must be 16–512 printable ASCII characters without whitespace")}
-        return .serve(.init(modelPath:path,modelID:modelID,host:host,port:port,context:context,budget:budget,queueCapacity:queue,apiKey:key))
+        return .serve(.init(modelPath:path,modelID:modelID,host:host,port:port,context:context,budget:budget,queueCapacity:queue,prefixCacheMode:prefix,apiKey:key))
     }
     private static func readKey(_ path: String) throws -> String {
         let fd=open(path,O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC)

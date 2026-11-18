@@ -167,6 +167,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         let kNormWBuf: MTLBuffer?
     }
 
+    private let prefixState: QwenPrefixState
     private let inferenceLease: QwenInferenceLease
     private let metalContext: MetalContext
     private let device: MTLDevice
@@ -314,6 +315,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         enableGPUProfiling: Bool
     ) throws {
         self.inferenceLease = try QwenInferenceLease()
+        self.prefixState = QwenPrefixState(maximum:maxSeqLen)
         self.maxSeqLen = maxSeqLen
         self.usePersistentExpertCache = usePersistentExpertCache
         self.keepDenseWeightsResident = keepDenseWeightsResident
@@ -745,7 +747,16 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         }
     }
 
+    public var prefixCacheEpoch: UInt64 { prefixState.currentEpoch }
+    public var prefixCacheSnapshot: QwenPrefixCacheSnapshot {prefixState.snapshot}
+    public func setPrefixCacheMode(_ mode: QwenPrefixCacheMode) {prefixState.setMode(mode)}
+    public func invalidatePrefixCache(_ reason: QwenPrefixInvalidation) {prefixState.clear(reason)}
+    public func commitPrefixCache() {prefixState.commit()}
     public func resetState() {
+        prefixState.clear(.reset)
+        resetStateBuffers()
+    }
+    private func resetStateBuffers() {
         for l in 0..<40 {
             if layerKinds[l] == .linearAttention {
                 memset(convStates[l].contents(), 0, 8192 * 4 * 4)
@@ -912,6 +923,17 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         seenTokenIDs: Set<Int32> = [],
         samplePosition: Int = 0
     ) throws -> Int32 {
+        prefixState.clear(.externalForward)
+        return try forwardTokenImpl(tokenId:tokenId,tokenPos:tokenPos,generationConfiguration:generationConfiguration,seenTokenIDs:seenTokenIDs,samplePosition:samplePosition)
+    }
+
+    private func forwardTokenImpl(
+        tokenId: Int,
+        tokenPos: Int,
+        generationConfiguration: QwenGenerationConfiguration? = nil,
+        seenTokenIDs: Set<Int32> = [],
+        samplePosition: Int = 0
+    ) throws -> Int32 {
         guard tokenId >= 0, tokenId < 248_320, tokenPos >= 0, tokenPos < maxSeqLen else {
             throw QwenSafetensorsError.invalidTensor(name: "embedding", reason: "token or position out of bounds")
         }
@@ -940,6 +962,8 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         var attentionRouterGPUMs: Double = 0.0
         var profiledSharedHitCommands: [MTLCommandBuffer] = []
         var profiledMoETailCommands: [MTLCommandBuffer] = []
+        var previousHit: MTLCommandBuffer?
+        var previousMoE: MTLCommandBuffer?
 
         let tSetupEnd = CFAbsoluteTimeGetCurrent()
         totalCpuSetupMs += (tSetupEnd - tStepStart) * 1000.0
@@ -955,7 +979,10 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
             // COMMAND BUFFER 1: Attention + PostNorm + Router + SharedCoeff
             let tEnc1Start = CFAbsoluteTimeGetCurrent()
             guard let cmdAttnRouter = metalContext.queue.makeCommandBuffer(),
-                  let initialEncoder = cmdAttnRouter.makeComputeCommandEncoder() else { fatalError() }
+                  let initialEncoder = cmdAttnRouter.makeComputeCommandEncoder() else {
+                previousMoE?.waitUntilCompleted()
+                throw MetalError.commandEncodingFailed
+            }
             var enc1 = initialEncoder
 
             if statics.kind == .linearAttention {
@@ -1126,7 +1153,10 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
                     numKVHeads: 2,
                     seqLen: curPosU + 1,
                     scale: 1.0 / 16.0)
-                guard let continuationEncoder = cmdAttnRouter.makeComputeCommandEncoder() else { fatalError() }
+                guard let continuationEncoder = cmdAttnRouter.makeComputeCommandEncoder() else {
+                    previousMoE?.waitUntilCompleted()
+                    throw MetalError.commandEncodingFailed
+                }
                 enc1 = continuationEncoder
 
                 enc1.setComputePipelineState(applyAttentionGatePipe)
@@ -1195,6 +1225,11 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
             let tWait1Start = CFAbsoluteTimeGetCurrent()
             cmdAttnRouter.commit()
             cmdAttnRouter.waitUntilCompleted()
+            // This queue barrier covers the previous layer's hit and miss work.
+            // A failed command must never produce a publishable consumed token.
+            try checkCommandBufferError(previousHit?.error)
+            try checkCommandBufferError(previousMoE?.error)
+            try checkCommandBufferError(cmdAttnRouter.error)
             let tWait1End = CFAbsoluteTimeGetCurrent()
             let cb1Wait = (tWait1End - tWait1Start) * 1000.0
             totalCbWaitMs += cb1Wait
@@ -1235,7 +1270,10 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
                     }
 
                     guard let hitCommand = self.metalContext.queue.makeCommandBuffer(),
-                          let hitEncoder = hitCommand.makeComputeCommandEncoder() else { fatalError() }
+                          let hitEncoder = hitCommand.makeComputeCommandEncoder() else {
+                        readFailure.record(MetalError.commandEncodingFailed)
+                        return
+                    }
 
                     var shGWOff = UInt32(DenseLayerArena.shGateWOff)
                     var shGSOff = UInt32(DenseLayerArena.shGateSOff)
@@ -1338,7 +1376,10 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
             // COMMAND BUFFER 2: MoE (and on layer 39: Final RMSNorm + LM Head)
             let tEnc2Start = CFAbsoluteTimeGetCurrent()
             guard let cmdMoE = metalContext.queue.makeCommandBuffer(),
-                  let enc2 = cmdMoE.makeComputeCommandEncoder() else { fatalError() }
+                  let enc2 = cmdMoE.makeComputeCommandEncoder() else {
+                layerHitCommand?.waitUntilCompleted()
+                throw MetalError.commandEncodingFailed
+            }
 
             if missCount > 0 {
                 var count = missCount
@@ -1409,8 +1450,12 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
             // The next layer is ordered behind this command buffer on the
             // same queue. Only the final layer needs an immediate CPU wait for
             // logits; earlier MoE work overlaps the host's next-layer encode.
+            previousHit = layerHitCommand
+            previousMoE = cmdMoE
             if l == 39 {
                 cmdMoE.waitUntilCompleted()
+                try checkCommandBufferError(previousHit?.error)
+                try checkCommandBufferError(cmdMoE.error)
             }
             let tWait2End = CFAbsoluteTimeGetCurrent()
             let cb2Wait = (tWait2End - tWait2Start) * 1000.0
@@ -1487,6 +1532,12 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
         return (end - start) * 1_000.0
     }
 
+    // Called only at a completed forward boundary by the opt-in equivalence test.
+    func debugSequenceBoundary() -> (hidden: Data, logits: Data) {
+        (Data(bytes: hiddenBuf0.contents(), count: 2_048 * MemoryLayout<Float>.stride),
+         Data(bytes: logitsOutBuf.contents(), count: 248_320 * MemoryLayout<Float>.stride))
+    }
+
     func debugTopLogits(limit: Int = 5) -> [(tokenID: Int32, logit: Float)] {
         guard limit > 0 else { return [] }
         let logits = logitsOutBuf.contents().assumingMemoryBound(to: Float.self)
@@ -1524,56 +1575,48 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
     public func generateResult(
         promptTokens: [Int32],
         configuration: QwenGenerationConfiguration = QwenGenerationConfiguration(),
+        prefixIdentity: String = "raw-token-input",
+        prefixEpoch: UInt64? = nil,
         onPrefillComplete: (@Sendable (Double) -> Void)? = nil,
         onToken: (@Sendable (Int32) -> Void)? = nil
     ) async throws -> QwenGenerationResult {
+        var finished = false
+        defer {if !finished {prefixState.abort(Task.isCancelled ? .cancelled:.inferenceError)}}
         try configuration.validate()
         guard !promptTokens.isEmpty else {
+            prefixState.abort(.invalidBoundary);finished = true
             return QwenGenerationResult(tokens: [], finishReason: .maxNewTokens)
         }
         guard promptTokens.count < maxSeqLen else {
-            throw QwenGenerationConfigurationError.promptExceedsContext(
-                promptTokens: promptTokens.count,
-                contextLength: maxSeqLen
-            )
+            throw QwenGenerationConfigurationError.promptExceedsContext(promptTokens:promptTokens.count,contextLength:maxSeqLen)
         }
-        resetState()
-
+        let reused = try prefixState.begin(prompt:promptTokens,identity:prefixIdentity,configuration:configuration,expectedEpoch:prefixEpoch)
+        if reused == 0 {resetStateBuffers()}
         let prefillStart = CFAbsoluteTimeGetCurrent()
         var lastTokenId: Int32 = promptTokens[0]
-        for (pos, token) in promptTokens.enumerated() {
+        for pos in reused..<promptTokens.count {
             try Task.checkCancellation()
+            let token = promptTokens[pos]
             let isLastPromptToken = pos == promptTokens.count - 1
-            let nextId = try forwardToken(
-                tokenId: Int(token),
-                tokenPos: pos,
-                generationConfiguration: isLastPromptToken ? configuration : nil,
-                seenTokenIDs: isLastPromptToken ? Set(promptTokens) : [],
-                samplePosition: 0
-            )
-            if isLastPromptToken {
-                lastTokenId = nextId
-            }
+            let nextId = try forwardTokenImpl(
+                tokenId:Int(token),tokenPos:pos,
+                generationConfiguration:isLastPromptToken ? configuration:nil,
+                seenTokenIDs:isLastPromptToken ? Set(promptTokens):[],samplePosition:0)
+            try prefixState.consume(token,position:pos,prompt:true)
+            if isLastPromptToken {lastTokenId = nextId}
         }
         onPrefillComplete?((CFAbsoluteTimeGetCurrent() - prefillStart) * 1_000.0)
-
-        return try QwenGenerationLoop.run(
-            initialToken: lastTokenId,
-            promptTokens: promptTokens,
-            maxSequenceLength: maxSeqLen,
-            configuration: configuration,
-            checkCancellation: { try Task.checkCancellation() },
-            onToken: { onToken?($0) },
-            nextToken: { token, position, seenTokenIDs, samplePosition in
-                try self.forwardToken(
-                    tokenId: Int(token),
-                    tokenPos: position,
-                    generationConfiguration: configuration,
-                    seenTokenIDs: seenTokenIDs,
-                    samplePosition: samplePosition
-                )
-            }
-        )
+        let result = try QwenGenerationLoop.run(
+            initialToken:lastTokenId,promptTokens:promptTokens,maxSequenceLength:maxSeqLen,
+            configuration:configuration,checkCancellation:{try Task.checkCancellation()},
+            onToken:{onToken?($0)},nextToken:{token,position,seenTokenIDs,samplePosition in
+                let next = try self.forwardTokenImpl(tokenId:Int(token),tokenPos:position,generationConfiguration:configuration,seenTokenIDs:seenTokenIDs,samplePosition:samplePosition)
+                try self.prefixState.consume(token,position:position,prompt:false)
+                return next
+            })
+        try prefixState.finish(promptCount:promptTokens.count,result:result)
+        finished = true
+        return result
     }
 
     public struct SubcomponentProfileReport: Sendable {
@@ -1597,6 +1640,7 @@ public final class QwenQ4ActiveExpertStreamingRunner: @unchecked Sendable {
     }
 
     public func profileSubcomponents(iterations: Int = 10) -> SubcomponentProfileReport {
+        prefixState.clear(.externalProfiling)
         var dim2048: UInt32 = 2048; var eps: Float = 1e-6
         var convDim: UInt32 = 8192
         var linOutRows: UInt32 = 2048; var linOutCols: UInt32 = 4096

@@ -1,4 +1,7 @@
 import Foundation
+import QwenFieldfareCore
+import Darwin
+import Darwin.Mach
 
 public struct RequestTiming: Codable, Sendable {
     public var admissionMs: Double?
@@ -6,6 +9,12 @@ public struct RequestTiming: Codable, Sendable {
     public var formattingMs: Double?
     public var tokenizationMs: Double?
     public var promptTokens: Int?
+    public var prefixCache: QwenPrefixCacheSnapshot?
+    public var actualPrefillTokens: Int?
+    public var expertCacheHits: Int?
+    public var expertCacheMisses: Int?
+    public var expertLogicalReads: Int?
+    public var expertFetchedBytes: Int?
     public var prefillMs: Double?
     public var firstGeneratedTokenMs: Double?
     public var firstVisibleSSEMs: Double?
@@ -29,6 +38,10 @@ public final class RequestTimingRecorder: @unchecked Sendable {
     public func prompt(formattingMs: Double, tokenizationMs: Double, count: Int) {
         lock.withLock {value.formattingMs = formattingMs; value.tokenizationMs = tokenizationMs; value.promptTokens = count}
     }
+    public func replayWork(prefillTokens: Int,hits: Int,misses: Int,logicalReads: Int,fetchedBytes: Int) {
+        lock.withLock {value.actualPrefillTokens=prefillTokens;value.expertCacheHits=hits;value.expertCacheMisses=misses;value.expertLogicalReads=logicalReads;value.expertFetchedBytes=fetchedBytes}
+    }
+    public func cache(_ snapshot: QwenPrefixCacheSnapshot) {lock.withLock {value.prefixCache=snapshot}}
     public func prefill(_ ms: Double) {lock.withLock {value.prefillMs = ms}}
     public func token() {
         lock.withLock {
@@ -73,8 +86,15 @@ public struct BackendDiagnostics: Codable, Sendable {
     public var context: Int?
     public var memoryBudgetGiB: Int?
     public var metalAllocatedBytes: UInt64?
-    public init(context: Int? = nil, memoryBudgetGiB: Int? = nil, metalAllocatedBytes: UInt64? = nil) {
-        self.context = context; self.memoryBudgetGiB = memoryBudgetGiB; self.metalAllocatedBytes = metalAllocatedBytes
+    public var physicalFootprintBytes: UInt64?
+    public var prefixCache: QwenPrefixCacheSnapshot?
+    public static var currentPhysicalFootprint: UInt64? {
+        var info=task_vm_info_data_t();var count=mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size/MemoryLayout<integer_t>.size)
+        let code=withUnsafeMutablePointer(to:&info) {$0.withMemoryRebound(to:integer_t.self,capacity:Int(count)) {task_info(mach_task_self_,task_flavor_t(TASK_VM_INFO),$0,&count)}}
+        return code == KERN_SUCCESS ? info.phys_footprint:nil
+    }
+    public init(context: Int? = nil, memoryBudgetGiB: Int? = nil, metalAllocatedBytes: UInt64? = nil,physicalFootprintBytes: UInt64? = nil,prefixCache: QwenPrefixCacheSnapshot? = nil) {
+        self.context = context; self.memoryBudgetGiB = memoryBudgetGiB; self.metalAllocatedBytes = metalAllocatedBytes;self.physicalFootprintBytes=physicalFootprintBytes;self.prefixCache=prefixCache
     }
 }
 public struct ServerHealth: Codable, Sendable {

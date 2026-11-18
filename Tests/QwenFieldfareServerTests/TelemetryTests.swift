@@ -77,3 +77,24 @@ extension TelemetryTests {
         try await server.shutdown()
     }
 }
+
+private final class FlushTrackingMock: GenerationBackend, @unchecked Sendable {
+    private let lock=NSLock();private var committed=0
+    var count:Int {lock.withLock {committed}}
+    func commitGeneration() {lock.withLock {committed+=1}}
+    func generate(_ request:ChatRequest,emit:@escaping @Sendable (String)->Void) async throws -> Completion {
+        emit("hello");return Completion(text:"hello",prompt:1,count:1,reason:"stop")
+    }
+}
+extension TelemetryTests {
+    @Test func completeFlushCommitsBeforeAnEagerClientCloses() async throws {
+        let backend=FlushTrackingMock();let server=try LocalServer(backend:backend,key:"eager-close-test-key",model:"qwen")
+        let port=try await server.start(port:0)
+        var request=URLRequest(url:URL(string:"http://127.0.0.1:\(port)/v1/chat/completions")!)
+        request.httpMethod="POST";request.setValue("Bearer eager-close-test-key",forHTTPHeaderField:"Authorization");request.setValue("application/json",forHTTPHeaderField:"Content-Type")
+        request.httpBody=wire(["model":"qwen","messages":[["role":"user","content":"hi"]]])
+        for _ in 0..<40 {_=try await URLSession.shared.data(for:request)}
+        #expect(backend.count == 40)
+        try await server.shutdown()
+    }
+}

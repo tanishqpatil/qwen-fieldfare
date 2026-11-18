@@ -5,7 +5,11 @@ import QwenFieldfareServerSupport
 public protocol ManagedServerSession: Sendable {
     var port: Int {get}
     func health() async throws -> ServerHealth
+    func clearPrefixCache() async throws
     func stop() async throws
+}
+public extension ManagedServerSession {
+    func clearPrefixCache() async throws {throw ManagementError.invalid("Prefix cache control is unavailable for this session.")}
 }
 public actor InProcessServerSession: ManagedServerSession {
     public nonisolated let port: Int
@@ -14,6 +18,7 @@ public actor InProcessServerSession: ManagedServerSession {
     public func health() throws -> ServerHealth {
         guard let server else {throw ManagementError.connection};return server.snapshot
     }
+    public func clearPrefixCache() throws {guard let server else {throw ManagementError.connection};server.clearPrefixCache()}
     public func stop() async throws {
         guard let owned = server else {return}
         try await owned.shutdown()
@@ -21,7 +26,7 @@ public actor InProcessServerSession: ManagedServerSession {
     }
     public static func start(_ config: ServerConfiguration) async throws -> any ManagedServerSession {
         try assertPortAvailable(config.port)
-        let backend = try await CoreBackend(path:config.modelPath,context:config.context,budget:config.budget)
+        let backend = try await CoreBackend(path:config.modelPath,context:config.context,budget:config.budget,prefixCacheMode:config.prefixCacheMode)
         try Task.checkCancellation()
         let server = try LocalServer(backend:backend,key:config.apiKey,model:config.modelID,queueCapacity:config.queueCapacity)
         do {return InProcessServerSession(server:server,port:try await server.start(host:config.host,port:config.port))}

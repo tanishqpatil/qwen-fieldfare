@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 import Darwin
 import Metal
 import QwenFieldfareCore
@@ -6,11 +7,15 @@ import QwenFieldfareCore
 public final class Cancellation: @unchecked Sendable {
     private let lock = NSLock()
     private var cancelled = false
+    private var delivered = false
     private var task: Task<Void,Never>?
     public init() {}
     public var isCancelled: Bool { lock.withLock { cancelled } }
     public func attach(_ task: Task<Void,Never>) { lock.withLock { self.task = task; if cancelled { task.cancel() } } }
-    public func cancel() { lock.withLock { cancelled = true; task?.cancel() } }
+    public func cancel() {lock.withLock {guard !delivered else {return};cancelled = true;task?.cancel()}}
+    public func completeDelivery(_ commit: () -> Void) -> Bool {
+        lock.withLock {guard !cancelled,!delivered else {return false};delivered = true;commit();return true}
+    }
     public func finish() { lock.withLock { task = nil } }
 }
 /// Serial admission independently bounds asynchronous work; actor reentrancy
@@ -51,11 +56,15 @@ public struct Completion: Sendable {
     public init(text: String,prompt: Int,count: Int,reason: String) { self.text=text;self.prompt=prompt;self.count=count;self.reason=reason }
 }
 public protocol GenerationBackend: Sendable {
+    func commitGeneration()
+    func invalidatePrefixCache(_ reason: QwenPrefixInvalidation)
     var diagnostics: BackendDiagnostics {get}
     func generate(_ request: ChatRequest, timing: RequestTimingRecorder, emit: @escaping @Sendable (String) -> Void) async throws -> Completion
     func generate(_ request: ChatRequest, emit: @escaping @Sendable (String) -> Void) async throws -> Completion
 }
 public extension GenerationBackend {
+    func commitGeneration() {}
+    func invalidatePrefixCache(_ reason: QwenPrefixInvalidation) {}
     var diagnostics: BackendDiagnostics {BackendDiagnostics()}
     func generate(_ request: ChatRequest, timing: RequestTimingRecorder, emit: @escaping @Sendable (String) -> Void) async throws -> Completion {try await generate(request,emit:emit)}
 }
@@ -65,8 +74,8 @@ public final class CoreBackend: GenerationBackend, @unchecked Sendable {
     private let context: Int
     private let toolPrompt: ToolPrompt
     private let budget: Int
-    public var diagnostics: BackendDiagnostics {BackendDiagnostics(context:context,memoryBudgetGiB:budget,metalAllocatedBytes:MTLCreateSystemDefaultDevice().map {UInt64($0.currentAllocatedSize)})}
-    public init(path: String, context: Int, budget: QwenActiveStreamingMemoryBudget) async throws {
+    public var diagnostics: BackendDiagnostics {BackendDiagnostics(context:context,memoryBudgetGiB:budget,metalAllocatedBytes:MTLCreateSystemDefaultDevice().map {UInt64($0.currentAllocatedSize)},physicalFootprintBytes:BackendDiagnostics.currentPhysicalFootprint,prefixCache:runner.prefixCacheSnapshot)}
+    public init(path: String, context: Int, budget: QwenActiveStreamingMemoryBudget,prefixCacheMode: QwenPrefixCacheMode = .off) async throws {
         let path = try QwenModelDirectory.validate(path:path)
         let plan = try QwenActiveStreamingMemoryConfiguration.make(budget:budget,contextLength:context)
         self.context = context; self.budget = budget.rawValue
@@ -84,11 +93,24 @@ public final class CoreBackend: GenerationBackend, @unchecked Sendable {
         toolPrompt = try ToolPrompt(source:source)
         tokenizer = try await QwenTokenizer.load(from:URL(fileURLWithPath:path))
         runner = try QwenQ4ActiveExpertStreamingRunner(modelPath:path,maxSeqLen:context,expertCacheCapacity:plan.expertCacheSlots,usePersistentExpertCache:true,keepDenseWeightsResident:true)
+        runner.setPrefixCacheMode(prefixCacheMode)
     }
+    public func commitGeneration() {runner.commitPrefixCache()}
+    public func invalidatePrefixCache(_ reason: QwenPrefixInvalidation) {runner.invalidatePrefixCache(reason)}
     public func generate(_ request: ChatRequest, emit: @escaping @Sendable (String) -> Void) async throws -> Completion {
         try await generate(request,timing:RequestTimingRecorder(),emit:emit)
     }
     public func generate(_ request: ChatRequest, timing: RequestTimingRecorder, emit: @escaping @Sendable (String) -> Void) async throws -> Completion {
+        let epoch = runner.prefixCacheEpoch
+        let cacheBefore=runner.expertCache.metricsSnapshot()
+        var succeeded = false
+        var enteredRunner = false
+        defer {
+            if !succeeded {runner.invalidatePrefixCache(Task.isCancelled ? .cancelled:(enteredRunner ? .inferenceError:.rejectedRequest))}
+            let after=runner.expertCache.metricsSnapshot();let fetched=after.fetchedBytes-cacheBefore.fetchedBytes
+            timing.replayWork(prefillTokens:enteredRunner ? runner.prefixCacheSnapshot.processedPromptTokens:0,hits:after.hits-cacheBefore.hits,misses:after.misses-cacheBefore.misses,logicalReads:fetched/Q4BoundedExpertCache.expertByteLength,fetchedBytes:fetched)
+            if enteredRunner {timing.cache(runner.prefixCacheSnapshot)}
+        }
         let formattingStarted = ProcessInfo.processInfo.systemUptime
         let last = request.messages.last!
         let prompt = try request.toolConversation.map {try toolPrompt.render($0)}
@@ -98,11 +120,15 @@ public final class CoreBackend: GenerationBackend, @unchecked Sendable {
         timing.prompt(formattingMs:(tokenizationStarted-formattingStarted)*1000,tokenizationMs:(ProcessInfo.processInfo.systemUptime-tokenizationStarted)*1000,count:tokens.count)
         try validateContextReservation(promptTokens:tokens.count,outputTokens:request.configuration.maxNewTokens,context:context)
         let decoder = Decoder(tokenizer:tokenizer,emit:emit)
-        let result = try await runner.generateResult(promptTokens:tokens,configuration:request.configuration,onPrefillComplete:{timing.prefill($0)},onToken:{timing.token(); decoder.append($0) })
+        let policy=ToolJSON.object([.init("format",.string(request.toolConversation == nil ? "core-text-thinking-off":"checkpoint-jinja-thinking-off")),.init("tools",.array(request.toolConversation?.tools.map(\.json) ?? [])),.init("allows",.bool(request.toolConversation?.allowsCalls ?? false))])
+        let identity=SHA256.hash(data:Data(policy.encoded.utf8)).map {String(format:"%02x",$0)}.joined()
+        enteredRunner = true
+        let result = try await runner.generateResult(promptTokens:tokens,configuration:request.configuration,prefixIdentity:identity,prefixEpoch:epoch,onPrefillComplete:{timing.prefill($0)},onToken:{timing.token(); decoder.append($0) })
         timing.generatedOutput(count:result.tokens.count)
         try decoder.flush()
         let reason: String
         switch result.finishReason { case .endOfSequence: reason="stop"; case .contextLength,.maxNewTokens: reason="length" }
+        succeeded = true
         return Completion(text:tokenizer.decode(result.tokens),prompt:tokens.count,count:result.tokens.count,reason:reason)
     }
     private final class Decoder: @unchecked Sendable {

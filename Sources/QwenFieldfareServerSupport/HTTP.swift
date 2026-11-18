@@ -1,4 +1,5 @@
 import Foundation
+import QwenFieldfareCore
 import NIOCore
 import NIOHTTP1
 import NIOPosix
@@ -44,7 +45,9 @@ public final class LocalServer: @unchecked Sendable {
         listener=channel
         return channel.localAddress!.port!
     }
+    public func clearPrefixCache() {backend.invalidatePrefixCache(.explicitClear)}
     public func shutdown() async throws {
+        backend.invalidatePrefixCache(.shutdown)
         admission.shutdown()
         try await listener?.close().get()
         while !admission.idle {try await Task.sleep(for:.milliseconds(20))}
@@ -87,27 +90,41 @@ private final class HTTPHandler: ChannelInboundHandler, @unchecked Sendable {
             if head.method == .GET && head.uri == "/v1/models" {
                 respond(channel,status:200,data:wire(["object":"list","data":[["id":server.model,"object":"model","created":0,"owned_by":"local"]]]));return
             }
+            if head.method == .POST && head.uri == "/v1/cache/clear" {
+                guard body.isEmpty || (try? ToolJSON.parse(String(decoding:body,as:UTF8.self))) == .object([]) else {respond(channel,status:400,data:APIError(400,"Clear cache takes an empty object").data);return}
+                server.clearPrefixCache();respond(channel,status:200,data:wire(["cleared":true]));return
+            }
             guard head.method == .POST,head.uri == "/v1/chat/completions" else {respond(channel,status:404,data:APIError(404,"Not found").data);return}
             do {
                 guard head.headers["content-type"].first?.split(separator:";").first == "application/json" else {throw APIError(415,"Expected application/json")}
                 let request=try ChatRequest(data:body,model:server.model)
                 body=Data()
                 let timing=requestTiming ?? RequestTimingRecorder();timing.enqueue()
-                try server.admission.submit(cancellation,onCancelled:{ [server] in server.statistics.finish(timing.finish("cancelled")) }) { [server,cancellation] in
+                try server.admission.submit(cancellation,onCancelled:{ [server] in server.backend.invalidatePrefixCache(.cancelled);server.statistics.finish(timing.finish("cancelled")) }) { [server,cancellation] in
                     timing.start()
                     var outcome="failed"
                     defer {server.statistics.finish(timing.finish(outcome))}
                     let output=Output(channel:channel,model:server.model,stream:request.stream,includeUsage:request.includeUsage,timing:timing,tools:request.toolConversation.map { $0.allowsCalls ? $0.tools : [] },cancellation:cancellation)
                     do {
                         let result=try await server.backend.generate(request,timing:timing) { output.delta($0) }
-                        if !cancellation.isCancelled {try output.complete(result,usage:request.includeUsage);outcome="completed"} else {outcome=output.parserFailed ? "failed":"cancelled"}
+                        if !cancellation.isCancelled {
+                            try output.complete(result,usage:request.includeUsage,onFlushed:{_ = cancellation.completeDelivery {server.backend.commitGeneration()}})
+                            if !cancellation.isCancelled {outcome="completed"}
+                            else {server.backend.invalidatePrefixCache(.cancelled);outcome="cancelled"}
+                        } else {server.backend.invalidatePrefixCache(output.parserFailed ? .outputValidationFailed:.cancelled);outcome=output.parserFailed ? "failed":"cancelled"}
                     } catch {
+                        let reason: QwenPrefixInvalidation
+                        if error is NativeToolError || output.parserFailed {reason = .outputValidationFailed}
+                        else if cancellation.isCancelled {reason = .cancelled}
+                        else if let api = error as? APIError, (400..<500).contains(api.status) {reason = .rejectedRequest}
+                        else {reason = .inferenceError}
+                        server.backend.invalidatePrefixCache(reason)
                         if cancellation.isCancelled && !output.parserFailed {outcome="cancelled"}
                         if !cancellation.isCancelled {output.fail(error as? APIError ?? APIError(error is NativeToolError ? 502 : 500,error is NativeToolError ? "Invalid native tool output: \(error)" : "Generation failed"))}
                     }
                     _ = try? await channel.close().get()
                 }
-            } catch {respond(channel,status:(error as? APIError)?.status ?? 400,data:(error as? APIError ?? APIError(400,"Invalid request")).data)}
+            } catch {server.backend.invalidatePrefixCache(.rejectedRequest);respond(channel,status:(error as? APIError)?.status ?? 400,data:(error as? APIError ?? APIError(400,"Invalid request")).data)}
         }
     }
     private func respond(_ channel:Channel,status:Int,data:Data) {
@@ -131,12 +148,23 @@ private final class Output: @unchecked Sendable {
         self.channel=channel;self.model=model;self.stream=stream;self.includeUsage=includeUsage;self.cancellation=cancellation;self.timing=timing
         if let tools {parser=NativeToolParser(tools:tools,emit:{ [weak self] text in self?.proseDelta(text) })}
     }
-    func write(_ part:HTTPServerResponsePart) throws {
+    func write(_ part:HTTPServerResponsePart,onFlushed: (@Sendable () -> Void)? = nil) throws {
         guard !cancellation.isCancelled,channel.isActive,channel.isWritable else {cancellation.cancel();throw CancellationError()}
         let channel=self.channel
         let timeout=channel.eventLoop.scheduleTask(in:.seconds(10)) {channel.close(promise:nil)}
         defer {timeout.cancel()}
-        try channel.writeAndFlush(part).wait()
+        if let onFlushed {
+            // Register the terminal flush callback on the event loop itself, so
+            // the expected peer close cannot race ahead of the commit boundary.
+            let promise=channel.eventLoop.makePromise(of:Void.self)
+            channel.eventLoop.execute {
+                channel.writeAndFlush(part).whenComplete {result in
+                    if case .success=result {onFlushed()}
+                    promise.completeWith(result)
+                }
+            }
+            try promise.futureResult.wait()
+        } else {try channel.writeAndFlush(part).wait()}
     }
     func begin() throws {
         if started {return};started=true
@@ -164,7 +192,7 @@ private final class Output: @unchecked Sendable {
         guard stream else {return}
         do {try begin();try send(chunk(delta:["content":text]));if !text.isEmpty {timing.visible()}} catch {cancellation.cancel()}
     }
-    func complete(_ value:Completion,usage:Bool) throws {
+    func complete(_ value:Completion,usage:Bool,onFlushed: @escaping @Sendable () -> Void) throws {
         guard !parserFailed else {throw NativeToolError.closed}
         let parsed = try parser?.finish(endedNormally:value.reason == "stop")
         let calls = parsed?.calls ?? []
@@ -189,7 +217,7 @@ private final class Output: @unchecked Sendable {
             let data=wire(["id":id,"object":"chat.completion","created":created,"model":model,"choices":[["index":0,"message":message,"finish_reason":reason]],"usage":counts])
             try write(.body(.byteBuffer(channel.allocator.buffer(bytes:data))))
         }
-        try write(.end(nil))
+        try write(.end(nil),onFlushed:onFlushed)
     }
     func fail(_ error:APIError) {
         do {

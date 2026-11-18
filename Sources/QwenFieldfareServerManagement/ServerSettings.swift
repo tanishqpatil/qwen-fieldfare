@@ -8,19 +8,30 @@ public struct ServerSettings: Codable, Equatable, Sendable {
     public var context: Int = 8192
     public var memoryGiB: Int = 5
     public var queueCapacity: Int = 2
+    public var prefixCacheMode: QwenPrefixCacheMode = .off
     public init(modelPath: String = "") {self.modelPath = modelPath}
+    private enum CodingKeys: String,CodingKey {case modelPath,port,context,memoryGiB,queueCapacity,prefixCacheMode}
+    public init(from decoder: Decoder) throws {
+        let values=try decoder.container(keyedBy:CodingKeys.self)
+        modelPath=try values.decode(String.self,forKey:.modelPath)
+        port=try values.decodeIfPresent(Int.self,forKey:.port) ?? 8080
+        context=try values.decodeIfPresent(Int.self,forKey:.context) ?? 8192
+        memoryGiB=try values.decodeIfPresent(Int.self,forKey:.memoryGiB) ?? 5
+        queueCapacity=try values.decodeIfPresent(Int.self,forKey:.queueCapacity) ?? 2
+        prefixCacheMode=try values.decodeIfPresent(QwenPrefixCacheMode.self,forKey:.prefixCacheMode) ?? .off
+    }
     public func configuration(keyFile: String) throws -> ServerConfiguration {
         let action = try ServerConfiguration.parse([
             "--model",modelPath,"--host","127.0.0.1","--port",String(port),
             "--context",String(context),"--memory-gib",String(memoryGiB),
-            "--queue-capacity",String(queueCapacity),"--api-key-file",keyFile
+            "--queue-capacity",String(queueCapacity),"--prefix-cache",prefixCacheMode.rawValue,"--api-key-file",keyFile
         ],environment:[:])
         guard case .serve(let config) = action else {throw ManagementError.invalid("Invalid server configuration.")}
         return config
     }
     public var validationMessage: String? {
         do {
-            _ = try ServerConfiguration.parse(["--model",modelPath,"--host","127.0.0.1","--port",String(port),"--context",String(context),"--memory-gib",String(memoryGiB),"--queue-capacity",String(queueCapacity)],environment:["QWENFIELDFARE_API_KEY":"validation-placeholder-key"])
+            _ = try ServerConfiguration.parse(["--model",modelPath,"--host","127.0.0.1","--port",String(port),"--context",String(context),"--memory-gib",String(memoryGiB),"--queue-capacity",String(queueCapacity),"--prefix-cache",prefixCacheMode.rawValue],environment:["QWENFIELDFARE_API_KEY":"validation-placeholder-key"])
             return nil
         } catch {return managementMessage(error)}
     }

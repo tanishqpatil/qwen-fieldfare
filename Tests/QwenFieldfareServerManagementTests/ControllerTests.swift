@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import QwenFieldfareCore
 import QwenFieldfareServerSupport
 @testable import QwenFieldfareServerManagement
 
@@ -11,6 +12,14 @@ import QwenFieldfareServerSupport
 private struct ManagementMockBackend: GenerationBackend {
     func generate(_ request: ChatRequest,emit: @escaping @Sendable (String) -> Void) async throws -> Completion {
         emit("hello");return Completion(text:"hello",prompt:4,count:1,reason:"stop")
+    }
+}
+private final class PrefixControlBackend: GenerationBackend, @unchecked Sendable {
+    private let lock=NSLock();private var clears=0
+    var count:Int {lock.withLock {clears}}
+    func invalidatePrefixCache(_ reason:QwenPrefixInvalidation) {if reason == .explicitClear {lock.withLock {clears+=1}}}
+    func generate(_ request:ChatRequest,emit:@escaping @Sendable (String)->Void) async throws -> Completion {
+        Completion(text:"hello",prompt:2,count:1,reason:"stop")
     }
 }
 @MainActor @Suite(.serialized) struct ControllerTests {
@@ -72,6 +81,26 @@ private struct ManagementMockBackend: GenerationBackend {
         #expect(await controller.shutdown())
         #expect(try await LoopbackServerObserver.health(port:port,key:key.key!).status == "ready")
         try await server.shutdown()
+    }
+    @Test func ownedPrefixClearAndPersistedModeHaveNoExternalAuthority() async throws {
+        let backend=PrefixControlBackend();let store=defaults();let key=MemoryCredential()
+        let owner=ServerController(modelPath:"/test-model",defaults:store,credentials:key,factory:{config in
+            #expect(config.prefixCacheMode == .exactPrefix)
+            let server=try LocalServer(backend:backend,key:config.apiKey,model:config.modelID)
+            return InProcessServerSession(server:server,port:try await server.start(port:0))
+        })
+        owner.settings.prefixCacheMode = .exactPrefix;owner.settings.port=0
+        owner.start();try await wait(owner)
+        #expect(owner.state == .ready)
+        await owner.clearPrefixCache();#expect(backend.count == 1)
+        let observer=ServerController(modelPath:"/test-model",defaults:defaults(),credentials:key)
+        observer.settings.port=try #require(owner.boundPort);observer.observeExternal();try await wait(observer)
+        #expect(observer.isExternal && observer.state == .ready)
+        await observer.clearPrefixCache();#expect(backend.count == 1)
+        #expect(await observer.shutdown());#expect(owner.state == .ready)
+        #expect(await owner.shutdown())
+        let reopened=ServerController(modelPath:"other",defaults:store,credentials:key)
+        #expect(reopened.settings.prefixCacheMode == .exactPrefix && reopened.state == .stopped)
     }
     @Test func stoppingWhileLoadingCancelsAndResumesChat() async throws {
         let controller = ServerController(modelPath:"/test-model",defaults:defaults(),credentials:MemoryCredential(),factory:{_ in

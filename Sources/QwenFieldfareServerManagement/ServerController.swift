@@ -80,6 +80,11 @@ import QwenFieldfareServerSupport
         while operation != nil {try? await Task.sleep(for:.milliseconds(10))}
         return !blocksNativeChat
     }
+    public func clearPrefixCache() async {
+        guard !isExternal,let session,state == .ready || state == .generating else {return}
+        do {try await session.clearPrefixCache();snapshot=try await session.health()}
+        catch {report(error)}
+    }
     public func restart() async {
         guard !isExternal else {return}
         if await shutdown() {start()}

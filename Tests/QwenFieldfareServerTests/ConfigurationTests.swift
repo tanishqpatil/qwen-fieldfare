@@ -66,3 +66,21 @@ import Testing
         #expect(throws:APIError.self) {try ToolSchema(ToolJSON.parse(#"{"$schema":"unknown","type":"object"}"#))}
     }
 }
+
+extension ConfigurationTests {
+    @Test func prefixCacheDefaultsOffAndRejectsUnknownModes() throws {
+        #expect(try config().prefixCacheMode == .off)
+        #expect(try config(["--prefix-cache","exact-prefix"]).prefixCacheMode == .exactPrefix)
+        #expect(throws:APIError.self) {try config(["--prefix-cache","approximate"])}
+    }
+    @Test func successfulFlushProtectsCommitFromExpectedConnectionClose() {
+        let token=Cancellation();var commits=0
+        #expect(token.completeDelivery {commits+=1})
+        token.cancel()
+        #expect(!token.isCancelled && commits == 1)
+        #expect(!token.completeDelivery {commits+=1})
+        let cancelled=Cancellation();cancelled.cancel()
+        #expect(!cancelled.completeDelivery {commits+=1})
+        #expect(commits == 1)
+    }
+}

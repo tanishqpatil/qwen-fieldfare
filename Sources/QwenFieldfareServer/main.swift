@@ -34,10 +34,10 @@ import QwenFieldfareCore
             let shutdown=Cancellation()
             let signals=installSignals(shutdown)
             let started=Date()
-            let backend=try await CoreBackend(path:config.modelPath,context:config.context,budget:config.budget)
+            let backend=try await CoreBackend(path:config.modelPath,context:config.context,budget:config.budget,prefixCacheMode:config.prefixCacheMode)
             let server=try LocalServer(backend:backend,key:config.apiKey,model:config.modelID,queueCapacity:config.queueCapacity)
             let bound=try await server.start(host:config.host,port:config.port)
-            print("QwenFieldfareServer ready 127.0.0.1:\(bound); load_seconds=\(Date().timeIntervalSince(started)); context=\(config.context), budget_gib=\(config.budget.rawValue), queue=\(config.queueCapacity)")
+            print("QwenFieldfareServer ready 127.0.0.1:\(bound); load_seconds=\(Date().timeIntervalSince(started)); context=\(config.context), budget_gib=\(config.budget.rawValue), queue=\(config.queueCapacity), prefix_cache=\(config.prefixCacheMode.rawValue)")
             print("Loaded \(memory())");fflush(stdout)
             while !shutdown.isCancelled {try await Task.sleep(for:.milliseconds(100))}
             try await server.shutdown()
