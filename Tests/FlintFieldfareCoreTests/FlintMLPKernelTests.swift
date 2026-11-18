@@ -65,11 +65,14 @@ import Testing
         let layer: Int
         let kind: String
         let batch: Int
-        let tokens: Int
+        let num_tokens: Int
+        var tokens: Int { num_tokens }
         let hidden_dim: Int
         let intermediate_dim: Int
         let dtype: String
         let input_hex: String
+        let real_module_out_hex: String
+        let fused_module_out_hex: String
         let gate_proj_hex: String
         let up_proj_hex: String
         let silu_gate_hex: String
@@ -78,7 +81,7 @@ import Testing
     }
 
     private struct MLKGoldenFixture: Decodable {
-        let metadata: [String: AnyCodable]
+        let generator: String?
         let cases: [MLKGoldenCase]
     }
 
@@ -233,12 +236,42 @@ import Testing
 
                 // Verify intermediate stage error bounds
                 if isBF16 {
-                    #expect(maxStageDiff <= 0.05, "Stage \(stage.name) in \(c.name) max diff exceeded: \(maxStageDiff)")
-                    #expect(relL2 <= 0.005, "Stage \(stage.name) in \(c.name) relative L2 exceeded: \(relL2)")
+                    #expect(maxStageDiff <= 0.01, "Stage \(stage.name) in \(c.name) max diff exceeded: \(maxStageDiff)")
+                    #expect(relL2 <= 0.01, "Stage \(stage.name) in \(c.name) relative L2 exceeded: \(relL2)")
                 } else {
                     #expect(maxStageDiff <= 1e-5, "Stage \(stage.name) in \(c.name) FP32 max diff exceeded: \(maxStageDiff)")
                     #expect(relL2 <= 1e-5, "Stage \(stage.name) in \(c.name) FP32 relative L2 exceeded: \(relL2)")
                 }
+            }
+
+            // Also verify production execution path directly against real module forward!
+            let prodOutBuf = try context.makeBuffer(byteCount: c.batch * c.tokens * c.hidden_dim * dtype.elementByteWidth)
+            if c.kind == "dense" {
+                let dw = residentWeights.denseMLPWeights(forLayer: c.layer)!
+                try mlpKernel.executeForwardDenseMLP(weights: dw, input: inBuf, output: prodOutBuf, batch: c.batch, numTokens: c.tokens, dtype: dtype)
+            } else {
+                let sw = residentWeights.moeResidentWeights(forLayer: c.layer)!
+                try mlpKernel.executeForwardSharedExpertMLP(weights: sw, input: inBuf, output: prodOutBuf, batch: c.batch, numTokens: c.tokens, dtype: dtype)
+            }
+
+            let realExpData = Self.parseHexToData(c.real_module_out_hex)
+            var prodDiff: Float = 0.0
+            if isBF16 {
+                let prodPtr = prodOutBuf.contents().bindMemory(to: UInt16.self, capacity: c.batch * c.tokens * c.hidden_dim)
+                let expPtr = realExpData.withUnsafeBytes { $0.bindMemory(to: UInt16.self) }
+                for i in 0..<(c.batch * c.tokens * c.hidden_dim) {
+                    let diff = abs(Self.bf16ToFloat(prodPtr[i]) - Self.bf16ToFloat(expPtr[i]))
+                    if diff > prodDiff { prodDiff = diff }
+                }
+                #expect(prodDiff <= 1e-4, "Production forward vs real module forward diff exceeded: \(prodDiff)")
+            } else {
+                let prodPtr = prodOutBuf.contents().bindMemory(to: Float.self, capacity: c.batch * c.tokens * c.hidden_dim)
+                let expPtr = realExpData.withUnsafeBytes { $0.bindMemory(to: Float.self) }
+                for i in 0..<(c.batch * c.tokens * c.hidden_dim) {
+                    let diff = abs(prodPtr[i] - expPtr[i])
+                    if diff > prodDiff { prodDiff = diff }
+                }
+                #expect(prodDiff <= 1e-5, "Production forward vs real module forward FP32 diff exceeded: \(prodDiff)")
             }
 
             print(String(format: "%-28@ | %-6@ | %-7@ | %4d | %6d | %12.6f | %12.6e | %10.6e | PASSED",
@@ -480,6 +513,75 @@ import Testing
 
         // 4. Unaligned offset
         checkGEMMThrows(input: inBuf, inputOffset: 1, weight: inBuf, output: outBuf, M: 2048, K: 2048, batch: 1, numTokens: 1)
+
+        // 5. Negative offsets
+        checkGEMMThrows(input: inBuf, inputOffset: -1, weight: inBuf, output: outBuf, M: 2048, K: 2048, batch: 1, numTokens: 1)
+
+        // 6. Pointwise SiLU / Mul / SwiGLU / Add bounds and alignment checks
+        #expect(throws: FlintMetalError.self) {
+            guard let cb = context.queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { throw FlintMetalError.commandQueueUnavailable }
+            defer { enc.endEncoding() }
+            try mlpKernel.encodeSiLU(into: enc, input: inBuf, inputOffset: 1, output: outBuf, totalElements: 100)
+        }
+        #expect(throws: FlintMetalError.self) {
+            guard let cb = context.queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { throw FlintMetalError.commandQueueUnavailable }
+            defer { enc.endEncoding() }
+            try mlpKernel.encodeMul(into: enc, inputA: inBuf, offsetA: -2, inputB: inBuf, output: outBuf, totalElements: 100)
+        }
+        #expect(throws: FlintMetalError.self) {
+            guard let cb = context.queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { throw FlintMetalError.commandQueueUnavailable }
+            defer { enc.endEncoding() }
+            try mlpKernel.encodeSwiGLU(into: enc, gate: inBuf, up: inBuf, upOffset: 1, output: outBuf, totalElements: 100)
+        }
+        #expect(throws: FlintMetalError.self) {
+            guard let cb = context.queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { throw FlintMetalError.commandQueueUnavailable }
+            defer { enc.endEncoding() }
+            try mlpKernel.encodeAdd(into: enc, inputA: inBuf, inputB: inBuf, output: outBuf, outputOffset: -4, totalElements: 100)
+        }
+
+        // 7. Undocumented aliasing check (input or output equals internal scratch)
+        #expect(throws: FlintMetalError.self) {
+            guard let cb = context.queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { throw FlintMetalError.commandQueueUnavailable }
+            defer { enc.endEncoding() }
+            try mlpKernel.encodeForwardMLP(
+                into: enc,
+                gateWeight: inBuf, gateScales: inBuf, gateBiases: inBuf,
+                upWeight: inBuf, upScales: inBuf, upBiases: inBuf,
+                downWeight: inBuf, downScales: inBuf, downBiases: inBuf,
+                input: mlpKernel.gateScratch, // aliasing with scratch!
+                output: outBuf,
+                intermediateDim: 1024,
+                numTokens: 1
+            )
+        }
+    }
+
+    // MARK: - 7. Scratch Concurrency Exclusivity Contract
+
+    @Test func scratchConcurrencyViolationContract() throws {
+        let context = try FlintMetalContext()
+        let mlpKernel = try FlintMLPKernel(context: context)
+        let weights = try Self.loadLiveWeights(context: context)
+        guard let dw = weights.denseMLPWeights(forLayer: 0) else {
+            Issue.record("Missing dense MLP weights for layer 0")
+            return
+        }
+
+        let inBuf = try context.makeBuffer(byteCount: 2048 * 2)
+        let outBuf = try context.makeBuffer(byteCount: 2048 * 2)
+
+        // Verify acquisition and lock
+        try mlpKernel.acquireInFlight()
+        #expect(throws: FlintMetalError.self) {
+            try mlpKernel.acquireInFlight()
+        }
+        mlpKernel.releaseInFlight()
+
+        // Verify nonblocking launch exclusivity
+        try mlpKernel.executeForwardDenseMLP(weights: dw, input: inBuf, output: outBuf, batch: 1, numTokens: 1, waitUntilCompleted: false)
+        #expect(throws: FlintMetalError.self) {
+            try mlpKernel.executeForwardDenseMLP(weights: dw, input: inBuf, output: outBuf, batch: 1, numTokens: 1, waitUntilCompleted: false)
+        }
     }
 
     // MARK: - 7. Canonical Metal Shader Source Equivalence

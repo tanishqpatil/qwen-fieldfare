@@ -11,6 +11,7 @@ public enum FlintMetalError: Error, LocalizedError, Equatable {
     case commandBufferFailed(String)
     case bufferTooSmall(name: String, actual: Int, required: Int)
     case invalidParameter(String)
+    case concurrencyViolation(String)
 
     public var errorDescription: String? {
         switch self {
@@ -30,6 +31,8 @@ public enum FlintMetalError: Error, LocalizedError, Equatable {
             return "Buffer '\(name)' length (\(actual) B) is smaller than required (\(required) B)"
         case .invalidParameter(let reason):
             return "Invalid kernel parameter: \(reason)"
+        case .concurrencyViolation(let reason):
+            return "Concurrency violation: \(reason)"
         }
     }
 }

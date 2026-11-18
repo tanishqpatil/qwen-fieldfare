@@ -147,6 +147,7 @@ let package = Package(
                 "Kernels/FlintReductionReference.swift",
                 "Kernels/FlintMLPKernel.swift",
                 "Kernels/FlintMLPReference.swift",
+                "Layers/FlintDecoderLayerRunner.swift",
             ],
             resources: [.copy("Metal")]
         ),
@@ -165,6 +166,7 @@ let package = Package(
                 "FlintDequantizeKernelTests.swift",
                 "FlintReductionKernelTests.swift",
                 "FlintMLPKernelTests.swift",
+                "FlintDecoderLayerTests.swift",
             ],
             resources: [.copy("Fixtures")]
         ),

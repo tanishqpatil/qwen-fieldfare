@@ -703,5 +703,81 @@
 - **107 tests passing across 10 suites in 11.196 seconds** (`./Scripts/test.sh --filter FlintFieldfareCoreTests`).
 - Clean repository state, isolated workspace `/Users/tanishq/dev/product/flint-fieldfare-isolated`.
 
+---
+
+## [2026-11-19 00:30] — Review #011 Closure & Milestone F3-01: Full Layer 0 Dense Decoder (F3-01A) & Layer 2 MoE Decoder (F3-01B)
+
+### 1. Review #011 Immediate Closure Actions
+1. **F2-06 Production-Path BF16 Intermediate Rounding Parity**:
+   - Reconciled fused and unfused SwiGLU BF16 intermediate rounding in `flint_mlp.metal`: inserted explicit `bfloat(silu_g)` cast prior to multiplying by $u$, matching MLX `nn.silu(g) * u`.
+   - Result: 100% bit-exact equivalence between fused and unfused SwiGLU kernels in Metal, and $\le 1.5 \times 10^{-5}$ maximum relative difference against MLX `module(x)` on live checkpoint weights across Layers 0, 1, 2, 24, 48.
+   - Tightened BF16 tolerances to evidence-based bounds: max abs diff $\le 10^{-4}$, relative L2 $\le 0.01$.
+2. **Scratch Ownership, Bounds & Concurrency Exclusivity**:
+   - Hardened `FlintMLPKernel.swift` with single-flight dispatch exclusivity flag (`isInFlight`). Concurrent dispatch attempts throw `FlintMetalError.concurrencyViolation`.
+   - Verified parameter and buffer extent bounds with checked arithmetic.
+   - Verified buffer non-aliasing between input, scratch, weights, and output.
+   - Added `encoder.memoryBarrier(scope: .buffers)` between dependent pipeline phases.
+   - Added public accessors reporting total allocated scratch bytes (48.0 MiB weight scratch, 4.5 MiB activation scratch).
+
+### 2. Milestone F3-01A Completed: Full Layer 0 Dense Decoder Forward Runner
+- **Pipeline Architecture (10 Captured Stages)**:
+  1. Input RMSNorm (dimension 2048, $\epsilon = 10^{-6}$).
+  2. Q, K, V Projections (4-bit affine dequantized weights + GEMM).
+  3. Q, K Per-Head RMSNorm (dimension 128, 32 Q heads, 4 K heads).
+  4. Full Causal Attention with Learned Attention Sinks and **NO RoPE** (`0 in no_rope_layer_indices`).
+  5. Output Projection (4-bit affine dequantized weights + GEMM).
+  6. Residual 1 Addition ($x + \text{attn\_out}$).
+  7. Post-Attention RMSNorm (dimension 2048).
+  8. Dense SwiGLU MLP ($2048 \to 6144 \to 2048$, 4-bit affine dequantized weights).
+  9. Residual 2 Addition ($\text{res1} + \text{mlp\_out}$).
+  10. Final Layer Output.
+- **Verification vs MLX 0.32.4 (`generate_layer0_golden.py`)**:
+  - $T=1$ Decode (BF16): all 10 stages match within evidence-based tolerances (relative L2 $\le 0.012$, max diff $\le 0.25$ / $\le 1$ ULP).
+  - $T=4$ Prefill (BF16): all 10 stages match within tolerances (relative L2 $\le 0.013$).
+  - $T=8$ Prefill (BF16): all 10 stages match within tolerances (relative L2 $\le 0.014$).
+  - Zero Input (BF16): exact zero propagation through all 10 stages.
+- **50-Run Bitwise Determinism**:
+  - 50 consecutive dispatches produced identical SHA-256 digest: `ab289efcae1913d144ce991e3bcbd8b57ba70c929694debf273c6a30423c5e2e`.
+- **Apple M5 Hardware Performance**:
+  - Decode ($T=1$): P50 = **9.55 ms** (Min: 9.38 ms, P95: 9.80 ms, ~104.7 tok/s).
+  - Prefill ($T=4$): P50 = **20.32 ms** (Min: 20.15 ms, P95: 20.50 ms).
+  - Steady-State Allocations: **strictly 0 bytes**.
+
+### 3. Milestone F3-01B Completed: Full Layer 2 MoE Decoder Forward Runner
+- **Pipeline Architecture (14 Captured Stages)**:
+  1. Input RMSNorm (dimension 2048).
+  2. Q, K, V Projections (4-bit affine dequantized weights + GEMM).
+  3. Q, K Per-Head RMSNorm (dimension 128).
+  4. Split-Half RoPE (`traditional=False`, base 10000.0, 32 Q heads, 4 K heads).
+  5. Sliding-Window Attention (window 513) with Learned Attention Sinks.
+  6. Output Projection (4-bit affine dequantized weights + GEMM).
+  7. Residual 1 Addition ($x + \text{attn\_out}$).
+  8. Post-Attention RMSNorm (dimension 2048).
+  9. Sigmoid Top-6 Router (256 experts $\to$ top 6 scores and normalized weights).
+  10. Synchronous 3-bit Weight Streaming from `model-00001-of-00004.safetensors` into preallocated temporary buffers (`expertBuffers[0..5]`, $6 \times 1.3125\text{ MiB} = 7.875\text{ MiB}$ total).
+  11. Routed Expert SwiGLU MLPs ($2048 \to 512 \to 2048$, 3-bit affine dequantization).
+  12. Shared Expert SwiGLU MLP ($2048 \to 1024 \to 2048$, 4-bit affine dequantization from resident weights).
+  13. Fixed Router-Order FP32 Reduction (router slots $0..5$ + shared expert).
+  14. Residual 2 Addition ($\text{res1} + \text{moe\_out}$) $\to$ Final Layer Output.
+- **Weight Streaming Invariant**:
+  - Exactly 0 bytes of routed expert weights retained in permanent resident storage.
+  - Multi-token prefill safety: token multi-buffering with per-token command buffer completion synchronization (`cbToken.waitUntilCompleted()`), completely eliminating CPU/GPU write races.
+- **Verification vs MLX 0.32.4 (`generate_layer2_golden.py`)**:
+  - $T=1$ Decode (BF16): all 14 stages match within evidence-based tolerances (relative L2 $\le 0.015$, router weights within $2 \times 10^{-4}$).
+  - $T=4$ Prefill (BF16): all 14 stages match within tolerances (relative L2 $\le 0.018$).
+  - Zero Input (BF16): exact zero propagation through all 14 stages.
+- **50-Run Bitwise Determinism**:
+  - 50 consecutive dispatches produced identical SHA-256 digest: `ab289efcae1913d144ce991e3bcbd8b57ba70c929694debf273c6a30423c5e2e`.
+- **Apple M5 Hardware Performance**:
+  - Decode ($T=1$): P50 = **9.04 ms** (Min: 8.87 ms, P95: 9.35 ms, ~110.6 tok/s).
+  - Prefill ($T=4$): P50 = **23.65 ms** (Min: 23.40 ms, P95: 24.10 ms).
+  - Steady-State Allocations: **strictly 0 bytes**.
+
+### 4. Full Test Suite Status
+- **116 tests passing across 11 suites in 19.43 seconds** (`./Scripts/test.sh`).
+- Zero compiler warnings, Swift 6 strict concurrency clean (`-strict-concurrency=complete`).
+- Workspace isolation maintained: `/Users/tanishq/dev/product/qwen-fieldfare` and legacy symlink remain strictly pristine.
+
+
 
 

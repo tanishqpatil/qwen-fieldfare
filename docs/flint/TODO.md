@@ -52,7 +52,8 @@
 
 | Task ID | Priority | Status | Title | Affects | Acceptance Criteria | Tests | Commit / Evidence |
 |---|---|---|---|---|---|---|---|
-| **F3-01** | P0 | `PENDING` | Single Layer End-to-End Forward | Runtime | Numerically qualify Layer 0 (dense) and Layer 2 (MoE) vs MLX | Layer numerical tests | Pending |
+| **F3-01A** | P0 | `COMPLETED` | Layer 0 Dense End-to-End Forward | Runtime | Decompose and qualify all 10 intermediate stages of Layer 0 (Input RMSNorm, QKV 4-bit dequant+GEMM, Q/K per-head norm 128, causal attention with sinks, O-proj, Res1, Post-attn norm, Dense SwiGLU 6144, Res2) for T=1 decode and T=4, T=8 prefill vs MLX 0.32.4 | `FlintDecoderLayerTests` (5 tests) | Implemented & verified (111 tests passing) |
+| **F3-01B** | P0 | `COMPLETED` | Layer 2 MoE End-to-End Forward | Runtime | Decompose and qualify all 14 intermediate stages of Layer 2 (Sliding attention 513 with RoPE, Sigmoid top-6 router, synchronous 3-bit weight reads from `model-00001-of-00004.safetensors`, 6 routed experts into contribution slots, 4-bit shared expert forward, fixed router-order reduction, Res1 & Res2) for T=1 decode and T=4 prefill vs MLX 0.32.4 | `FlintDecoderLayerTests` (8 tests) | Implemented & verified (116 tests passing across 11 suites) |
 | **F3-02** | P0 | `PENDING` | Full 49-Layer Forward Runner | Runtime | Teacher-forced forward on prompt token IDs matching logits | Teacher forcing test | Pending |
 | **F3-03** | P0 | `PENDING` | Greedy Deterministic Generation | Runtime | Generate first coherent text continuation | First token test | Pending |
 

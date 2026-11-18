@@ -7,6 +7,7 @@ using namespace metal;
 // Mathematical Specification:
 //   - Dense MLP (Layers 0, 1): hidden_dim = 2048, intermediate_dim = 6144
 //   - Shared Expert MLP (Layers 2..48): hidden_dim = 2048, intermediate_dim = 1024
+//   - Routed Expert MLP (Layers 2..48): hidden_dim = 2048, intermediate_dim = 512
 //   - gate = gate_proj(x)       [batch, num_tokens, intermediate_dim]
 //   - up = up_proj(x)           [batch, num_tokens, intermediate_dim]
 //   - activated = SiLU(gate) * up
@@ -14,9 +15,8 @@ using namespace metal;
 //
 // Accumulation Contract:
 //   - Matrix-vector projections evaluate with FP32 SIMD-coalesced reduction.
-//   - SiLU evaluates in FP32: silu(g) = g / (1.0f + exp(-g)).
-//   - Product silu(g) * u evaluates in FP32 prior to casting.
-//   - Zero data races, zero atomic operations, zero GPU heap allocations.
+//   - SiLU evaluates in FP32 with precise exp, intermediate BF16 cast matching MLX reference.
+//   - Pointwise activations evaluate with 0 heap allocations and 0 data races.
 // ==============================================================================
 
 // MARK: - Matrix-Vector Projections (GEMM: Y = X * W^T)
@@ -136,7 +136,7 @@ kernel void flint_silu_bf16(
 ) {
     if (pos >= total_elements) return;
     float x = float(in_x[pos]);
-    float silu_x = x / (1.0f + exp(-x));
+    float silu_x = x / (1.0f + metal::precise::exp(-x));
     out_y[pos] = bfloat(silu_x);
 }
 
@@ -148,7 +148,7 @@ kernel void flint_silu_f32(
 ) {
     if (pos >= total_elements) return;
     float x = in_x[pos];
-    float silu_x = x / (1.0f + exp(-x));
+    float silu_x = x / (1.0f + metal::precise::exp(-x));
     out_y[pos] = silu_x;
 }
 
@@ -177,7 +177,31 @@ kernel void flint_elementwise_mul_f32(
     out_y[pos] = in_a[pos] * in_b[pos];
 }
 
+/// Elementwise addition: y = a + b
+kernel void flint_elementwise_add_bf16(
+    device const bfloat* in_a [[buffer(0)]],
+    device const bfloat* in_b [[buffer(1)]],
+    device bfloat* out_y [[buffer(2)]],
+    constant uint& total_elements [[buffer(3)]],
+    uint pos [[thread_position_in_grid]]
+) {
+    if (pos >= total_elements) return;
+    out_y[pos] = bfloat(float(in_a[pos]) + float(in_b[pos]));
+}
+
+kernel void flint_elementwise_add_f32(
+    device const float* in_a [[buffer(0)]],
+    device const float* in_b [[buffer(1)]],
+    device float* out_y [[buffer(2)]],
+    constant uint& total_elements [[buffer(3)]],
+    uint pos [[thread_position_in_grid]]
+) {
+    if (pos >= total_elements) return;
+    out_y[pos] = in_a[pos] + in_b[pos];
+}
+
 /// Fused SwiGLU activation: y = SiLU(gate) * up
+/// Evaluates with intermediate BF16 rounding on SiLU(gate) to match reference execution semantics bit-for-bit.
 kernel void flint_swiglu_bf16(
     device const bfloat* in_gate [[buffer(0)]],
     device const bfloat* in_up [[buffer(1)]],
@@ -187,9 +211,10 @@ kernel void flint_swiglu_bf16(
 ) {
     if (pos >= total_elements) return;
     float g = float(in_gate[pos]);
+    float silu_g = g / (1.0f + metal::precise::exp(-g));
+    bfloat silu_bf16 = bfloat(silu_g);
     float u = float(in_up[pos]);
-    float silu_g = g / (1.0f + exp(-g));
-    out_y[pos] = bfloat(silu_g * u);
+    out_y[pos] = bfloat(float(silu_bf16) * u);
 }
 
 kernel void flint_swiglu_f32(
@@ -202,6 +227,6 @@ kernel void flint_swiglu_f32(
     if (pos >= total_elements) return;
     float g = in_gate[pos];
     float u = in_up[pos];
-    float silu_g = g / (1.0f + exp(-g));
+    float silu_g = g / (1.0f + metal::precise::exp(-g));
     out_y[pos] = silu_g * u;
 }

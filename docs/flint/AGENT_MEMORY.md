@@ -155,8 +155,9 @@ This document is the authoritative recovery guide for agents operating on FlintF
       - Dense L0 Prefill ($T=8, I=6144$): P50 = 2379.63 µs (Min: 2355.79 µs, P95: 2424.21 µs)
       - Shared L2 Decode ($T=1, I=1024$): P50 = 163.37 µs (Min: 163.08 µs, P95: 163.63 µs)
       - Shared L2 Prefill ($T=8, I=1024$): P50 = 373.46 µs (Min: 371.83 µs, P95: 374.25 µs)
-  - Test Suite Breakdown: **107 tests passing across 10 suites in 11.196s (clean ./Scripts/test.sh)**:
-    - `FlintMLPKernelTests`: 8 tests (MLX qualification, CPU analytical contract, resident weights integration, 50-run determinism, zero allocation verification, parameter/buffer bounds, M5 benchmark, shader equivalence).
+  - Test Suite Breakdown: **116 tests passing across 11 suites in 19.43s (clean ./Scripts/test.sh)**:
+    - `FlintDecoderLayerTests`: 9 tests (Layer 0 qualification vs MLX, Layer 2 MoE qualification vs MLX, 50-run determinism, canonical shader equivalence, bounds validation, Apple M5 benchmarks).
+    - `FlintMLPKernelTests`: 9 tests (MLX qualification, CPU analytical contract, resident weights integration, 50-run determinism, zero allocation verification, parameter/buffer bounds, M5 benchmark, shader equivalence, concurrency exclusivity).
     - `FlintReductionKernelTests`: 8 tests (MLX qualification, CPU analytical contract, residency invariance, 50-run determinism, magnitude/cancellation, buffer bounds, M5 benchmark, shader equivalence).
     - `FlintDequantizeKernelTests`: 7 tests.
     - `FlintRouterKernelTests`: 8 tests (including real Metal vs MLX 100-token diagnostic).
@@ -166,8 +167,26 @@ This document is the authoritative recovery guide for agents operating on FlintF
     - `FlintSafetensorsFileTests`: 28 tests.
     - `FlintModelDirectoryTests`: 20 tests.
     - `FlintInferenceLeaseTests`: 2 tests.
-- **F3 (First Real Flint Token Forward)**: Pending.
-- **F4 (Bounded Expert Streaming)**: Pending.
+- **F3 (First Real Flint Token Forward)**: **F3-01A (Layer 0 Dense Decoder) & F3-01B (Layer 2 MoE Decoder) COMPLETED**.
+  - `FlintDecoderLayerRunner` & Metal Shading Language (`flint_layer.metal`):
+    - Implemented unified forward runners for Layer 0 (dense) and Layer 2 (MoE).
+    - Layer 0 validates all 10 captured intermediate stages against pinned MLX 0.32.4 (`norm1`, `q_proj`, `k_proj`, `v_proj`, `q_norm`, `k_norm`, `attn_out`, `res1`, `norm2`, `mlp_out`, `final_out`):
+      - Uses full causal attention with learned sinks and **NO RoPE** (`0 in no_rope_layer_indices`).
+      - Dense SwiGLU MLP ($2048 \to 6144 \to 2048$).
+      - Decodes at $T=1$ and prefills at $T=4, T=8$.
+      - 50/50 repeat run bitwise determinism confirmed (SHA-256: `ab289efcae1913d144ce991e3bcbd8b57ba70c929694debf273c6a30423c5e2e`).
+      - Apple M5 Benchmark: Decode P50 = 9.55 ms (104.7 tok/s), Prefill $T=4$ P50 = 20.32 ms, 0 steady-state heap allocations.
+    - Layer 2 validates all 14 captured intermediate stages against pinned MLX 0.32.4 (`norm1`, `q_proj`, `k_proj`, `v_proj`, `q_norm`, `k_norm`, `attn_out`, `res1`, `norm2`, `router_scores`, `routed_contributions`, `shared_out`, `moe_out`, `final_out`):
+      - Uses sliding-window attention (window 513) with learned sinks and **split-half RoPE** (`traditional=False`, base 10000.0).
+      - Top-6 Sigmoid Router into 6 routed expert slots.
+      - Dynamic synchronous streaming of 3-bit weights from `model-00001-of-00004.safetensors` via `FlintSafetensorsFile` into preallocated temporary buffers (`expertBuffers[0..5]`, $6 \times 1.3125\text{ MiB} = 7.875\text{ MiB}$ total).
+      - Strictly 0 bytes of routed expert weights retained in resident storage.
+      - Shared Expert 4-bit SwiGLU forward ($2048 \to 1024 \to 2048$) evaluated concurrently.
+      - Fixed router-order FP32 reduction across slots $0..5$ plus shared expert.
+      - Multi-token prefill safety: token multi-buffering with per-token command buffer completion synchronization, eliminating CPU/GPU write races.
+      - 50/50 repeat run bitwise determinism confirmed (SHA-256: `ab289efcae1913d144ce991e3bcbd8b57ba70c929694debf273c6a30423c5e2e`).
+      - Apple M5 Benchmark: Decode P50 = 9.04 ms (110.6 tok/s), Prefill $T=4$ P50 = 23.65 ms, 0 steady-state heap allocations.
+- **F4 (Bounded Expert Streaming & Full Model Pipeline)**: Pending.
 
 ## Strict Workspace Isolation Rules
 1. **Flint Operations**: Execute all edits, builds, tests, and git operations EXCLUSIVELY in `/Users/tanishq/dev/product/flint-fieldfare-isolated`.
@@ -182,5 +201,5 @@ This document is the authoritative recovery guide for agents operating on FlintF
 5. **Never Commit Weights**: Checkpoint files remain strictly external.
 
 ## Immediate Next Steps
-1. Submit Review #010 Completion Report (F2-06 SwiGLU Dense & Shared Expert MLP + Router Diagnostic + Reduction Tightening).
-2. Request authorization for Milestone F3-01 (Single Layer End-to-End Forward for Layer 0 Dense and Layer 2 MoE).
+1. Submit Review #011 Completion Report (F2-06 Closure, F3-01A Layer 0 Dense Decoder, F3-01B Layer 2 MoE Decoder).
+2. Request authorization for Milestone F3-02 (Full 49-Layer Model Pipeline Integration & End-to-End Generation).

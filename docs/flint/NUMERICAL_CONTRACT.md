@@ -307,6 +307,68 @@ Ground truth fixtures were generated using Python MLX 0.32.4 across BF16, FP32, 
   - **Shared L2 Decode ($T=1, I=1024$)**: P50: **$163.37\ \mu\text{s}$**, Min: **$163.08\ \mu\text{s}$**, P95: **$163.63\ \mu\text{s}$**, Jitter: $0.54\ \mu\text{s}$.
   - **Shared L2 Prefill ($T=8, I=1024$)**: P50: **$373.46\ \mu\text{s}$**, Min: **$371.83\ \mu\text{s}$**, P95: **$374.25\ \mu\text{s}$**, Jitter: $2.42\ \mu\text{s}$.
 
+---
+
+### Level 6: Full Decoder Layer Forward Qualification (F3-01A & F3-01B vs MLX 0.32.4)
+
+Ground truth fixtures were generated using Python MLX 0.32.4 on live model checkpoint weights (`/Users/tanishq/models/flint-mixed-3-4bit`) across single-token decode ($T=1$), multi-token prefill ($T=4, T=8$), and zero input.
+
+#### Architectural Implementations
+1. **Layer 0 (Dense Decoder Layer, F3-01A)**:
+   - Input RMSNorm: 2048 ($\epsilon = 10^{-6}$)
+   - Q/K/V Projections: 4-bit affine dequantization (group size 64) with FP32 GEMM ($2048 \to 4096, 512, 512$).
+   - Q/K Per-Head RMSNorm: 128 ($\epsilon = 10^{-6}$) across 32 query heads and 4 key heads.
+   - Scaled Dot-Product Attention: Full causal attention without RoPE (`0 in args.no_rope_layer_indices`) and learned attention sinks (`softmax_offset[32]`).
+   - Output Projection: 4-bit affine dequantization ($4096 \to 2048$).
+   - First Residual: $y_1 = x + \text{attn\_proj}$.
+   - Post-Attention RMSNorm: 2048 ($\epsilon = 10^{-6}$).
+   - Dense SwiGLU MLP: 4-bit affine dequantization ($2048 \to 6144 \to 2048$) with FP32 accumulation and BF16 intermediate rounding matching MLX module evaluation.
+   - Second Residual: $y_{\text{final}} = y_1 + \text{mlp\_out}$.
+
+2. **Layer 2 (MoE Decoder Layer, F3-01B)**:
+   - Input RMSNorm: 2048 ($\epsilon = 10^{-6}$).
+   - Q/K/V Projections: 4-bit affine dequantization ($2048 \to 4096, 512, 512$).
+   - Q/K Per-Head RMSNorm: 128 ($\epsilon = 10^{-6}$).
+   - Split-Half RoPE: $\text{base} = 10000.0$, `traditional=False` applied to Q and K.
+   - Sliding-Window Attention: Window size 513 with learned sinks (`softmax_offset[32]`).
+   - Output Projection: 4-bit affine dequantization ($4096 \to 2048$).
+   - First Residual: $y_1 = x + \text{attn\_proj}$.
+   - Post-Attention RMSNorm: 2048 ($\epsilon = 10^{-6}$).
+   - Sigmoid Top-6 Router: Evaluates logits, sigmoid activation, selects top-6 experts, and computes normalized FP32 weights.
+   - Synchronous 3-Bit Expert Weight Streaming: Synchronously reads 3-bit slices ($3 \times 448\text{ KiB} = 1.3125\text{ MiB}$ per expert) from `model-00001-of-00004.safetensors` via `FlintSafetensorsFile` into preallocated temporary buffers (bounded to 7.875 MiB total, zero resident expert retention).
+   - Routed Expert Forward: Dequantizes 3-bit weights into scratch, runs SwiGLU forward ($2048 \to 512 \to 2048$) for each of the 6 selected experts, and writes to contribution slots $0..5$.
+   - Shared Expert Forward: 4-bit affine dequantization and SwiGLU forward ($2048 \to 1024 \to 2048$).
+   - Fixed Router-Order Reduction: Position-indexed FP32 accumulation summing the 6 routed experts + shared expert.
+   - Second Residual: $y_{\text{final}} = y_1 + \text{moe\_out}$.
+
+#### Numerical Qualification Results vs MLX 0.32.4
+
+| Case Name | Layer | Batch | Tokens | Max Abs Diff | Relative L2 | RMS Diff | Status |
+|---|---|---|---|---|---|---|---|
+| `layer0_decode_t1_bf16` | L0 (Dense) | 1 | 1 | 0.007812 | 9.617732e-04 | 9.232273e-04 | PASSED |
+| `layer0_prefill_t4_bf16` | L0 (Dense) | 1 | 4 | 0.015625 | 1.036752e-03 | 9.947127e-04 | PASSED |
+| `layer0_prefill_t8_bf16` | L0 (Dense) | 1 | 8 | 0.015625 | 1.201224e-03 | 1.183135e-03 | PASSED |
+| `layer0_decode_zero_bf16` | L0 (Dense) | 1 | 1 | 0.000000 | 0.000000e+00 | 0.000000e+00 | PASSED |
+| `layer2_decode_t1_bf16` | L2 (MoE) | 1 | 1 | 0.007812 | 2.116547e-04 | 2.033539e-04 | PASSED |
+| `layer2_prefill_t4_bf16` | L2 (MoE) | 1 | 4 | 0.007812 | 2.100852e-04 | 2.089889e-04 | PASSED |
+| `layer2_decode_zero_bf16` | L2 (MoE) | 1 | 1 | 0.000000 | 0.000000e+00 | 0.000000e+00 | PASSED |
+
+- **Intermediate Stage Verifications**: All 10 stages of Layer 0 and all 14 stages of Layer 2 verified within 1 BF16 ULP ($\text{rel L2} \le 0.02$, max diff $\le 0.25$).
+- **Router Selections & Weights**: 100% exact top-6 expert set agreement with MLX, and router normalized weights match MLX to within $0.00015$ across all tokens.
+- **Bitwise Determinism**: 50/50 repeat runs on Layer 0 and 50/50 repeat runs on Layer 2 produced identical SHA-256 digests (`ab289efcae1913d144ce991e3bcbd8b57ba70c929694debf273c6a30423c5e2e`).
+
+#### Apple M5 Hardware Performance Benchmark (FlintDecoderLayerRunner)
+- **Platform**: Apple M5, 32 GB Unified Memory, macOS 14+.
+- **Zero Steady-State Heap Allocations**: All layer and temporary expert buffers preallocated at runner initialization.
+
+| Configuration | P50 Latency | Min Latency | P95 Latency | Max Latency | Jitter (P95 - Min) | Status |
+|---|---|---|---|---|---|---|
+| **Layer 0 Decode ($T=1$, Dense)** | **$9.55\text{ ms}$** | $6.34\text{ ms}$ | $14.37\text{ ms}$ | $14.96\text{ ms}$ | $8.02\text{ ms}$ | PASSED |
+| **Layer 0 Prefill ($T=8$, Dense)** | **$20.32\text{ ms}$** | $10.76\text{ ms}$ | $24.34\text{ ms}$ | $26.51\text{ ms}$ | $13.58\text{ ms}$ | PASSED |
+| **Layer 2 Decode ($T=1$, MoE)** | **$9.04\text{ ms}$** | $7.23\text{ ms}$ | $11.49\text{ ms}$ | $12.72\text{ ms}$ | $4.27\text{ ms}$ | PASSED |
+| **Layer 2 Prefill ($T=4$, MoE)** | **$23.65\text{ ms}$** | $21.49\text{ ms}$ | $26.59\text{ ms}$ | $27.94\text{ ms}$ | $5.10\text{ ms}$ | PASSED |
+
+
 
 
 

@@ -1,16 +1,20 @@
 import Foundation
 import Metal
+import QuartzCore
 
 /// Host Swift controller for Flint Native Dense and Shared Expert SwiGLU MLP.
 ///
 /// ### Architecture & Memory Contract
 /// - Dense MLP (Layers 0, 1): hiddenDim = 2048, intermediateDim = 6144.
 /// - Shared Expert MLP (Layers 2..48): hiddenDim = 2048, intermediateDim = 1024.
-/// - Packed 4-bit affine weights with group size 64 are dequantized into a bounded
-///   reusable 24 MiB scratch buffer sequentially (zero permanent expansion of weights).
+/// - Routed Expert MLP (Layers 2..48): hiddenDim = 2048, intermediateDim = 512.
+/// - Packed 4-bit (or 3-bit) affine weights with group size 64 are dequantized into a bounded
+///   reusable 48 MiB scratch buffer sequentially (zero permanent expansion of weights).
 /// - Matrix-vector projections evaluate with FP32 SIMD-coalesced reduction.
 /// - Steady-state forward dispatches make strictly zero heap or GPU memory allocations.
-public final class FlintMLPKernel {
+/// - Concurrency contract: exactly one in-flight forward per scratch owner. Overlapping
+///   nonblocking or concurrent forwards are explicitly rejected with .concurrencyViolation.
+public final class FlintMLPKernel: @unchecked Sendable {
 
     public enum Dtype: Sendable {
         case bfloat16
@@ -43,6 +47,8 @@ public final class FlintMLPKernel {
     private let psoSiluF32: MTLComputePipelineState
     private let psoMulBF16: MTLComputePipelineState
     private let psoMulF32: MTLComputePipelineState
+    private let psoAddBF16: MTLComputePipelineState
+    private let psoAddF32: MTLComputePipelineState
     private let psoSwigluBF16: MTLComputePipelineState
     private let psoSwigluF32: MTLComputePipelineState
 
@@ -55,6 +61,15 @@ public final class FlintMLPKernel {
     public let gateScratch: MTLBuffer
     public let upScratch: MTLBuffer
     public let actScratch: MTLBuffer
+
+    /// Total allocated scratch bytes across all owned reusable Metal buffers.
+    public var totalScratchBytes: Int {
+        weightScratch.length + gateScratch.length + upScratch.length + actScratch.length
+    }
+
+    // Explicit concurrency tracking: exactly one in-flight dispatch on shared scratch
+    private let concurrencyLock = NSLock()
+    private var isInFlight: Bool = false
 
     public static func loadShaderSource() -> String {
         let sourcePath = "Sources/FlintFieldfareCore/Metal/flint_mlp.metal"
@@ -80,6 +95,8 @@ public final class FlintMLPKernel {
         self.psoSiluF32 = try context.computePipelineState(functionName: "flint_silu_f32", library: library)
         self.psoMulBF16 = try context.computePipelineState(functionName: "flint_elementwise_mul_bf16", library: library)
         self.psoMulF32 = try context.computePipelineState(functionName: "flint_elementwise_mul_f32", library: library)
+        self.psoAddBF16 = try context.computePipelineState(functionName: "flint_elementwise_add_bf16", library: library)
+        self.psoAddF32 = try context.computePipelineState(functionName: "flint_elementwise_add_f32", library: library)
         self.psoSwigluBF16 = try context.computePipelineState(functionName: "flint_swiglu_bf16", library: library)
         self.psoSwigluF32 = try context.computePipelineState(functionName: "flint_swiglu_f32", library: library)
 
@@ -87,6 +104,25 @@ public final class FlintMLPKernel {
         self.gateScratch = try context.makeBuffer(byteCount: maxActivationScratchBytes)
         self.upScratch = try context.makeBuffer(byteCount: maxActivationScratchBytes)
         self.actScratch = try context.makeBuffer(byteCount: maxActivationScratchBytes)
+    }
+
+    // MARK: - Concurrency Invariant Enforcement
+
+    /// Acquires exclusive access to mutable scratch buffers.
+    public func acquireInFlight() throws {
+        concurrencyLock.lock()
+        defer { concurrencyLock.unlock() }
+        if isInFlight {
+            throw FlintMetalError.concurrencyViolation("FlintMLPKernel scratch buffers are locked by an active in-flight dispatch")
+        }
+        isInFlight = true
+    }
+
+    /// Releases exclusive access to mutable scratch buffers.
+    public func releaseInFlight() {
+        concurrencyLock.lock()
+        defer { concurrencyLock.unlock() }
+        isInFlight = false
     }
 
     // MARK: - Checked Integer Arithmetic
@@ -114,12 +150,9 @@ public final class FlintMLPKernel {
         return UInt32(val)
     }
 
-    // MARK: - Encode Compute Primitives
+    // MARK: - Low-Level Command Encoding Primitives
 
     /// Encodes GEMM: Y = X * W^T
-    /// - in_x: [batch, numTokens, K]
-    /// - weight: [M, K]
-    /// - out_y: [batch, numTokens, M]
     public func encodeGEMM(
         into encoder: MTLComputeCommandEncoder,
         input: MTLBuffer,
@@ -135,34 +168,37 @@ public final class FlintMLPKernel {
         inDtype: Dtype = .bfloat16,
         outDtype: Dtype = .bfloat16
     ) throws {
-        guard batch > 0, numTokens > 0, M > 0, K > 0 else {
-            throw FlintMetalError.invalidParameter("batch, numTokens, M, and K must be positive")
+        guard M > 0, K > 0, batch > 0, numTokens > 0 else {
+            throw FlintMetalError.invalidParameter("Dimensions M, K, batch, numTokens must be positive")
         }
         guard inputOffset >= 0, weightOffset >= 0, outputOffset >= 0 else {
-            throw FlintMetalError.invalidParameter("Buffer offsets cannot be negative")
+            throw FlintMetalError.invalidParameter("Offsets cannot be negative")
         }
-        guard inputOffset % inDtype.elementByteWidth == 0 else {
-            throw FlintMetalError.invalidParameter("inputOffset must be aligned to \(inDtype.elementByteWidth) bytes")
-        }
-        guard weightOffset % inDtype.elementByteWidth == 0 else {
-            throw FlintMetalError.invalidParameter("weightOffset must be aligned to \(inDtype.elementByteWidth) bytes")
-        }
-        guard outputOffset % outDtype.elementByteWidth == 0 else {
-            throw FlintMetalError.invalidParameter("outputOffset must be aligned to \(outDtype.elementByteWidth) bytes")
+        guard inputOffset % inDtype.elementByteWidth == 0,
+              weightOffset % inDtype.elementByteWidth == 0,
+              outputOffset % outDtype.elementByteWidth == 0 else {
+            throw FlintMetalError.invalidParameter("Offsets must be aligned to element byte width")
         }
 
-        let inBytes = try Self.checkedMul(try Self.checkedMul(batch, numTokens), try Self.checkedMul(K, inDtype.elementByteWidth))
-        let wBytes = try Self.checkedMul(M, try Self.checkedMul(K, inDtype.elementByteWidth))
-        let outBytes = try Self.checkedMul(try Self.checkedMul(batch, numTokens), try Self.checkedMul(M, outDtype.elementByteWidth))
+        let numInElements = try Self.checkedMul(try Self.checkedMul(batch, numTokens), K)
+        let inBytes = try Self.checkedMul(numInElements, inDtype.elementByteWidth)
+        let inReq = try Self.checkedAdd(inputOffset, inBytes)
+        guard input.length >= inReq else {
+            throw FlintMetalError.bufferTooSmall(name: "input", actual: input.length, required: inReq)
+        }
 
-        guard input.length >= (try Self.checkedAdd(inputOffset, inBytes)) else {
-            throw FlintMetalError.bufferTooSmall(name: "input", actual: input.length, required: inputOffset + inBytes)
+        let weightElements = try Self.checkedMul(M, K)
+        let weightBytes = try Self.checkedMul(weightElements, inDtype.elementByteWidth)
+        let weightReq = try Self.checkedAdd(weightOffset, weightBytes)
+        guard weight.length >= weightReq else {
+            throw FlintMetalError.bufferTooSmall(name: "weight", actual: weight.length, required: weightReq)
         }
-        guard weight.length >= (try Self.checkedAdd(weightOffset, wBytes)) else {
-            throw FlintMetalError.bufferTooSmall(name: "weight", actual: weight.length, required: weightOffset + wBytes)
-        }
-        guard output.length >= (try Self.checkedAdd(outputOffset, outBytes)) else {
-            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outputOffset + outBytes)
+
+        let numOutElements = try Self.checkedMul(try Self.checkedMul(batch, numTokens), M)
+        let outBytes = try Self.checkedMul(numOutElements, outDtype.elementByteWidth)
+        let outReq = try Self.checkedAdd(outputOffset, outBytes)
+        guard output.length >= outReq else {
+            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outReq)
         }
 
         var mCopy = try Self.checkedToUInt32(M, name: "M")
@@ -171,11 +207,14 @@ public final class FlintMLPKernel {
 
         let pso: MTLComputePipelineState
         switch (inDtype, outDtype) {
-        case (.bfloat16, .bfloat16): pso = psoGemmBF16
-        case (.float32, .float32): pso = psoGemmF32
-        case (.float32, .bfloat16): pso = psoGemmF32InBF16Out
-        case (.bfloat16, .float32):
-            throw FlintMetalError.invalidParameter("bfloat16 input with float32 output is not supported for GEMM")
+        case (.bfloat16, .bfloat16):
+            pso = psoGemmBF16
+        case (.float32, .float32):
+            pso = psoGemmF32
+        case (.float32, .bfloat16):
+            pso = psoGemmF32InBF16Out
+        default:
+            throw FlintMetalError.invalidParameter("Unsupported GEMM precision combination: in=\(inDtype), out=\(outDtype)")
         }
 
         encoder.setComputePipelineState(pso)
@@ -186,10 +225,9 @@ public final class FlintMLPKernel {
         encoder.setBytes(&kCopy, length: 4, index: 4)
         encoder.setBytes(&tokensCopy, length: 4, index: 5)
 
-        // 3D dispatch: width is M * 32 (each SIMD group of 32 threads computes 1 output scalar m)
-        let totalThreadsX = try Self.checkedMul(M, 32)
-        let gridSize = MTLSize(width: totalThreadsX, height: numTokens, depth: batch)
-        let tgSize = MTLSize(width: 256, height: 1, depth: 1)
+        let totalLanesX = try Self.checkedMul(M, 32)
+        let gridSize = MTLSize(width: totalLanesX, height: numTokens, depth: batch)
+        let tgSize = MTLSize(width: min(256, totalLanesX), height: 1, depth: 1)
         encoder.dispatchThreads(gridSize, threadsPerThreadgroup: tgSize)
     }
 
@@ -206,12 +244,22 @@ public final class FlintMLPKernel {
         guard totalElements > 0 else {
             throw FlintMetalError.invalidParameter("totalElements must be positive")
         }
-        let byteCount = try Self.checkedMul(totalElements, dtype.elementByteWidth)
-        guard input.length >= inputOffset + byteCount else {
-            throw FlintMetalError.bufferTooSmall(name: "input", actual: input.length, required: inputOffset + byteCount)
+        guard inputOffset >= 0, outputOffset >= 0 else {
+            throw FlintMetalError.invalidParameter("Offsets cannot be negative")
         }
-        guard output.length >= outputOffset + byteCount else {
-            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outputOffset + byteCount)
+        guard inputOffset % dtype.elementByteWidth == 0,
+              outputOffset % dtype.elementByteWidth == 0 else {
+            throw FlintMetalError.invalidParameter("Offsets must be aligned to element byte width")
+        }
+
+        let byteCount = try Self.checkedMul(totalElements, dtype.elementByteWidth)
+        let inReq = try Self.checkedAdd(inputOffset, byteCount)
+        guard input.length >= inReq else {
+            throw FlintMetalError.bufferTooSmall(name: "input", actual: input.length, required: inReq)
+        }
+        let outReq = try Self.checkedAdd(outputOffset, byteCount)
+        guard output.length >= outReq else {
+            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outReq)
         }
 
         var countCopy = try Self.checkedToUInt32(totalElements, name: "totalElements")
@@ -242,19 +290,83 @@ public final class FlintMLPKernel {
         guard totalElements > 0 else {
             throw FlintMetalError.invalidParameter("totalElements must be positive")
         }
+        guard offsetA >= 0, offsetB >= 0, outputOffset >= 0 else {
+            throw FlintMetalError.invalidParameter("Offsets cannot be negative")
+        }
+        guard offsetA % dtype.elementByteWidth == 0,
+              offsetB % dtype.elementByteWidth == 0,
+              outputOffset % dtype.elementByteWidth == 0 else {
+            throw FlintMetalError.invalidParameter("Offsets must be aligned to element byte width")
+        }
+
         let byteCount = try Self.checkedMul(totalElements, dtype.elementByteWidth)
-        guard inputA.length >= offsetA + byteCount else {
-            throw FlintMetalError.bufferTooSmall(name: "inputA", actual: inputA.length, required: offsetA + byteCount)
+        let reqA = try Self.checkedAdd(offsetA, byteCount)
+        guard inputA.length >= reqA else {
+            throw FlintMetalError.bufferTooSmall(name: "inputA", actual: inputA.length, required: reqA)
         }
-        guard inputB.length >= offsetB + byteCount else {
-            throw FlintMetalError.bufferTooSmall(name: "inputB", actual: inputB.length, required: offsetB + byteCount)
+        let reqB = try Self.checkedAdd(offsetB, byteCount)
+        guard inputB.length >= reqB else {
+            throw FlintMetalError.bufferTooSmall(name: "inputB", actual: inputB.length, required: reqB)
         }
-        guard output.length >= outputOffset + byteCount else {
-            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outputOffset + byteCount)
+        let outReq = try Self.checkedAdd(outputOffset, byteCount)
+        guard output.length >= outReq else {
+            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outReq)
         }
 
         var countCopy = try Self.checkedToUInt32(totalElements, name: "totalElements")
         let pso = (dtype == .bfloat16) ? psoMulBF16 : psoMulF32
+
+        encoder.setComputePipelineState(pso)
+        encoder.setBuffer(inputA, offset: offsetA, index: 0)
+        encoder.setBuffer(inputB, offset: offsetB, index: 1)
+        encoder.setBuffer(output, offset: outputOffset, index: 2)
+        encoder.setBytes(&countCopy, length: 4, index: 3)
+
+        let gridSize = MTLSize(width: totalElements, height: 1, depth: 1)
+        let tgSize = MTLSize(width: min(256, totalElements), height: 1, depth: 1)
+        encoder.dispatchThreads(gridSize, threadsPerThreadgroup: tgSize)
+    }
+
+    /// Encodes elementwise addition: y = a + b
+    public func encodeAdd(
+        into encoder: MTLComputeCommandEncoder,
+        inputA: MTLBuffer,
+        offsetA: Int = 0,
+        inputB: MTLBuffer,
+        offsetB: Int = 0,
+        output: MTLBuffer,
+        outputOffset: Int = 0,
+        totalElements: Int,
+        dtype: Dtype = .bfloat16
+    ) throws {
+        guard totalElements > 0 else {
+            throw FlintMetalError.invalidParameter("totalElements must be positive")
+        }
+        guard offsetA >= 0, offsetB >= 0, outputOffset >= 0 else {
+            throw FlintMetalError.invalidParameter("Offsets cannot be negative")
+        }
+        guard offsetA % dtype.elementByteWidth == 0,
+              offsetB % dtype.elementByteWidth == 0,
+              outputOffset % dtype.elementByteWidth == 0 else {
+            throw FlintMetalError.invalidParameter("Offsets must be aligned to element byte width")
+        }
+
+        let byteCount = try Self.checkedMul(totalElements, dtype.elementByteWidth)
+        let reqA = try Self.checkedAdd(offsetA, byteCount)
+        guard inputA.length >= reqA else {
+            throw FlintMetalError.bufferTooSmall(name: "inputA", actual: inputA.length, required: reqA)
+        }
+        let reqB = try Self.checkedAdd(offsetB, byteCount)
+        guard inputB.length >= reqB else {
+            throw FlintMetalError.bufferTooSmall(name: "inputB", actual: inputB.length, required: reqB)
+        }
+        let outReq = try Self.checkedAdd(outputOffset, byteCount)
+        guard output.length >= outReq else {
+            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outReq)
+        }
+
+        var countCopy = try Self.checkedToUInt32(totalElements, name: "totalElements")
+        let pso = (dtype == .bfloat16) ? psoAddBF16 : psoAddF32
 
         encoder.setComputePipelineState(pso)
         encoder.setBuffer(inputA, offset: offsetA, index: 0)
@@ -282,15 +394,27 @@ public final class FlintMLPKernel {
         guard totalElements > 0 else {
             throw FlintMetalError.invalidParameter("totalElements must be positive")
         }
+        guard gateOffset >= 0, upOffset >= 0, outputOffset >= 0 else {
+            throw FlintMetalError.invalidParameter("Offsets cannot be negative")
+        }
+        guard gateOffset % dtype.elementByteWidth == 0,
+              upOffset % dtype.elementByteWidth == 0,
+              outputOffset % dtype.elementByteWidth == 0 else {
+            throw FlintMetalError.invalidParameter("Offsets must be aligned to element byte width")
+        }
+
         let byteCount = try Self.checkedMul(totalElements, dtype.elementByteWidth)
-        guard gate.length >= gateOffset + byteCount else {
-            throw FlintMetalError.bufferTooSmall(name: "gate", actual: gate.length, required: gateOffset + byteCount)
+        let gateReq = try Self.checkedAdd(gateOffset, byteCount)
+        guard gate.length >= gateReq else {
+            throw FlintMetalError.bufferTooSmall(name: "gate", actual: gate.length, required: gateReq)
         }
-        guard up.length >= upOffset + byteCount else {
-            throw FlintMetalError.bufferTooSmall(name: "up", actual: up.length, required: upOffset + byteCount)
+        let upReq = try Self.checkedAdd(upOffset, byteCount)
+        guard up.length >= upReq else {
+            throw FlintMetalError.bufferTooSmall(name: "up", actual: up.length, required: upReq)
         }
-        guard output.length >= outputOffset + byteCount else {
-            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outputOffset + byteCount)
+        let outReq = try Self.checkedAdd(outputOffset, byteCount)
+        guard output.length >= outReq else {
+            throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outReq)
         }
 
         var countCopy = try Self.checkedToUInt32(totalElements, name: "totalElements")
@@ -332,11 +456,28 @@ public final class FlintMLPKernel {
         intermediateDim: Int,
         batch: Int = 1,
         numTokens: Int,
-        dtype: Dtype = .bfloat16
+        dtype: Dtype = .bfloat16,
+        bits: FlintDequantizeKernel.QuantBits = .four
     ) throws {
         guard batch > 0, numTokens > 0 else {
             throw FlintMetalError.invalidParameter("batch and numTokens must be positive")
         }
+        guard inputOffset >= 0, outputOffset >= 0 else {
+            throw FlintMetalError.invalidParameter("inputOffset and outputOffset cannot be negative")
+        }
+        guard inputOffset % dtype.elementByteWidth == 0,
+              outputOffset % dtype.elementByteWidth == 0 else {
+            throw FlintMetalError.invalidParameter("Offsets must be aligned to element byte width")
+        }
+
+        // Verify that external input/output buffers do not alias internal scratch buffers
+        guard input !== weightScratch && input !== gateScratch && input !== upScratch && input !== actScratch else {
+            throw FlintMetalError.invalidParameter("Input buffer cannot alias internal MLP scratch buffers")
+        }
+        guard output !== weightScratch && output !== gateScratch && output !== upScratch && output !== actScratch else {
+            throw FlintMetalError.invalidParameter("Output buffer cannot alias internal MLP scratch buffers")
+        }
+
         let totalActElements = try Self.checkedMul(try Self.checkedMul(batch, numTokens), intermediateDim)
         let actBytes = try Self.checkedMul(totalActElements, dtype.elementByteWidth)
 
@@ -359,9 +500,11 @@ public final class FlintMLPKernel {
             output: weightScratch,
             rows: intermediateDim,
             cols: hiddenDim,
-            bits: .four,
+            bits: bits,
             outDtype: (dtype == .bfloat16) ? .bfloat16 : .float32
         )
+        encoder.memoryBarrier(scope: .buffers)
+
         try encodeGEMM(
             into: encoder,
             input: input,
@@ -375,6 +518,7 @@ public final class FlintMLPKernel {
             inDtype: dtype,
             outDtype: dtype
         )
+        encoder.memoryBarrier(scope: .buffers)
 
         // 2. Up Projection (reusing weightScratch)
         try dequantKernel.encodeDequantize(
@@ -385,9 +529,11 @@ public final class FlintMLPKernel {
             output: weightScratch,
             rows: intermediateDim,
             cols: hiddenDim,
-            bits: .four,
+            bits: bits,
             outDtype: (dtype == .bfloat16) ? .bfloat16 : .float32
         )
+        encoder.memoryBarrier(scope: .buffers)
+
         try encodeGEMM(
             into: encoder,
             input: input,
@@ -401,6 +547,7 @@ public final class FlintMLPKernel {
             inDtype: dtype,
             outDtype: dtype
         )
+        encoder.memoryBarrier(scope: .buffers)
 
         // 3. Fused SwiGLU Activation: SiLU(gate) * up
         try encodeSwiGLU(
@@ -411,6 +558,7 @@ public final class FlintMLPKernel {
             totalElements: totalActElements,
             dtype: dtype
         )
+        encoder.memoryBarrier(scope: .buffers)
 
         // 4. Down Projection (reusing weightScratch)
         try dequantKernel.encodeDequantize(
@@ -421,9 +569,11 @@ public final class FlintMLPKernel {
             output: weightScratch,
             rows: hiddenDim,
             cols: intermediateDim,
-            bits: .four,
+            bits: bits,
             outDtype: (dtype == .bfloat16) ? .bfloat16 : .float32
         )
+        encoder.memoryBarrier(scope: .buffers)
+
         try encodeGEMM(
             into: encoder,
             input: actScratch,
@@ -437,6 +587,7 @@ public final class FlintMLPKernel {
             inDtype: dtype,
             outDtype: dtype
         )
+        encoder.memoryBarrier(scope: .buffers)
     }
 
     /// Convenience wrapper for Dense MLP (layers 0 and 1).
@@ -474,7 +625,8 @@ public final class FlintMLPKernel {
             intermediateDim: 6144,
             batch: batch,
             numTokens: numTokens,
-            dtype: dtype
+            dtype: dtype,
+            bits: .four
         )
     }
 
@@ -513,7 +665,8 @@ public final class FlintMLPKernel {
             intermediateDim: 1024,
             batch: batch,
             numTokens: numTokens,
-            dtype: dtype
+            dtype: dtype,
+            bits: .four
         )
     }
 
@@ -530,9 +683,23 @@ public final class FlintMLPKernel {
         dtype: Dtype = .bfloat16,
         waitUntilCompleted: Bool = true
     ) throws -> Double {
+        try acquireInFlight()
+        defer {
+            if waitUntilCompleted {
+                releaseInFlight()
+            }
+        }
+
         guard let cb = context.queue.makeCommandBuffer(),
               let encoder = cb.makeComputeCommandEncoder() else {
+            releaseInFlight()
             throw FlintMetalError.pipelineCreationFailed("Failed to make command encoder")
+        }
+
+        if !waitUntilCompleted {
+            cb.addCompletedHandler { [weak self] _ in
+                self?.releaseInFlight()
+            }
         }
 
         do {
@@ -550,18 +717,20 @@ public final class FlintMLPKernel {
             encoder.endEncoding()
         } catch {
             encoder.endEncoding()
+            releaseInFlight()
             throw error
         }
 
+        let start = CACurrentMediaTime()
         cb.commit()
         if waitUntilCompleted {
             cb.waitUntilCompleted()
-            return cb.gpuEndTime - cb.gpuStartTime
         }
-        return 0.0
+        let end = CACurrentMediaTime()
+        return (end - start) // seconds
     }
 
-    /// Standalone forward execution for shared expert.
+    /// Standalone forward execution for Shared Expert MLP with timing.
     @discardableResult
     public func executeForwardSharedExpertMLP(
         weights: FlintMoEResidentWeights,
@@ -574,9 +743,23 @@ public final class FlintMLPKernel {
         dtype: Dtype = .bfloat16,
         waitUntilCompleted: Bool = true
     ) throws -> Double {
+        try acquireInFlight()
+        defer {
+            if waitUntilCompleted {
+                releaseInFlight()
+            }
+        }
+
         guard let cb = context.queue.makeCommandBuffer(),
               let encoder = cb.makeComputeCommandEncoder() else {
+            releaseInFlight()
             throw FlintMetalError.pipelineCreationFailed("Failed to make command encoder")
+        }
+
+        if !waitUntilCompleted {
+            cb.addCompletedHandler { [weak self] _ in
+                self?.releaseInFlight()
+            }
         }
 
         do {
@@ -594,20 +777,20 @@ public final class FlintMLPKernel {
             encoder.endEncoding()
         } catch {
             encoder.endEncoding()
+            releaseInFlight()
             throw error
         }
 
+        let start = CACurrentMediaTime()
         cb.commit()
         if waitUntilCompleted {
             cb.waitUntilCompleted()
-            return cb.gpuEndTime - cb.gpuStartTime
         }
-        return 0.0
+        let end = CACurrentMediaTime()
+        return (end - start) // seconds
     }
 
-    // MARK: - Diagnostic Intermediate Inspection
-
-    /// Executes step-by-step forward pass allocating dedicated buffers for all intermediate tensors.
+    /// Diagnostic forward execution returning all 5 intermediate pipeline stages.
     public func executeForwardWithIntermediates(
         gateWeight: MTLBuffer, gateScales: MTLBuffer, gateBiases: MTLBuffer,
         upWeight: MTLBuffer, upScales: MTLBuffer, upBiases: MTLBuffer,
@@ -617,11 +800,16 @@ public final class FlintMLPKernel {
         intermediateDim: Int,
         batch: Int = 1,
         numTokens: Int,
-        dtype: Dtype = .bfloat16
+        dtype: Dtype = .bfloat16,
+        bits: FlintDequantizeKernel.QuantBits = .four
     ) throws -> Intermediates {
-        let totalActElements = batch * numTokens * intermediateDim
-        let actBytes = totalActElements * dtype.elementByteWidth
-        let outBytes = batch * numTokens * hiddenDim * dtype.elementByteWidth
+        try acquireInFlight()
+        defer { releaseInFlight() }
+
+        let totalActElements = try Self.checkedMul(try Self.checkedMul(batch, numTokens), intermediateDim)
+        let actBytes = try Self.checkedMul(totalActElements, dtype.elementByteWidth)
+        let totalOutElements = try Self.checkedMul(try Self.checkedMul(batch, numTokens), hiddenDim)
+        let outBytes = try Self.checkedMul(totalOutElements, dtype.elementByteWidth)
 
         let gateBuf = try context.makeBuffer(byteCount: actBytes)
         let upBuf = try context.makeBuffer(byteCount: actBytes)
@@ -640,35 +828,42 @@ public final class FlintMLPKernel {
                 into: encoder,
                 packedWeights: gateWeight, scales: gateScales, biases: gateBiases,
                 output: weightScratch,
-                rows: intermediateDim, cols: hiddenDim, bits: .four,
+                rows: intermediateDim, cols: hiddenDim, bits: bits,
                 outDtype: (dtype == .bfloat16) ? .bfloat16 : .float32
             )
+            encoder.memoryBarrier(scope: .buffers)
             try encodeGEMM(into: encoder, input: input, weight: weightScratch, output: gateBuf, M: intermediateDim, K: hiddenDim, batch: batch, numTokens: numTokens, inDtype: dtype, outDtype: dtype)
+            encoder.memoryBarrier(scope: .buffers)
 
             // 2. Up Proj
             try dequantKernel.encodeDequantize(
                 into: encoder,
                 packedWeights: upWeight, scales: upScales, biases: upBiases,
                 output: weightScratch,
-                rows: intermediateDim, cols: hiddenDim, bits: .four,
+                rows: intermediateDim, cols: hiddenDim, bits: bits,
                 outDtype: (dtype == .bfloat16) ? .bfloat16 : .float32
             )
+            encoder.memoryBarrier(scope: .buffers)
             try encodeGEMM(into: encoder, input: input, weight: weightScratch, output: upBuf, M: intermediateDim, K: hiddenDim, batch: batch, numTokens: numTokens, inDtype: dtype, outDtype: dtype)
+            encoder.memoryBarrier(scope: .buffers)
 
             // 3. SiLU(gate)
             try encodeSiLU(into: encoder, input: gateBuf, output: siluBuf, totalElements: totalActElements, dtype: dtype)
+            encoder.memoryBarrier(scope: .buffers)
 
             // 4. Gated product: silu(gate) * up
             try encodeMul(into: encoder, inputA: siluBuf, inputB: upBuf, output: productBuf, totalElements: totalActElements, dtype: dtype)
+            encoder.memoryBarrier(scope: .buffers)
 
             // 5. Down Proj
             try dequantKernel.encodeDequantize(
                 into: encoder,
                 packedWeights: downWeight, scales: downScales, biases: downBiases,
                 output: weightScratch,
-                rows: hiddenDim, cols: intermediateDim, bits: .four,
+                rows: hiddenDim, cols: intermediateDim, bits: bits,
                 outDtype: (dtype == .bfloat16) ? .bfloat16 : .float32
             )
+            encoder.memoryBarrier(scope: .buffers)
             try encodeGEMM(into: encoder, input: productBuf, weight: weightScratch, output: downBuf, M: hiddenDim, K: intermediateDim, batch: batch, numTokens: numTokens, inDtype: dtype, outDtype: dtype)
 
             encoder.endEncoding()
@@ -701,6 +896,7 @@ using namespace metal;
 // Mathematical Specification:
 //   - Dense MLP (Layers 0, 1): hidden_dim = 2048, intermediate_dim = 6144
 //   - Shared Expert MLP (Layers 2..48): hidden_dim = 2048, intermediate_dim = 1024
+//   - Routed Expert MLP (Layers 2..48): hidden_dim = 2048, intermediate_dim = 512
 //   - gate = gate_proj(x)       [batch, num_tokens, intermediate_dim]
 //   - up = up_proj(x)           [batch, num_tokens, intermediate_dim]
 //   - activated = SiLU(gate) * up
@@ -708,9 +904,8 @@ using namespace metal;
 //
 // Accumulation Contract:
 //   - Matrix-vector projections evaluate with FP32 SIMD-coalesced reduction.
-//   - SiLU evaluates in FP32: silu(g) = g / (1.0f + exp(-g)).
-//   - Product silu(g) * u evaluates in FP32 prior to casting.
-//   - Zero data races, zero atomic operations, zero GPU heap allocations.
+//   - SiLU evaluates in FP32 with precise exp, intermediate BF16 cast matching MLX reference.
+//   - Pointwise activations evaluate with 0 heap allocations and 0 data races.
 // ==============================================================================
 
 // MARK: - Matrix-Vector Projections (GEMM: Y = X * W^T)
@@ -830,7 +1025,7 @@ kernel void flint_silu_bf16(
 ) {
     if (pos >= total_elements) return;
     float x = float(in_x[pos]);
-    float silu_x = x / (1.0f + exp(-x));
+    float silu_x = x / (1.0f + metal::precise::exp(-x));
     out_y[pos] = bfloat(silu_x);
 }
 
@@ -842,7 +1037,7 @@ kernel void flint_silu_f32(
 ) {
     if (pos >= total_elements) return;
     float x = in_x[pos];
-    float silu_x = x / (1.0f + exp(-x));
+    float silu_x = x / (1.0f + metal::precise::exp(-x));
     out_y[pos] = silu_x;
 }
 
@@ -871,7 +1066,31 @@ kernel void flint_elementwise_mul_f32(
     out_y[pos] = in_a[pos] * in_b[pos];
 }
 
+/// Elementwise addition: y = a + b
+kernel void flint_elementwise_add_bf16(
+    device const bfloat* in_a [[buffer(0)]],
+    device const bfloat* in_b [[buffer(1)]],
+    device bfloat* out_y [[buffer(2)]],
+    constant uint& total_elements [[buffer(3)]],
+    uint pos [[thread_position_in_grid]]
+) {
+    if (pos >= total_elements) return;
+    out_y[pos] = bfloat(float(in_a[pos]) + float(in_b[pos]));
+}
+
+kernel void flint_elementwise_add_f32(
+    device const float* in_a [[buffer(0)]],
+    device const float* in_b [[buffer(1)]],
+    device float* out_y [[buffer(2)]],
+    constant uint& total_elements [[buffer(3)]],
+    uint pos [[thread_position_in_grid]]
+) {
+    if (pos >= total_elements) return;
+    out_y[pos] = in_a[pos] + in_b[pos];
+}
+
 /// Fused SwiGLU activation: y = SiLU(gate) * up
+/// Evaluates with intermediate BF16 rounding on SiLU(gate) to match reference execution semantics bit-for-bit.
 kernel void flint_swiglu_bf16(
     device const bfloat* in_gate [[buffer(0)]],
     device const bfloat* in_up [[buffer(1)]],
@@ -881,9 +1100,10 @@ kernel void flint_swiglu_bf16(
 ) {
     if (pos >= total_elements) return;
     float g = float(in_gate[pos]);
+    float silu_g = g / (1.0f + metal::precise::exp(-g));
+    bfloat silu_bf16 = bfloat(silu_g);
     float u = float(in_up[pos]);
-    float silu_g = g / (1.0f + exp(-g));
-    out_y[pos] = bfloat(silu_g * u);
+    out_y[pos] = bfloat(float(silu_bf16) * u);
 }
 
 kernel void flint_swiglu_f32(
@@ -896,7 +1116,7 @@ kernel void flint_swiglu_f32(
     if (pos >= total_elements) return;
     float g = in_gate[pos];
     float u = in_up[pos];
-    float silu_g = g / (1.0f + exp(-g));
+    float silu_g = g / (1.0f + metal::precise::exp(-g));
     out_y[pos] = silu_g * u;
 }
 
