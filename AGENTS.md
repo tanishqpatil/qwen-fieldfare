@@ -1,6 +1,14 @@
 # QwenFieldfare
 
-## Current milestone — S3-01b bounded router readback
+## Current milestone — S3-01c two-row expert I/O feasibility
+
+Decision C closes chunked-prefill scheduling research. Use S3-00d
+tokenwise source with the fixed expert reduction and existing SLRU and
+exact-prefix contract. Preserve the disposable collector and offline
+replay evidence on the existing experiment branch. The next independent
+performance priority needs separate scope. The strict 131/132 blocker remains.
+
+## Historical milestone — S3-01b bounded router readback
 
 Use the existing isolated branch at `335e4d9` and preserve S3-00d
 tokenwise source. Inspect dependencies and measure exposed router readback.

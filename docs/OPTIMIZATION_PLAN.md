@@ -1,5 +1,15 @@
 # Optimization analysis and priority order
 
+## S3-01c closes chunked-prefill scheduling
+
+Exact offline replay confirmed the router demand, SLRU decisions and
+GPU reader conflicts. The 1K ordered model credits 1.175 s of extra
+miss overlap and only 6.19% for I/O and second-row router wake combined.
+The higher combined estimate relies on eliminating mandatory host work.
+Do not prototype this schedule. The next independent measurement is
+default sampled-token selection cost during sustained decode.
+See the [two-row evidence](evidence/2026-11-18-s301c/README.md).
+
 ## S3-01b router-readback feasibility stop
 
 Trace the unchanged tokenwise path before redesigning the scheduler.

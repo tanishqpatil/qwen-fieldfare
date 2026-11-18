@@ -1499,3 +1499,22 @@ after GPU router completion is 1.909 s of 34.314 s traced prefill. The
 optimistic row-local model reaches 19.52% and still credits mandatory host
 work. Decision D. Do not build a scheduler or run large benchmarks.
 Archive the timing probe, restore the S3-00d sources and publish evidence.
+
+
+## S3-01c two-row feasibility and scheduling closeout
+
+Use the existing experiment branch and a disposable source snapshot
+for a read-only cache-decision collector. The prior aggregates lacked
+slots and victims. Capture short, 1K and 89-fresh-ID suffix conditions,
+including suffix setup. Exact replay matches 425,920 choices, actual
+miss launches, final slots, segments, timestamps and prior demand.
+The collected first-output, hidden and logit digests match S3-01b.
+
+At 1K, 105,758 next-row misses have safe addresses and 458 wait for
+GPU tail retirement in the sliding view. Disjoint pairs allow 1.175 s
+of additional modeled ordered overlap. Crediting every second-row wake
+gives 6.19%. Adding the I/O estimate to the optimistic S3-01b model gives
+22.94% before host work. Ideal conflict staging adds only 0.038 s of
+modeled reduction even before copy cost. Decision C. Keep the exact
+tokenwise runtime and publish evidence only. Measure sampled-token
+selection during sustained decode as independent follow-up work.

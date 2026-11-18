@@ -1,0 +1,10 @@
+test_all_hit_right_has_no_prefetch_benefit (test_replay.ReplayTests.test_all_hit_right_has_no_prefetch_benefit) ... ok
+test_empty_then_probationary_in_slot_order (test_replay.ReplayTests.test_empty_then_probationary_in_slot_order) ... ok
+test_promote_demote_and_preserve_active_slot (test_replay.ReplayTests.test_promote_demote_and_preserve_active_slot) ... ok
+test_protected_victim_when_probationary_is_empty (test_replay.ReplayTests.test_protected_victim_when_probationary_is_empty) ... ok
+test_split_reader_retirement_and_staging (test_replay.ReplayTests.test_split_reader_retirement_and_staging) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK

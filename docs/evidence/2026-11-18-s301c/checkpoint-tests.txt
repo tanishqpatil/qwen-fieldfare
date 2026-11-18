@@ -1,0 +1,12 @@
+Build complete! (48.65 secs)
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite QwenRouterReadbackProbeTests started.
+◇ Test traceTwoRowDecisions() started.
+short: 8560 layer-rows, 214 fresh tokens, 9380.558013916016 ms.
+1k: 40400 layer-rows, 1010 fresh tokens, 33751.06191635132 ms.
+suffix: 4280 layer-rows, 89 fresh tokens, 3204.9829959869385 ms.
+✔ Test traceTwoRowDecisions() passed after 51.241 seconds.
+✔ Suite QwenRouterReadbackProbeTests passed after 51.241 seconds.
+✔ Test run with 1 test in 1 suite passed after 51.241 seconds.

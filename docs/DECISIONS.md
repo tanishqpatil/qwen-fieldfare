@@ -261,3 +261,13 @@ service leaves at most 19.52% modeled headroom at 1K under deliberately
 optimistic assumptions. The probe is archived. No runtime batching mode
 or longer benchmark was introduced.
 See the [feasibility evidence](evidence/2026-11-18-s301b/README.md).
+
+
+## ADR — S3-01c close chunked-prefill scheduling
+
+Keep the tokenwise scheduler, fixed reduction and ordered SLRU service.
+The two-row replay found mostly safe cache addresses. Safe addresses
+alone yield insufficient measured critical-path opportunity, and staging
+adds memory traffic. Do not pursue a runtime prototype or another round
+of prefill scheduling. Measure default sampled-token selection latency
+independently. See the [feasibility evidence](evidence/2026-11-18-s301c/README.md).

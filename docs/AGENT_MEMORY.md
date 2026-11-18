@@ -1,6 +1,21 @@
 # Agent recovery memory
 
-## Current milestone — S3-01b bounded router readback
+## Current milestone — S3-01c two-row expert I/O feasibility
+
+The isolated prefill branch starts at `b49517b`, with source matching
+`2e5b993`. Disposable diagnostic and offline replay matched 425,920
+decisions and all recorded final slots, segments and timestamps. At 1K,
+105,758 sliding next-row misses were address-safe and 458 had to wait
+for GPU tail retirement. Disjoint ordered pairs hide 1.175 s of additional
+modeled miss I/O. Gross second-row wake plus I/O credit is 6.19%; the
+optimistic combined model gives 22.94% before mandatory host work.
+Staging adds copies for little modeled gain. Decision C closes the
+chunked-prefill scheduling direction. No runtime changes or new
+scheduler. Next independent measurement is sampled-token selection cost
+at 128 and 512 outputs, still unstarted.
+See the [evidence and simulator](evidence/2026-11-18-s301c/README.md).
+
+## Historical milestone — S3-01b bounded router readback
 
 Base `335e4d9` on the isolated prefill branch. A layer can collect eight actual
 router packets before CPU service while preserving row order. The prior

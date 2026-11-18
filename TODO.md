@@ -1,6 +1,20 @@
 # Authoritative implementation backlog
 
-## Current milestone — S3-01b bounded router readback
+## Current milestone — S3-01c two-row expert I/O feasibility
+
+- [x] Verify every actual SLRU decision, victim, final slot and partition state offline.
+- [x] Classify safe reads and retirement hazards for adjacent rows.
+- [x] Bound critical-path credit, extra staging, and implementation overhead.
+- [x] Close the scheduling direction and review the evidence-only checkpoint.
+
+Decision C. Most destinations are address-safe. The ordered model's gross
+1K I/O and wake credit is 6.19%, and the more generous combined estimate
+provides limited headroom. No runtime work is retained.
+Next independent priority is a measurement of default sampled-token
+selection cost in sustained decode. It remains unstarted.
+See the [two-row evidence](docs/evidence/2026-11-18-s301c/README.md).
+
+## Historical milestone — S3-01b bounded router readback
 
 - [x] Establish layer-major ordering, packet lifetimes and safe slot retirement.
 - [x] Bound the available savings with short, 1K and suffix diagnostics.

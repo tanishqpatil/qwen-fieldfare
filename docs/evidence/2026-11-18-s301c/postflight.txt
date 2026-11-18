@@ -1,0 +1,5 @@
+2026-11-18T16:45:00+05:30
+1
+total = 6144.00M  used = 4523.69M  free = 1620.31M  (encrypted)
+The system has 34359738368 (2097152 pages with a page size of 16384).
+System-wide memory free percentage: 85%
