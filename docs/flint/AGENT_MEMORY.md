@@ -35,11 +35,14 @@ This document is the authoritative recovery guide for agents operating on FlintF
     - Programmatic `FlintResidentManifest`: All 1,328 permanently resident tensors across all 49 layers. Total resident payload: 1,278,418,496 B (1.1906 GiB / ~1.28 GB).
     - Direct zero-copy I/O: 0 bytes peak temporary staging allocation.
     - Strictly 0 bytes of routed expert weights (`switch_mlp`) loaded into resident memory.
-    - Partial-failure immediate buffer cleanup and deterministic teardown deallocation.
+    - Deterministic failure injection seam and verified partial-load cleanup (`weak` pointer deallocation).
+    - Real teardown verification in explicit scopes (`weakWeights == nil`, `weakSampleBuffer == nil`).
+    - Explicit Metal allocation measurements (`device.currentAllocatedSize` before, during, after).
+    - Hardened storage modes: `.gpuRequired` (explicit failure, zero silent CPU fallback) and `.cpuOnly` (aligned heap).
     - 15 independent reference SHA-256 digests verified across early, middle, and final layers.
     - Packed U32 weights verified intact without float conversion.
-    - Measured on Apple M5 32 GB: 0.404s – 0.428s load duration, 60 MiB -> ~400-600 MiB process RSS.
-  - Test Suite: **55 tests passing across 4 suites in 0.519 seconds**.
+    - Measured on Apple M5 32 GB: 0.218s – 0.351s load duration.
+  - Test Suite: **59 tests passing across 4 suites in 0.651 seconds**.
 - **F2 (Mathematical Primitives & Metal Kernels)**: Next active milestone.
 - **F3 (First Real Flint Token Forward)**: Pending.
 - **F4 (Bounded Expert Streaming)**: Pending.

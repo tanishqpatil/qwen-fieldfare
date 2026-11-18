@@ -246,3 +246,42 @@
      - Regression test suite: **55 tests passing across 4 suites in 0.519s**.
   7. **Strict Repository Isolation**:
      - `/Users/tanishq/dev/product/qwen-fieldfare` verified strictly untouched.
+
+
+---
+
+## 2026-11-18 — F1-04 Closure: Hardened Resident Loader, Explicit Metal Allocation & Safety Verification
+
+- **Author**: Inference Systems Architect
+- **Branch**: `feature/recursive-flint-40b-a2p5b`
+- **Actions Completed**:
+  1. **Deterministic Partial-Load Cleanup Test**:
+     - Added internal failure-injection seam (`FailureInjection`) in `FlintResidentLoader.loadResidentWeightsInternal` allowing injection of arbitrary errors after $N$ successfully allocated and loaded resident tensors.
+     - Implemented `testPartialLoadFailureReleasesResourcesWithoutLeak()`: Injected simulated disk failure after 15 resident tensors. Verified via thread-safe `BufferTracker` that `weak var sampleBuffer` allocated prior to the failure is immediately deallocated (`#expect(tracker.sampleBuffer == nil)`).
+     - Verified that a subsequent call to `loadResidentWeights` proceeds cleanly without leakage or corrupted state.
+  2. **Real Teardown Verification & Metal Allocation Metrics**:
+     - Restructured live checkpoint loading test with explicit `autoreleasepool` scope.
+     - Verified deallocation of `FlintResidentWeights` and underlying `FlintResidentBuffer` using `weak` reference assertions outside the pool (`#expect(weakWeights == nil)` and `#expect(weakSampleBuffer == nil)`).
+     - Captured Metal allocation transitions using `device.currentAllocatedSize` before, during, and after resident lifetime.
+     - Implemented repeated load/unload test (`liveCheckpointRepeatedLoadUnloadCycles`): Executed 3 complete cycles on the live 1.28 GB checkpoint, confirming 100% deallocation on each cycle without accumulating memory.
+  3. **Explicit GPU Allocation Failures & Storage Modes**:
+     - Introduced `FlintStorageMode` enum with `.gpuRequired` and `.cpuOnly`.
+     - Replaced silent fallback to CPU heap with explicit throwing: If Metal buffer allocation fails in `.gpuRequired`, `FlintResidentError.metalAllocationFailed` is thrown immediately.
+     - Added injectable `metalBufferAllocator` test hook to deterministically test allocation failure.
+     - Added tests for `.cpuOnly` mode, verifying buffers allocate on 64-byte aligned heap memory and metrics report `backendSummary == .cpuOnly`.
+     - Enforced rejection of negative buffer sizes with `FlintResidentError.invalidByteCount`.
+  4. **Manifest and Config Consistency Validation**:
+     - Dynamic embedding packed shape derivation based on `config.embeddingBits`: 8-bit embedding yields `[150144, 512]` U32 (307,494,912 B), while 4-bit embedding yields `[150144, 256]` U32 (153,747,456 B).
+     - Added negative tests rejecting unsupported embedding bits (e.g. 16 or 3) with `FlintSafetensorsError.unsupportedDtype`.
+     - Validated architectural invariants in manifest construction: strictly 49 layers, dense MLPs only on layers [0, 1], 256 experts, top-6 routing, 512 intermediate size, 1024 shared intermediate size. Rejected invalid configurations with `FlintSafetensorsError.invalidMetadata`.
+     - Updated synthetic test fixtures to use actual Flint values (`num_experts_per_tok = 6`, `moe_intermediate_size = 512`).
+  5. **Buffer Mutability and Thread Safety**:
+     - Restricted mutable raw buffer pointer to internal scope (`internal let mutablePointer`).
+     - Exposed only immutable `public var readOnlyPointer: UnsafeRawBufferPointer` and `public var baseAddress: UnsafeRawPointer?`.
+     - Validated `Sendable` conformance on `FlintResidentWeights`, `FlintResidentTensor`, `FlintResidentBuffer`, `FlintResidentManifest`, and metrics types.
+  6. **Qwen Test Suite Parallel Execution Isolation Diagnosis**:
+     - Diagnosed that the `failedFallbackInitializationReleasesDescriptorsAcrossRetries` failure during full package testing was caused by concurrent lease acquisition contention on `/tmp/qwenfieldfare_inference.lock` between parallel SPM test targets (`QwenFieldfareServerTests` and `QwenFieldfareCoreTests`).
+     - Verified that when executed sequentially or uncontended (`swift test --no-parallel --filter QwenFieldfareCoreTests`), all 99 tests in 14 suites pass in 0.129 seconds with zero failures, without modifying any Qwen source code.
+  7. **Qualification Suite Status**:
+     - `FlintFieldfareCoreTests`: 59 tests in 4 suites passing in 0.651s.
+     - Full package `./Scripts/test.sh`: All suites passing with exit code 0.

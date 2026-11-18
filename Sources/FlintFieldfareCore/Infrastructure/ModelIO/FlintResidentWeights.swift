@@ -1,4 +1,5 @@
 import Foundation
+import Metal
 
 /// A single loaded resident tensor combining metadata with its authoritative memory buffer.
 public struct FlintResidentTensor: Sendable {
@@ -12,6 +13,9 @@ public struct FlintResidentTensor: Sendable {
     public var dtype: String { spec.dtype }
     public var byteWidth: Int { spec.byteWidth }
     public var byteCount: Int { buffer.byteCount }
+    public var readOnlyPointer: UnsafeRawBufferPointer { buffer.readOnlyPointer }
+    public var baseAddress: UnsafeRawPointer? { buffer.baseAddress }
+    public var metalBuffer: MTLBuffer? { buffer.metalBuffer }
 
     public init(spec: FlintResidentTensorSpec, buffer: FlintResidentBuffer) {
         self.spec = spec

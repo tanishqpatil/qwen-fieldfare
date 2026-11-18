@@ -79,6 +79,26 @@ public struct FlintResidentManifest: Sendable {
 
     /// Constructs the authoritative resident manifest from the validated model configuration.
     public static func build(config: FlintConfig) throws -> FlintResidentManifest {
+        // Enforce architectural invariants
+        guard config.numHiddenLayers == 49 else {
+            throw FlintSafetensorsError.invalidMetadata("Unsupported numHiddenLayers: \(config.numHiddenLayers) (expected 49)")
+        }
+        guard config.mlpOnlyLayers == [0, 1] else {
+            throw FlintSafetensorsError.invalidMetadata("Unsupported mlpOnlyLayers: \(config.mlpOnlyLayers) (expected [0, 1])")
+        }
+        guard config.numExperts == 256 else {
+            throw FlintSafetensorsError.invalidMetadata("Unsupported numExperts: \(config.numExperts) (expected 256)")
+        }
+        guard config.numExpertsPerTok == 6 else {
+            throw FlintSafetensorsError.invalidMetadata("Unsupported numExpertsPerTok: \(config.numExpertsPerTok) (expected 6)")
+        }
+        guard config.moeIntermediateSize == 512 else {
+            throw FlintSafetensorsError.invalidMetadata("Unsupported moeIntermediateSize: \(config.moeIntermediateSize) (expected 512)")
+        }
+        guard config.sharedExpertIntermediateSize == 1024 else {
+            throw FlintSafetensorsError.invalidMetadata("Unsupported sharedExpertIntermediateSize: \(config.sharedExpertIntermediateSize) (expected 1024)")
+        }
+
         var specs = [String: FlintResidentTensorSpec]()
         var orderedNames = [String]()
 
@@ -87,25 +107,40 @@ public struct FlintResidentManifest: Sendable {
             orderedNames.append(spec.name)
         }
 
-        // 1. Global Embeddings (3 tensors)
+        // 1. Global Embeddings (3 tensors) - Derived from validated config.embeddingBits
+        let embeddingCols: Int
+        switch config.embeddingBits {
+        case 8:
+            // 8-bit quantized: 1 byte per weight, 4 weights per U32 -> hiddenSize / 4 = 512
+            embeddingCols = config.hiddenSize / 4
+        case 4:
+            // 4-bit quantized: 0.5 bytes per weight, 8 weights per U32 -> hiddenSize / 8 = 256
+            embeddingCols = config.hiddenSize / 8
+        default:
+            throw FlintSafetensorsError.unsupportedDtype(
+                name: "model.embed_tokens",
+                dtype: "\(config.embeddingBits)-bit embedding quantization"
+            )
+        }
+
         add(FlintResidentTensorSpec(
             name: "model.embed_tokens.weight",
             category: .embeddings,
-            shape: [150144, 512],
+            shape: [config.vocabSize, embeddingCols],
             dtype: "U32",
             byteWidth: 4
         ))
         add(FlintResidentTensorSpec(
             name: "model.embed_tokens.scales",
             category: .embeddings,
-            shape: [150144, 32],
+            shape: [config.vocabSize, config.hiddenSize / config.groupSize],
             dtype: "BF16",
             byteWidth: 2
         ))
         add(FlintResidentTensorSpec(
             name: "model.embed_tokens.biases",
             category: .embeddings,
-            shape: [150144, 32],
+            shape: [config.vocabSize, config.hiddenSize / config.groupSize],
             dtype: "BF16",
             byteWidth: 2
         ))
