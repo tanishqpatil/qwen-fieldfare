@@ -5,6 +5,7 @@ let package = Package(
     name: "QwenFieldfare",
     platforms: [.macOS(.v26)],
     products: [
+        .library(name: "FlintFieldfareCore", targets: ["FlintFieldfareCore"]),
         .executable(name: "QwenFieldfareServer", targets: ["QwenFieldfareServer"]),
         .library(name: "QwenFieldfareCore", targets: ["QwenFieldfareCore"]),
         .executable(name: "QwenFieldfareMac", targets: ["QwenFieldfareMac"]),
@@ -117,6 +118,24 @@ let package = Package(
                 "AboutPanelPresentationTests.swift",
                 "FastMarkdownParserTests.swift",
                 "ModelRevealPolicyTests.swift",
+            ]
+        ),
+        .target(
+            name: "FlintFieldfareCore",
+            dependencies: [.product(name: "Tokenizers", package: "swift-transformers")],
+            path: "Sources/FlintFieldfareCore",
+            sources: [
+                "Infrastructure/ModelIO/FlintInferenceLease.swift",
+                "Infrastructure/ModelIO/FlintModelDirectory.swift",
+            ]
+        ),
+        .testTarget(
+            name: "FlintFieldfareCoreTests",
+            dependencies: ["FlintFieldfareCore"],
+            path: "Tests/FlintFieldfareCoreTests",
+            sources: [
+                "FlintInferenceLeaseTests.swift",
+                "FlintModelDirectoryTests.swift",
             ]
         ),
     ]
