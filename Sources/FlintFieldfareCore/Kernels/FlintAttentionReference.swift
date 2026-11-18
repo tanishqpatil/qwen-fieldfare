@@ -44,6 +44,13 @@ public enum FlintAttentionReference {
         precondition(values.count == expectedKVCount, "Value count mismatch")
         precondition(sinks.count == numQHeads, "Sinks count mismatch")
 
+        let firstQPos = cacheOffset
+        let lastQPos = cacheOffset + T_q - 1
+        let kvEndAbs = retainedKVStart + T_kv - 1
+        let kStartAbs = isSliding ? max(0, firstQPos - 512) : 0
+        precondition(retainedKVStart <= kStartAbs, "Incomplete KV history: required keys back to \(kStartAbs), but retained cache begins at \(retainedKVStart)")
+        precondition(kvEndAbs >= lastQPos, "Incomplete KV history: required keys up to \(lastQPos), but retained cache ends at \(kvEndAbs)")
+
         var output = [Float](repeating: 0, count: expectedQCount)
 
         for b in 0..<batch {

@@ -203,23 +203,35 @@ public final class FlintAttentionKernel: @unchecked Sendable {
             throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outputOffset + qBytes)
         }
 
-        // Bounded-KV index translation
-        let kStartAbs = isSliding ? max(0, qPos - 512) : 0
-        let kEndAbs = qPos
+        // Combined integer bounds and overflow checks
+        let _ = try Self.checkedToUInt32(qPos, name: "queryAbsPos")
         let kvEndAbs = try Self.checkedAdd(retainedKVStart, T_kv - 1)
+        let _ = try Self.checkedToUInt32(kvEndAbs, name: "retainedKVEnd")
+
+        let maxQElements = try Self.checkedMul(batch, 32 * headDim)
+        let maxKVElements = try Self.checkedMul(try Self.checkedMul(batch, 4 * headDim), T_kv)
+        guard maxQElements <= UInt32.max, maxKVElements <= UInt32.max else {
+            throw FlintMetalError.invalidParameter("GPU index product exceeds UInt32.max")
+        }
+
+        // KV-history completeness validation for exact attention
+        let kStartAbs = isSliding ? max(0, qPos - 512) : 0
+        guard retainedKVStart <= kStartAbs else {
+            throw FlintMetalError.invalidParameter(
+                "Incomplete KV history for exact \(isSliding ? "sliding" : "full") attention: query at \(qPos) requires historical keys back to \(kStartAbs), but retained cache begins at \(retainedKVStart)"
+            )
+        }
+        guard kvEndAbs >= qPos else {
+            throw FlintMetalError.invalidParameter(
+                "Incomplete KV history: query at \(qPos) requires key at \(qPos), but retained cache ends at \(kvEndAbs)"
+            )
+        }
 
         let effStart = max(kStartAbs, retainedKVStart)
-        let effEnd = min(kEndAbs, kvEndAbs)
+        let effEnd = min(qPos, kvEndAbs)
 
-        let physStart: UInt32
-        let physEnd: UInt32
-        if effStart <= effEnd && effStart >= retainedKVStart {
-            physStart = try Self.checkedToUInt32(effStart - retainedKVStart, name: "physStart")
-            physEnd = try Self.checkedToUInt32(effEnd - retainedKVStart + 1, name: "physEnd")
-        } else {
-            physStart = 0
-            physEnd = 0
-        }
+        let physStart: UInt32 = try Self.checkedToUInt32(effStart - retainedKVStart, name: "physStart")
+        let physEnd: UInt32 = try Self.checkedToUInt32(effEnd - retainedKVStart + 1, name: "physEnd")
 
         var T_kv_copy = try Self.checkedToUInt32(T_kv, name: "T_kv")
         var phys_start_copy = physStart
@@ -326,6 +338,32 @@ public final class FlintAttentionKernel: @unchecked Sendable {
         }
         guard output.length >= (try Self.checkedAdd(outputOffset, qBytes)) else {
             throw FlintMetalError.bufferTooSmall(name: "output", actual: output.length, required: outputOffset + qBytes)
+        }
+
+        // Combined integer bounds and overflow checks
+        let firstQPos = cacheOffset
+        let lastQPos = try Self.checkedAdd(cacheOffset, T_q - 1)
+        let _ = try Self.checkedToUInt32(lastQPos, name: "lastQPos")
+        let kvEndAbs = try Self.checkedAdd(retainedKVStart, T_kv - 1)
+        let _ = try Self.checkedToUInt32(kvEndAbs, name: "retainedKVEnd")
+
+        let maxQElements = try Self.checkedMul(try Self.checkedMul(batch, 32 * headDim), T_q)
+        let maxKVElements = try Self.checkedMul(try Self.checkedMul(batch, 4 * headDim), T_kv)
+        guard maxQElements <= UInt32.max, maxKVElements <= UInt32.max else {
+            throw FlintMetalError.invalidParameter("GPU index product exceeds UInt32.max")
+        }
+
+        // KV-history completeness validation for exact attention
+        let kStartAbs = isSliding ? max(0, firstQPos - 512) : 0
+        guard retainedKVStart <= kStartAbs else {
+            throw FlintMetalError.invalidParameter(
+                "Incomplete KV history for exact \(isSliding ? "sliding" : "full") attention: prefill starting at \(firstQPos) requires historical keys back to \(kStartAbs), but retained cache begins at \(retainedKVStart)"
+            )
+        }
+        guard kvEndAbs >= lastQPos else {
+            throw FlintMetalError.invalidParameter(
+                "Incomplete KV history: prefill ending at \(lastQPos) requires keys up to \(lastQPos), but retained cache ends at \(kvEndAbs)"
+            )
         }
 
         var T_q_copy = try Self.checkedToUInt32(T_q, name: "T_q")

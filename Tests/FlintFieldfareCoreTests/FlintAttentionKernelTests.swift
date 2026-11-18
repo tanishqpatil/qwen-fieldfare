@@ -999,8 +999,8 @@ import Testing
         }
         #expect(maxDiff <= 1e-5, "Metal decode does not match CPU reference on pos 1024 eviction (max diff \(maxDiff))")
 
-        // Also test boundary positions 512, 513, 514:
-        for testPos in [512, 513, 514] {
+        // Test boundary shifts with complete retained storage:
+        for (testPos, testStart) in [(1024, 512), (1025, 513), (1026, 514)] {
             try kernel.executeDecode(
                 queries: qBuf,
                 keys: kBuf,
@@ -1009,7 +1009,7 @@ import Testing
                 output: outBuf,
                 T_kv: T_kv,
                 queryAbsPos: testPos,
-                retainedKVStart: retainedKVStart,
+                retainedKVStart: testStart,
                 isSliding: true,
                 dtype: .float32,
                 waitUntilCompleted: true
@@ -1022,7 +1022,7 @@ import Testing
                 batch: 1,
                 T_kv: T_kv,
                 queryAbsPos: testPos,
-                retainedKVStart: retainedKVStart,
+                retainedKVStart: testStart,
                 isSliding: true
             )
             let outPtr = Array(UnsafeBufferPointer(start: outBuf.contents().assumingMemoryBound(to: Float.self), count: numQHeads * headDim))
@@ -1032,6 +1032,59 @@ import Testing
                 if diff > pDiff { pDiff = diff }
             }
             #expect(pDiff <= 1e-5, "Position \(testPos) failed bounded-KV equivalence (diff \(pDiff))")
+        }
+
+        // Test Review #008 required rejection:
+        // Incomplete KV history (query at 1024 requires keys back to 512, but retained cache begins at 900)
+        #expect(throws: FlintMetalError.self) {
+            try kernel.executeDecode(
+                queries: qBuf,
+                keys: kBuf,
+                values: vBuf,
+                sinks: sBuf,
+                output: outBuf,
+                T_kv: 125,
+                queryAbsPos: 1024,
+                retainedKVStart: 900,
+                isSliding: true,
+                dtype: .float32,
+                waitUntilCompleted: true
+            )
+        }
+
+        // Test prefill incomplete history rejection
+        #expect(throws: FlintMetalError.self) {
+            try kernel.executePrefill(
+                queries: qBuf,
+                keys: kBuf,
+                values: vBuf,
+                sinks: sBuf,
+                output: outBuf,
+                T_q: 1,
+                T_kv: 125,
+                cacheOffset: 1024,
+                retainedKVStart: 900,
+                isSliding: true,
+                dtype: .float32,
+                waitUntilCompleted: true
+            )
+        }
+
+        // Test full attention incomplete history rejection (requires keys back to 0, but cache starts at 5)
+        #expect(throws: FlintMetalError.self) {
+            try kernel.executeDecode(
+                queries: qBuf,
+                keys: kBuf,
+                values: vBuf,
+                sinks: sBuf,
+                output: outBuf,
+                T_kv: 10,
+                queryAbsPos: 10,
+                retainedKVStart: 5,
+                isSliding: false,
+                dtype: .float32,
+                waitUntilCompleted: true
+            )
         }
     }
 

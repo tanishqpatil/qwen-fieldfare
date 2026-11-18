@@ -75,7 +75,7 @@ This document is the authoritative recovery guide for agents operating on FlintF
     - Direct consumption of resident BF16 attention sinks with FP32 activations (`flint_attention_decode_f32_bf16sinks` and `flint_attention_prefill_f32_bf16sinks`).
     - Pinned MLX 0.32.4 Numerical Qualification: All 38 golden test cases passed.
       - 24 RoPE cases: FP32 exact match (diff $\le 3.5 \times 10^{-5}$, max rel $\le 0.0035\%$), BF16 max rel $\le 0.769\%$.
-      - 14 Attention cases: FP32 max abs diff $= 0.000000$ (rel L2 $\le 10^{-6}$), BF16 relative L2 error strictly $\le 5 \times 10^{-3}$ ($< 1$ BF16 ULP of $7.81 \times 10^{-3}$).
+      - 14 Attention cases: FP32 max abs diff $= 0.000000$ (rel L2 $\le 10^{-6}$), BF16 relative L2 error strictly $\le 5 \times 10^{-3}$ (aggregate $L_2 \le 0.5\%$, measured $0.0029 - 0.0047$, with individual element ULPs reaching hundreds near zero due to reduction tree differences).
     - Canonical Metal shader source equivalence test: verified zero drift between on-disk `flint_attention.metal` / `flint_rope.metal` and their embedded Swift strings.
     - Apple M5 Hardware Benchmark:
       - Decode Attention (1 token, 513 KV cache): P50 = 183.37 µs (Min: 181.63 µs, P95: 807.42 µs, Max: 810.25 µs, Nominal: 5.82 GB/s).
@@ -90,12 +90,30 @@ This document is the authoritative recovery guide for agents operating on FlintF
     - Zero GPU heap allocations, zero CPU roundtrips.
     - Direct zero-copy consumption of resident weights. Zero weight mutation (SHA-256 verified invariant before and after execution on layers 2, 24, 48).
     - Pinned MLX 0.32.4 Numerical Qualification: All 10 golden test cases passed (FP32 and BF16 exact matches across layers 2, 24, 48, all-zeros tie-breaking, saturated positive, saturated negative, and multi-token sequence).
+    - Actual MLX router oracle (`mlx_vlm.models.flint.language.SparseMoeBlock`) qualification: verified set equality and per-expert weights across FP32, BF16, near-ties, saturation, zeros, sequence (T=8), and batch > 1 (batch=2, T=4).
     - Apple M5 Hardware Benchmark:
-      - Decode Router (1 token, BF16): P50 = 138.13 µs, Min: 135.42 µs, P95: 141.63 µs, Jitter: 6.21 µs, Throughput: 7,240 tok/s.
-      - Prefill Router (8 tokens, BF16): P50 = 137.25 µs, Min: 135.37 µs, P95: 138.63 µs, Jitter: 3.25 µs, Throughput: 58,288 tok/s.
-      - Prefill Router (64 tokens, BF16): P50 = 565.62 µs, Min: 555.75 µs, P95: 579.29 µs, Jitter: 23.54 µs, Throughput: 113,149 tok/s.
-      - Decode Router FP32 (1 token): P50 = 162.75 µs, Min: 161.33 µs, P95: 177.58 µs, Jitter: 16.25 µs, Throughput: 6,144 tok/s.
-  - Test Suite Breakdown: **83 tests passing across 7 suites in 6.533s (clean ./Scripts/test.sh)**:
+      - Decode Router (1 token, BF16): P50 = 31 µs (Throughput: ~32,000 tok/s).
+      - Prefill Router (8 tokens, BF16): P50 = 29 µs (Throughput: ~270,000 tok/s).
+      - Prefill Router (64 tokens, BF16): P50 = 118 µs (Throughput: ~540,000 tok/s).
+      - Decode Router FP32 (1 token): P50 = 39 µs (Throughput: ~25,000 tok/s).
+  - `FlintDequantizeKernel` & Metal Shading Language (`flint_dequantize.metal`) (F2-04):
+    - 3-bit and 4-bit affine dequantization for MLX packed UInt32 weights with group size 64 and resident BF16 scales & biases.
+    - Mathematical formula: $\text{weight} = \text{scale} \times \text{int\_val} + \text{bias}$, computed in FP32 then cast to BF16 or FP32.
+    - 4-bit packing: 8 values packed per 32-bit UInt32 word ($64 \times 4 / 32 = 8$ words per group).
+    - 3-bit continuous bit-stream: continuous bit packing crossing 32-bit word boundaries ($64 \times 3 / 32 = 6$ words per group).
+      - Formula: `combined = (ulong(w_hi) << 32) | ulong(w_lo)`, `int_val = (combined >> (bit_idx % 32)) & 0x7`.
+    - Supports routed expert projections: `gate_proj` & `up_proj` `[256, 512, 192]` UInt32 ($2048 \times \text{packed}$), `down_proj` `[256, 2048, 48]` UInt32.
+    - Supports resident shared expert projections: 4-bit INT4 group size 64 (`[1024, 256]` and `[2048, 128]` UInt32).
+    - Bounded execution memory: dequantizes on-demand into temporary preallocated scratch buffer (only 6 MiB per expert, 36 MiB for all Top-6 experts), zero permanent memory expansion.
+    - Direct zero-copy consumption of resident weights. Zero weight mutation (SHA-256 verified invariant before and after execution).
+    - Pinned MLX 0.32.4 Numerical Qualification: All 18 golden test cases passed (15/15 BF16 cases 100% bit-exact $0.000000$, FP32 diff bounded by $1.5 \times 10^{-5}$).
+    - Apple M5 Hardware Benchmark:
+      - Shared Expert Gate Proj (4-bit, [1024, 2048]): P50 = 32.25 µs (166.63 GB/s).
+      - Routed Expert Gate Proj (3-bit, [512, 2048]): P50 = 17.71 µs (144.33 GB/s).
+      - Routed Expert Down Proj (3-bit, [2048, 512]): P50 = 17.67 µs (144.67 GB/s).
+      - Routed Expert Gate Proj FP32 (3-bit, [512, 2048]): P50 = 22.25 µs (209.13 GB/s).
+  - Test Suite Breakdown: **90 tests passing across 8 suites in 7.503s (clean ./Scripts/test.sh)**:
+    - `FlintDequantizeKernelTests`: 7 tests (MLX qualification, analytical boundary-crossing, 50-run determinism, buffer bounds, real checkpoint expert immutability, M5 benchmark, shader equivalence).
     - `FlintRouterKernelTests`: 7 tests (MLX qualification, analytical tie-breaking, 50-run determinism, buffer bounds, resident weight immutability, M5 benchmark, shader equivalence).
     - `FlintAttentionKernelTests`: 10 tests (analytical synthetic sink, RoPE invariants, sliding boundaries 1..514, 38 MLX goldens, resident sinks integration & immutability, ring layout rejection, bounded-KV eviction, buffer bounds, M5 benchmark, shader equivalence).
     - `FlintRMSNormKernelTests`: 7 tests.

@@ -123,6 +123,13 @@ public final class FlintRouterKernel: @unchecked Sendable {
             throw FlintMetalError.bufferTooSmall(name: "outWeights", actual: outWeights.length, required: outWeightsOffset + outWgtBytes)
         }
 
+        let maxTokens = try Self.checkedMul(batch, numTokens)
+        let maxInElements = try Self.checkedMul(maxTokens, hiddenDim)
+        let maxOutElements = try Self.checkedMul(maxTokens, topK)
+        guard maxInElements <= UInt32.max, maxOutElements <= UInt32.max else {
+            throw FlintMetalError.invalidParameter("GPU index product exceeds UInt32.max")
+        }
+
         var numTokensCopy = try Self.checkedToUInt32(numTokens, name: "numTokens")
 
         let pso: MTLComputePipelineState

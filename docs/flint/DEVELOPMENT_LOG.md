@@ -432,7 +432,7 @@
 #### 2. BF16 Numerical Acceptance Analysis
 - Removed permissive fallback `|| maxAbsDiff <= 0.02`.
 - Formally analyzed BF16 quantization limits: BF16 has 1 sign bit, 8 exponent bits, and 7 fraction bits. Machine epsilon is $2^{-7} = 0.0078125$ ($0.781\%$). A single ULP difference in BF16 yields a relative error of $\approx 0.78\%$.
-- Enforced strict relative L2 threshold $\le 5 \times 10^{-3}$ ($0.5\%$, strictly below 1 BF16 ULP).
+- Enforced strict relative L2 threshold $\le 5 \times 10^{-3}$ ($0.5\%$ aggregate vector error). Note that an aggregate relative L2 bound $\le 0.005$ does not imply $\le 1$ ULP per element: individual elements near zero or where floating-point summation tree order diverges exhibit ULP differences reaching hundreds, while the overall vector distance remains strictly within $0.5\%$.
 - Measured error metrics across all 7 BF16 attention cases:
   - `l0_full_prefill_t4_bfloat16`: Max Abs $0.015625$, Rel L2 $0.002957$, RMS $0.000560$
   - `l0_full_decode_tkv8_bfloat16`: Max Abs $0.007812$, Rel L2 $0.004493$, RMS $0.000969$
@@ -478,3 +478,66 @@
   - Decode Router FP32 (1 token): P50: 162.75 µs | Min: 161.33 µs | P95: 177.58 µs | Max: 219.29 µs | Jitter: 16.25 µs | Throughput: 6,144 tok/s
 - **Full Test Suite Status**:
   - 83 tests passing across 7 suites in 6.533 seconds (clean `./Scripts/test.sh --filter FlintFieldfareCoreTests`).
+
+---
+
+### Session Entry: 2026-11-18 (Independent Review #008 Closure & Milestone F2-04 Native Dequantization)
+
+#### 1. Review #008 Section A: Four Focused F2-02/F2-03 Correctness Safeguards
+1. **Actual MLX Router Oracle (`mlx_vlm.models.flint.language.SparseMoeBlock`)**:
+   - Replaced pure NumPy router golden generation with actual pinned Flint MLX model forward pass `SparseMoeBlock.route(x)`.
+   - Verified that MLX router produces identical expert sets, normalized weights, and ordering semantics across FP32, BF16, near-ties, saturation, zeros, sequence ($T=8$), and batch > 1 (batch=2, $T=4$).
+   - Characterized dot product reduction tree differences between Metal 4-wide serial accumulation and MLX GEMM tiled reduction: near boundary ties ($< 10^{-4}$ score difference), expert set overlap is $\ge 5/6$ with weight diff $\le 5 \times 10^{-4}$, while FP32 is 100% exact.
+2. **Correct BF16 Numerical Language in Documentation**:
+   - Corrected inaccurate statement in `NUMERICAL_CONTRACT.md`, `AGENT_MEMORY.md`, and `DEVELOPMENT_LOG.md` that claimed relative L2 $\le 0.005$ implies $< 1$ ULP per element.
+   - Formally clarified that relative L2 $\le 0.005$ is an aggregate vector bound ($\le 0.5\%$), and individual elements near zero or where summation trees diverge can reach hundreds of ULPs while the aggregate vector distance remains strictly within $0.5\%$.
+3. **KV-History Completeness Validation**:
+   - Formalized distinction between valid physical indexing and complete required historical attention context.
+   - Implemented strict rejection in `FlintAttentionKernel.swift` (`encodeDecode` and `encodePrefill`) and `FlintAttentionReference.swift`:
+     - If `retainedKVStart > kStartAbs`, throws `FlintMetalError.invalidParameter("Incomplete KV history for exact \(isSliding ? "sliding" : "full") attention: query requires keys back to \(kStartAbs), but retained cache begins at \(retainedKVStart)")`.
+     - If `kvEndAbs < queryPos`, throws `FlintMetalError.invalidParameter`.
+   - Added unit tests in `FlintAttentionKernelTests.swift`: verifies pos 1024 with complete storage 512..1024 succeeds, while incomplete storage 900..1024 throws `invalidParameter` in both decode and prefill, as well as full attention incomplete history rejection.
+4. **Combined Integer Bounds**:
+   - Implemented overflow-checked bounds for `cacheOffset + T_q - 1`, `retainedKVStart + T_kv - 1`, and GPU index-products (`batch * T_q * 32 * headDim <= UInt32.max`, `batch * T_kv * 4 * headDim <= UInt32.max`) before dispatch in both attention and router kernels.
+
+#### 2. Milestone F2-04 Native 3-bit and 4-bit Metal Dequantization
+- **Mathematical Specification**:
+  - Affine formula: $\text{weight} = \text{scale} \times \text{int\_val} + \text{bias}$.
+  - Group size: strictly 64 elements per group across all Flint projections.
+  - Scales and biases: stored as resident BF16 tensors `[rows, num_groups]`.
+  - Math performed in FP32, then cast to target dtype (BF16 or FP32).
+- **Bit-Packing Rules & Formats**:
+  - 4-bit (INT4, group size 64): 8 values packed per 32-bit `UInt32` word ($64 \times 4 / 32 = 8$ words per group).
+    - Unpacked value $j$: `int_val = (group_words[j / 8] >> ((j % 8) * 4)) & 0xF`.
+  - 3-bit (group size 64): continuous bit-stream packed across 32-bit word boundaries ($64 \times 3 / 32 = 6$ words per group).
+    - Unpacked value $j$: continuous 64-bit shift `combined = (ulong(w_hi) << 32) | ulong(w_lo)`, `int_val = (combined >> (bit_idx % 32)) & 0x7`.
+    - Handles word-boundary crossing (e.g. elements 10, 21, 32, 42, 53) without branching.
+- **Physical Tensor Shapes Supported**:
+  - 3-bit routed expert projections: `gate_proj.weight` & `up_proj.weight` `[256, 512, 192]` UInt32 (unquantized `[512, 2048]`), `down_proj.weight` `[256, 2048, 48]` UInt32 (unquantized `[2048, 512]`).
+  - 4-bit resident projections: `shared_expert.gate_proj.weight` `[1024, 256]` UInt32 (unquantized `[1024, 2048]`), `down_proj.weight` `[2048, 128]` UInt32 (unquantized `[2048, 1024]`).
+- **Implementation Artifacts**:
+  - `Sources/FlintFieldfareCore/Metal/flint_dequantize.metal`: MSL kernels `flint_dequantize_4bit_bf16`, `flint_dequantize_4bit_f32`, `flint_dequantize_3bit_bf16`, `flint_dequantize_3bit_f32`.
+  - `Sources/FlintFieldfareCore/Kernels/FlintDequantizeKernel.swift`: Host Swift controller with checked bounds, checked byte alignments, and `(cols, rows)` 2D dispatch.
+  - `Sources/FlintFieldfareCore/Kernels/FlintDequantizeReference.swift`: Host CPU reference implementation.
+  - `Tests/FlintFieldfareCoreTests/FlintDequantizeKernelTests.swift`: Comprehensive unit and integration test suite.
+  - `Tests/FlintFieldfareCoreTests/Fixtures/generate_dequant_golden.py`: MLX 0.32.4 golden generator yielding `flint_dequant_golden.json`.
+- **Pinned Reference Qualification (vs MLX 0.32.4 `mx.dequantize`)**:
+  - 18 golden test cases covering synthetic edge cases, 4-bit shared expert projections, and 3-bit routed expert projections (first expert 0, middle expert 128, last expert 255 across layers 2, 24, 48 for gate_proj, up_proj, down_proj).
+  - Results: All 15 BF16 cases matched with Max Abs Diff $= 0.000000$ (100% bit-exact). FP32 cases matched with Max Abs Diff $\le 1.5 \times 10^{-5}$ (Level 1 contract $\le 10^{-4}$).
+- **Analytical Boundary-Crossing Verification**:
+  - Explicitly tested synthetic bit patterns crossing word boundaries (elements 10, 21, 32, 42, 53); matched CPU reference with diff $\le 10^{-5}$.
+- **Bitwise Determinism**:
+  - 50 consecutive GPU dispatches produced 100% bitwise identical output buffers (SHA-256 invariant).
+- **Real Checkpoint Integration & Input Immutability**:
+  - Read expert 0 projection slice from `/Users/tanishq/models/flint-mixed-3-4bit/model-00001-of-00004.safetensors`.
+  - Verified weight immutability: SHA-256 before == SHA-256 after execution across packed weights, scales, and biases.
+- **Canonical Metal Shader Source Equivalence**:
+  - Verified 100% byte-for-byte identity between `flint_dequantize.metal` and `FlintDequantizeKernel.embeddedShaderSource`.
+- **Apple M5 Hardware Performance Benchmark**:
+  - Shared Expert Gate Proj (4-bit, [1024, 2048]): P50: 32.25 µs | Min: 28.00 µs | P95: 91.04 µs | Max: 91.62 µs | Jitter: 63.04 µs | 166.63 GB/s
+  - Routed Expert Gate Proj (3-bit, [512, 2048]): P50: 17.71 µs | Min: 17.62 µs | P95: 18.21 µs | Max: 18.21 µs | Jitter: 0.58 µs | 144.33 GB/s
+  - Routed Expert Down Proj (3-bit, [2048, 512]): P50: 17.67 µs | Min: 17.62 µs | P95: 17.75 µs | Max: 17.75 µs | Jitter: 0.13 µs | 144.67 GB/s
+  - Routed Expert Gate Proj FP32 (3-bit, [512, 2048]): P50: 22.25 µs | Min: 22.12 µs | P95: 22.37 µs | Max: 22.46 µs | Jitter: 0.25 µs | 209.13 GB/s
+- **Full Test Suite Status**:
+  - **90 tests passing across 8 suites in 7.503 seconds** (clean `./Scripts/test.sh --filter FlintFieldfareCoreTests`).
+

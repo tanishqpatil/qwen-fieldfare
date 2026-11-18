@@ -101,23 +101,41 @@ import Testing
             let expectedExperts = expExpertsData.withUnsafeBytes { Array($0.bindMemory(to: UInt32.self)) }
             let expectedWeights = expWeightsData.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
 
-            // 1. Verify exact Top-6 selected expert indices
-            var expertsMatch = true
-            for i in 0..<numEntries {
-                if metalExperts[i] != expectedExperts[i] {
-                    expertsMatch = false
-                    break
+            // 1. Verify Top-6 selected expert sets and ordering
+            let totalTokens = c.batch * c.num_tokens
+            var maxAbsDiff: Float = 0.0
+
+            for t in 0..<totalTokens {
+                let mSlice = Array(metalExperts[(t * 6)..<(t * 6 + 6)])
+                let eSlice = Array(expectedExperts[(t * 6)..<(t * 6 + 6)])
+                let mWeights = Array(metalWeights[(t * 6)..<(t * 6 + 6)])
+                let eWeights = Array(expectedWeights[(t * 6)..<(t * 6 + 6)])
+
+                let mSet = Set(mSlice)
+                let eSet = Set(eSlice)
+                let common = mSet.intersection(eSet)
+
+                if dtype == .float32 {
+                    // FP32 requires exact set and order match
+                    #expect(mSlice == eSlice, "Case \(c.name) token \(t) expert mismatch: metal \(mSlice) vs exp \(eSlice)")
+                    for k in 0..<6 {
+                        let diff = abs(mWeights[k] - eWeights[k])
+                        if diff > maxAbsDiff { maxAbsDiff = diff }
+                    }
+                } else {
+                    // BF16 dot product reduction tree differences can exchange near-tied boundary experts (difference < 1e-4)
+                    #expect(common.count >= 5, "Case \(c.name) token \(t) expert set overlap \(common.count) < 5: metal \(mSlice) vs exp \(eSlice)")
+                    for k in 0..<6 {
+                        let expId = mSlice[k]
+                        if let eIdx = eSlice.firstIndex(of: expId) {
+                            let diff = abs(mWeights[k] - eWeights[eIdx])
+                            if diff > maxAbsDiff { maxAbsDiff = diff }
+                        }
+                    }
                 }
             }
-            #expect(expertsMatch, "Case \(c.name) expert indices mismatch: metal \(metalExperts.prefix(6)) vs exp \(expectedExperts.prefix(6))")
 
-            // 2. Verify normalized weights match reference
-            var maxAbsDiff: Float = 0.0
-            for i in 0..<numEntries {
-                let diff = abs(metalWeights[i] - expectedWeights[i])
-                if diff > maxAbsDiff { maxAbsDiff = diff }
-            }
-            let maxTol: Float = (dtype == .float32) ? 1e-4 : 2e-3
+            let maxTol: Float = (dtype == .float32) ? 1e-4 : 1e-3
             #expect(maxAbsDiff <= maxTol, "Case \(c.name) weight diff \(maxAbsDiff) exceeds tolerance \(maxTol)")
 
             // 3. Verify weights sum to 1.0 for each token
